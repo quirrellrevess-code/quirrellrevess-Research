@@ -14,7 +14,7 @@
 4. **Result Verifier**：等待游戏端响应或可观测状态变化，确认建议确实执行；遇到超时先核实状态，不盲目重发。
 5. **Audit Log**：记录原始 AI 建议、提交参数、响应和执行结果，方便定位协议/操作失败。
 
-优先评估赛马娘 PC 客户端 + Hachimi Edge。公开示例插件已证明可 hook `Gallop.HttpHelper.DecompressResponse` 并观察游戏解密、解压后的响应，但这并不证明存在通用动作提交 API。Hachimi 适配层仅用于必要的结果核验或已证实的接入能力；不重复采集 LegendAI 已自行读取的数据。具体调查记录见 `docs/HACHIMI_EDGE_INTEGRATION_RESEARCH.md`。URADLL 可作为对照研究对象，不再预设为主执行通道。
+当前实际环境是赛马娘 PC 客户端 + Hachimi Edge 转发功能；Hachimi 主要用于文本替换和图形解锁，转发功能是现有游戏请求/响应数据链路的一部分。优先查明本机转发配置与 URADLL 接收端如何协作，不把开发 Hachimi 插件当作首要路线。转发游戏流量只证明数据可被转交/观察，不等于可以通过同一通道提交育成操作。公开示例插件的 hook 研究保留为备用参考。具体记录见 `docs/HACHIMI_EDGE_INTEGRATION_RESEARCH.md`。
 
 ## 源码调查已确认的事实
 
