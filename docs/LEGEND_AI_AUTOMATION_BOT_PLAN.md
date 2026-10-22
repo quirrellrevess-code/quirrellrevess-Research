@@ -8,29 +8,30 @@
 
 ## 目标架构
 
-1. **LegendAI Recommendation Bridge**：查明并读取现有 AI 已产生的建议。严格复用真实程序的输出协议，不假定 JSON、命名管道、标准输出或固定文件。
+1. **LegendAI Recommendation Bridge**：现有公开 AIRedirector 源码已确认会启动 `UmaAI.exe`，以 UTF-8 读取 stdout/stderr；`LegendAiOutputBuffer` 识别 `AI建议...` 行并解析部分训练/心得评分。先复用这条既有进程输出，不要启动第二份 AI；需要增加本地 IPC 或原子 JSONL 导出，让 Bot 获得原始建议及其回合上下文。当前 AIRedirector 的已证实行为是显示到 URA UI，而不是向外部 Bot 提供接口。
 2. **Recommendation Guard**：检查建议是否完整、是否仍属于当前回合、动作是否可执行。只做安全校验，不更改或重新排序 AI 的决策。
 3. **Action Executor**：通过已确认的游戏操作通道提交 AI 建议。一次只执行一项，具备回合去重、超时保护和紧急停止。
 4. **Result Verifier**：等待游戏端响应或可观测状态变化，确认建议确实执行；遇到超时先核实状态，不盲目重发。
 5. **Audit Log**：记录原始 AI 建议、提交参数、响应和执行结果，方便定位协议/操作失败。
 
-当前实际环境是赛马娘 PC 客户端 + Hachimi Edge 转发功能；Hachimi 主要用于文本替换和图形解锁，转发功能是现有游戏请求/响应数据链路的一部分。优先查明本机转发配置与 URADLL 接收端如何协作，不把开发 Hachimi 插件当作首要路线。转发游戏流量只证明数据可被转交/观察，不等于可以通过同一通道提交育成操作。公开示例插件的 hook 研究保留为备用参考。具体记录见 `docs/HACHIMI_EDGE_INTEGRATION_RESEARCH.md`。
+当前实际环境是赛马娘 PC 客户端 + Hachimi Edge 转发功能；Hachimi 主要用于文本替换和图形解锁。本次 `ai.zip` 检查确认了 URA 侧配置、AIRedirector、SendGameStatusPlugin 和回合样本，但没有包含 Hachimi 配置或 `UnityPlayer_orig.dll`，所以 Hachimi 端的具体转发设置仍待单独确认。优先复用 URA 已有转发/建议展示链路，不把开发 Hachimi 插件当成首要路线。转发游戏流量只证明数据可被转交/观察，不等于可以通过同一通道提交育成操作。具体记录见 `docs/HACHIMI_EDGE_INTEGRATION_RESEARCH.md`。
 
 ## 源码调查已确认的事实
 
 - `URADLL/UmamusumeResponseAnalyzer/Server.cs` 注册了 `/notify/request`、`/notify/response` 和 `/notify/ping`。前两个入口解析已经经过的游戏请求/响应，再调用分析器；它们不是游戏动作提交接口。
 - `URADLL/Gallop/SingleModeExecCommandRequest.cs` 描述了操作请求字段：`command_type`、`command_id`、`command_group_id`、`select_id`、`current_turn`、`current_vital`。这只能证明请求数据模型存在，不能证明插件可直接发出请求。
 - URADLL 的路由注册能力和请求/响应分析器能力已存在，但尚未从当前仓库确认游戏请求真正由哪段代码发送、请求头/会话如何构造，以及怎样等待对应响应。
-- 当前分支未包含 `LegendAI/UmaAi.exe`、传奇杯 AI 的调用代码、输入输出样本或历史 `turn0`–`turn71` 快照，因此不能声称已成功连接 AI 或验证其输出协议。
+- 本次上传的本地 `ai.zip` 包含 `LegendAI/UmaAi.exe`、AIRedirector/SendGameStatusPlugin 部署文件，以及 turn0–turn71 状态样本；这些私有/客户端材料没有提交到 GitHub。公开 AIRedirector 源码确认 AI 通过子进程 stdout 输出文本建议，解析器识别 `AI建议...`。本地 `aiConfig_cpu.json` 未启用明确的 `communicationMode`，副本配置则含 `urafile`，所以 AI 输入通道的实际启用模式仍需运行时确认。状态快照是 AI 输入/游戏状态，不是 AI 建议输出。
+- 当前仍未确认实际游戏操作的提交路径；AIRedirector 显示建议不等于自动点击或提交游戏操作。
 
 ## 实施阶段
 
 ### L0：确认两个真实协议（当前阶段）
 
-**协议 A：AI 建议输出**
-- 找出启动 LegendAI 的宿主、调用入口、配置及其实际输出。
-- 确认输出字段、动作 ID、回合标识、完成信号、错误和超时行为。
-- 用真实样本验证解析结果；不根据旧快照字段自行猜测输出格式。
+**协议 A：AI 建议输出（部分已确认）**
+- 已确认：AIRedirector 启动现有 `UmaAi.exe` 子进程，读取 UTF-8 stdout/stderr；建议以 `AI建议` 文本行输出，另有训练评分、休息/外出评分及心得评分。
+- 未确认：所有建议文案的完整枚举、各动作到游戏 command ID 的映射、每条建议与育成 ID/回合的严格关联，以及 AI 完成/异常信号。
+- 下一步：给 AIRedirector 增加明确的外部输出桥接，保存原始建议并带上由 URA 侧确认的育成 ID/回合；先做影子模式测试。不要仅靠回合状态 JSON 猜测 AI 建议。
 
 **协议 B：游戏动作提交**
 - 从 URADLL 调用链和现有客户端代码确认动作请求发送方式、序列化、会话/请求头及响应关联方式。
