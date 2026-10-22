@@ -1,0 +1,94 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <AssemblyName>UmamusumeResponseAnalyzer</AssemblyName>
+    <GenerateAssemblyInfo>False</GenerateAssemblyInfo>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <PlatformTarget>x64</PlatformTarget>
+  </PropertyGroup>
+  <PropertyGroup>
+    <LangVersion>14.0</LangVersion>
+    <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
+    <CheckForOverflowUnderflow>False</CheckForOverflowUnderflow>
+  </PropertyGroup>
+  <PropertyGroup>
+    <ApplicationIcon>app.ico</ApplicationIcon>
+    <RootNamespace />
+  </PropertyGroup>
+  <ItemGroup />
+  <ItemGroup>
+    <Reference Include="MessagePack">
+      <HintPath>..\URA\MessagePack.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Collections">
+      <HintPath>C:\Program Files\dotnet\shared\Microsoft.NETCore.App\10.0.9\System.Collections.dll</HintPath>
+    </Reference>
+    <Reference Include="MessagePack.Annotations" />
+    <Reference Include="System.IO.Compression.Brotli">
+      <HintPath>C:\Program Files\dotnet\shared\Microsoft.NETCore.App\10.0.9\System.IO.Compression.Brotli.dll</HintPath>
+    </Reference>
+    <Reference Include="YamlDotNet">
+      <HintPath>..\URA\YamlDotNet.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Net.Primitives">
+      <HintPath>C:\Program Files\dotnet\shared\Microsoft.NETCore.App\10.0.9\System.Net.Primitives.dll</HintPath>
+    </Reference>
+    <Reference Include="Spectre.Console">
+      <HintPath>..\URA\Spectre.Console.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Collections.Immutable">
+      <HintPath>C:\Program Files\dotnet\shared\Microsoft.NETCore.App\10.0.9\System.Collections.Immutable.dll</HintPath>
+    </Reference>
+    <Reference Include="Newtonsoft.Json">
+      <HintPath>..\URA\Newtonsoft.Json.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Linq">
+      <HintPath>C:\Program Files\dotnet\shared\Microsoft.NETCore.App\10.0.9\System.Linq.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Threading">
+      <HintPath>C:\Program Files\dotnet\shared\Microsoft.NETCore.App\10.0.9\System.Threading.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Console">
+      <HintPath>C:\Program Files\dotnet\shared\Microsoft.NETCore.App\10.0.9\System.Console.dll</HintPath>
+    </Reference>
+    <Reference Include="System.IO.Compression">
+      <HintPath>C:\Program Files\dotnet\shared\Microsoft.NETCore.App\10.0.9\System.IO.Compression.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Diagnostics.Process">
+      <HintPath>C:\Program Files\dotnet\shared\Microsoft.NETCore.App\10.0.9\System.Diagnostics.Process.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Runtime.InteropServices">
+      <HintPath>C:\Program Files\dotnet\shared\Microsoft.NETCore.App\10.0.9\System.Runtime.InteropServices.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Net.Http">
+      <HintPath>C:\Program Files\dotnet\shared\Microsoft.NETCore.App\10.0.9\System.Net.Http.dll</HintPath>
+    </Reference>
+    <Reference Include="WatsonWebserver.Lite">
+      <HintPath>..\URA\WatsonWebserver.Lite.dll</HintPath>
+    </Reference>
+    <Reference Include="WatsonWebserver.Core">
+      <HintPath>..\URA\WatsonWebserver.Core.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Net.NetworkInformation">
+      <HintPath>C:\Program Files\dotnet\shared\Microsoft.NETCore.App\10.0.9\System.Net.NetworkInformation.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.Win32.Registry">
+      <HintPath>C:\Program Files\dotnet\shared\Microsoft.NETCore.App\10.0.9\Microsoft.Win32.Registry.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Runtime.Loader">
+      <HintPath>C:\Program Files\dotnet\shared\Microsoft.NETCore.App\10.0.9\System.Runtime.Loader.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Threading.Thread">
+      <HintPath>C:\Program Files\dotnet\shared\Microsoft.NETCore.App\10.0.9\System.Threading.Thread.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Memory">
+      <HintPath>C:\Program Files\dotnet\shared\Microsoft.NETCore.App\10.0.9\System.Memory.dll</HintPath>
+    </Reference>
+    <Reference Include="System.IO.Compression.ZipFile">
+      <HintPath>C:\Program Files\dotnet\shared\Microsoft.NETCore.App\10.0.9\System.IO.Compression.ZipFile.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Security.Cryptography">
+      <HintPath>C:\Program Files\dotnet\shared\Microsoft.NETCore.App\10.0.9\System.Security.Cryptography.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+</Project>

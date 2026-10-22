@@ -1,0 +1,59 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+<resheader name="resmimetype"><value>text/microsoft-resx</value></resheader><resheader name="version"><value>1.3</value></resheader><resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader><resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader><data name="Tabs_Localization_Path" xml:space="preserve"><value>本地化文件路径</value></data>
+  <data name="Tabs_Misc_Title" xml:space="preserve"><value>杂项</value></data>
+  <data name="Tabs_Repository_AdditionalPluginRepositoriesNamePrompt" xml:space="preserve"><value>请输入额外仓库的备注: </value></data>
+  <data name="Tabs_Core_ListenAddress" xml:space="preserve"><value>监听地址</value></data>
+  <data name="Tabs_Repository_Targets" xml:space="preserve"><value>目标服务器</value></data>
+  <data name="Tabs_Language_English" xml:space="preserve"><value>English</value></data>
+  <data name="Tabs_Plugin_Title" xml:space="preserve"><value>插件</value></data>
+  <data name="Tabs_Language_AutoDetect" xml:space="preserve"><value>Auto</value></data>
+  <data name="Tabs_Language_Title" xml:space="preserve"><value>语言</value></data>
+  <data name="Tabs_Repository_TargetsPrompt" xml:space="preserve"><value>请输入目标服务器，留空为不加限制，多个目标以逗号分隔。(日服建议填Cygames，繁中服建议填Komoe)</value></data>
+  <data name="Tabs_Language_Japanese" xml:space="preserve"><value>日本語</value></data>
+  <data name="Return" xml:space="preserve"><value>返回</value></data>
+  <data name="Tabs_Localization_Title" xml:space="preserve"><value>本地化</value></data>
+  <data name="Tabs_Core_ListenAddressPrompt" xml:space="preserve"><value>请输入监听地址(默认:127.0.0.1 管理员权限时为0.0.0.0)</value></data>
+  <data name="Settings_Title" xml:space="preserve"><value>设置</value></data>
+  <data name="Tabs_Localization_InputPath" xml:space="preserve"><value>输入本地化文件路径</value></data>
+  <data name="Tabs_Repository_AdditionalPluginRepositoriesPrompt" xml:space="preserve"><value>请输入额外仓库的URL: </value></data>
+  <data name="Tabs_Language_SimplifiedChinese" xml:space="preserve"><value>简体中文</value></data>
+  <data name="Add" xml:space="preserve"><value>添加</value></data>
+  <data name="Tabs_Core_ListenPort" xml:space="preserve"><value>监听端口</value></data>
+  <data name="Tabs_Updater_ForceUseGithubToUpdate" xml:space="preserve"><value>强制使用GitHub更新</value></data>
+  <data name="Tabs_Debug_Title" xml:space="preserve"><value>调试</value></data>
+  <data name="Tabs_Core_RequestAdditionalHeader" xml:space="preserve"><value>请求含有额外内容</value></data>
+  <data name="Tabs_Misc_WriteAIInfo" xml:space="preserve"><value>AI</value></data>
+  <data name="Tabs_Core_Title" xml:space="preserve"><value>核心</value></data>
+  <data name="Tabs_Updater_Title" xml:space="preserve"><value>更新</value></data>
+  <data name="Tabs_Repository_Title" xml:space="preserve"><value>仓库</value></data>
+  <data name="Tabs_Core_ListenPortPrompt" xml:space="preserve"><value>请输入监听端口(默认:4693)</value></data>
+  <data name="Tabs_Debug_SaveResponseForDebug" xml:space="preserve"><value>保存通讯文件</value></data>
+  </root>
