@@ -24,6 +24,18 @@
 - 本次上传的本地 `ai.zip` 包含 `LegendAI/UmaAi.exe`、AIRedirector/SendGameStatusPlugin 部署文件，以及 turn0–turn71 状态样本；这些私有/客户端材料没有提交到 GitHub。公开 AIRedirector 源码确认 AI 通过子进程 stdout 输出文本建议，解析器识别 `AI建议...`。本地 `aiConfig_cpu.json` 未启用明确的 `communicationMode`，副本配置则含 `urafile`，所以 AI 输入通道的实际启用模式仍需运行时确认。状态快照是 AI 输入/游戏状态，不是 AI 建议输出。
 - 当前仍未确认实际游戏操作的提交路径；AIRedirector 显示建议不等于自动点击或提交游戏操作。
 
+
+
+### Hachimi HTTP 转发链路：源码已确认（2026-10-22）
+
+公开的 [hachimi-httpforward-plugin](https://github.com/UmamusumeResponseAnalyzer/hachimi-httpforward-plugin) 源码确认，它 hook `Cute.Http` 层：请求侧从 `WWWRequest.Post` 取得 URL/请求头并匹配请求 body；响应侧从 `HttpHelper.DecompressResponse` 取得响应 body，再通过 FIFO 关联原始 URL/请求头。随后分别 POST 到 URA 的 `/notify/request` 与 `/notify/response`，携带 `X-Hachimi-Game-Url` 和带 `X-Hachimi-` 前缀的部分游戏请求头。URA 的 `Server.cs` 接收 body 并分发给分析器，返回空响应。
+
+这证明了游戏 HTTP 流量可以被旁路观察和解析；**没有证明、也不提供从 URA 通知入口向游戏提交新操作的路径**。请求体与 URL 无法配对、队列溢出等情况会导致丢包。下一步不再花时间猜测 Hachimi 通知 API，而是沿 URA/客户端源码查找实际动作请求的构造、序列化、会话头与发送调用链。
+
+源码：
+- https://github.com/UmamusumeResponseAnalyzer/hachimi-httpforward-plugin/blob/main/src/lib.rs
+- https://github.com/UmamusumeResponseAnalyzer/UmamusumeResponseAnalyzer/blob/main/UmamusumeResponseAnalyzer/Server.cs
+
 ## 实施阶段
 
 ### L0：确认两个真实协议（当前阶段）
