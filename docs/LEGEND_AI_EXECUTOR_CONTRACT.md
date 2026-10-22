@@ -8,7 +8,7 @@
 
 ## URADLL 已确认的能力与限制
 
-- 插件可用 `[Analyzer(response: true)]` 接收解析后的游戏响应，也可用 `response: false` 观察请求。
+- 插件可用 `[Analyzer(response: true)]` 接收解析后的游戏响应，也可用 `response: false` 观察请求。当前 `AutoTrainingPlugin` 已增加被动请求观察器：只记录 `single_mode_exec_command_request_common` 中的 command 字段到 `PluginData/UmaAutoTraining/action-requests-observed.jsonl`，不保存完整请求，也不发送任何操作。此改动尚未在用户的实际 URA 部署中编译/运行验证。
 - 插件可用 `[Route(HttpMethod, path)]` 注册 URADLL 内部 HTTP 路由；路由处理器必须符合宿主的静态 `Task`/`HttpContextBase` 注册约定。
 - `Server.cs` 中 `/notify/request` 和 `/notify/response` 是游戏通信的通知入口：它们读取并分析已发生的请求/响应，然后返回空响应。它们不是已确认的游戏操作提交端点。
 - 目前已找到 `Gallop.SingleModeExecCommandRequest` 数据结构，含 `command_type`、`command_id`、`command_group_id`、`select_id`、`current_turn`、`current_vital`。它只能证明存在相应请求模型，不能单凭此模型推断可直接从插件发送该请求。
@@ -21,6 +21,13 @@
 4. 通过已验证的游戏操作通道提交一次操作；对每个回合使用幂等/去重保护。
 5. 等待服务端响应并检查游戏状态是否实际变化。网络超时不能直接重发同一操作，必须先查询当前状态以避免双重执行。
 6. 记录 AI 原始建议、发送参数、响应、前后状态与结果。提供总开关和立即停止能力。
+
+## 新增的只读验证步骤
+
+- 在真实游戏里手动执行训练、休息、外出、技能/比赛等操作，确认 URA 的 request analyzer 是否收到 `single_mode_exec_command_request_common`。
+- 对比 LegendAI 的原始建议与 `action-requests-observed.jsonl`，逐项建立有证据的建议文本到命令字段映射；不从单个样本泛化未覆盖的动作。
+- 如果日志始终为空，先检查当前 URA 版本是否启用请求分析、转发是否成功、请求体 JSON 的真实结构；不要直接假定字段路径正确。
+- 该观察器只用于逆向确认现有游戏客户端本身如何发出动作请求。它不构造请求、不重放请求、不修改游戏行为。
 
 ## 当前待确认的两个协议
 
