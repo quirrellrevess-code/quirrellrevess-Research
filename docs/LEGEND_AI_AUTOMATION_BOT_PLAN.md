@@ -14,7 +14,7 @@
 4. **Result Verifier**：等待游戏端响应或可观测状态变化，确认建议确实执行；遇到超时先核实状态，不盲目重发。
 5. **Audit Log**：记录原始 AI 建议、提交参数、响应和执行结果，方便定位协议/操作失败。
 
-当前实际环境是赛马娘 PC 客户端 + Hachimi Edge 转发功能；Hachimi 主要用于文本替换和图形解锁。本次 `ai.zip` 检查确认了 URA 侧配置、AIRedirector、SendGameStatusPlugin 和回合样本，但没有包含 Hachimi 配置或 `UnityPlayer_orig.dll`，所以 Hachimi 端的具体转发设置仍待单独确认。优先复用 URA 已有转发/建议展示链路，不把开发 Hachimi 插件当成首要路线。转发游戏流量只证明数据可被转交/观察，不等于可以通过同一通道提交育成操作。具体记录见 `docs/HACHIMI_EDGE_INTEGRATION_RESEARCH.md`。
+当前实际环境是赛马娘 PC 客户端 + Hachimi Edge 转发功能；Hachimi 主要用于文本替换和图形解锁。本次检查结合 `ai.zip` 与仓库 `main/hachimi/` 目录：`hachimi/httpforward.json` 明确将转发通知目标设为 `http://127.0.0.1:4693`，与 URA 配置的监听端口一致；`config.json` 中 `enable_ipc=false`，因此不应把 Hachimi IPC 视为当前已启用的通信方案。优先复用 URA 已有转发/建议展示链路，不把开发 Hachimi 插件当成首要路线。转发游戏流量只证明数据可被转交/观察，不等于可以通过同一通道提交育成操作。具体记录见 `docs/HACHIMI_EDGE_INTEGRATION_RESEARCH.md`。
 
 ## 源码调查已确认的事实
 
