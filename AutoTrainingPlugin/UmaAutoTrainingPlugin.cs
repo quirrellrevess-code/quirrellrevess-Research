@@ -7,8 +7,8 @@ using UmamusumeResponseAnalyzer.Plugin;
 namespace UmaAutoTrainingPlugin;
 
 /// <summary>
-/// First milestone: observe and persist training-state responses only.
-/// No game actions are submitted until an execution path is verified.
+/// Passive observer for training-state responses and known action-request fields.
+/// It never submits game actions.
 /// </summary>
 public sealed class UmaAutoTrainingPlugin : IPlugin
 {
