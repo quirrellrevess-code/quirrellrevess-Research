@@ -14,7 +14,7 @@
 4. **Result Verifier**：等待游戏端响应或可观测状态变化，确认建议确实执行；遇到超时先核实状态，不盲目重发。
 5. **Audit Log**：记录原始 AI 建议、提交参数、响应和执行结果，方便定位协议/操作失败。
 
-URADLL 插件可以作为执行结果观察器，但不应为了重复采集状态而成为主系统。当前插件中的状态快照功能只作为研究/核验工具，最终运行模式可以关闭或精简它。
+优先评估赛马娘 PC 客户端 + Hachimi Edge。公开示例插件已证明可 hook `Gallop.HttpHelper.DecompressResponse` 并观察游戏解密、解压后的响应，但这并不证明存在通用动作提交 API。Hachimi 适配层仅用于必要的结果核验或已证实的接入能力；不重复采集 LegendAI 已自行读取的数据。具体调查记录见 `docs/HACHIMI_EDGE_INTEGRATION_RESEARCH.md`。URADLL 可作为对照研究对象，不再预设为主执行通道。
 
 ## 源码调查已确认的事实
 
