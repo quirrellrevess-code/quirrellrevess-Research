@@ -1,0 +1,4 @@
+{
+  "notifier_host": "http://127.0.0.1:4693",
+  "notifier_timeout_ms": 100
+}
