@@ -15,10 +15,27 @@
 - 公开的 [AIRedirector 源码](https://github.com/URA-Plugins/AIRedirector) 已明确其会启动配置的 `UmaAI.exe`，以 UTF-8 读取子进程 stdout/stderr；`LegendAiOutputBuffer` 解析 `AI建议...`、五项训练评分、休息/外出评分、心得选项评分和部分摘要，再交给 URA UI 显示。它目前的已证实用途是展示建议，不等于已经提供给外部 Bot 的 IPC/API。
 - 公开的 [SendGameStatusPlugin 源码](https://github.com/URA-Plugins/SendGameStatusPlugin) 与本地目录相符：它按剧本输出状态 JSON，包括 `thisTurn.json` 和 `turn{turn}.json`。不要把这些 JSON 文件误认为 AI 决策结果。
 
+## 新确认：HTTP 转发插件的源码级行为（2026-10-22）
+
+已找到并阅读公开仓库 [hachimi-httpforward-plugin](https://github.com/UmamusumeResponseAnalyzer/hachimi-httpforward-plugin)，不再仅依赖本地配置推测：
+
+- README 明确说明：这是 Hachimi-Edge V3 插件，将游戏 HTTP request/response body 转发到 URA，并附带原始游戏 URL。
+- `src/lib.rs` 定义目标路径为 `/notify/request` 与 `/notify/response`。请求侧在 `WWWRequest.Post(this, url, postData, headers)` 处取得 URL 和请求头，并与已截获的解压请求体匹配；响应侧在 `HttpHelper.DecompressResponse(byte[])` 处取得解压后的响应体，通过 FIFO 队列配回 URL/请求头。
+- 转发请求使用 `X-Hachimi-Game-Url` 传递原始 URL；游戏自身的请求头以 `X-Hachimi-` 前缀传递（例如 SID、ViewerID）。插件会剔除 hop-by-hop、content-length、content-type 等头，再由转发端重新设置传输头。
+- 插件默认通知目标为 `http://127.0.0.1:4693`，默认超时 100 ms；这与本项目 `hachimi/httpforward.json` 和 URA 的监听端口吻合。
+- URL/请求体无法可靠配对、队列溢出或响应缺少对应请求时，插件会丢弃对应流量并记录警告，而不是发送无 URL 或错误归属的数据。因此“转发已配置”不保证每个包都成功送达。
+- URA 服务端 `UmamusumeResponseAnalyzer/Server.cs` 将两个 POST 路径注册为通知入口：读取 body 与 Hachimi 头，调用 `DispatchPacket` 分发给相应 request/response analyzer，随后返回空响应。这条路径用于观察和分析游戏已经发送的流量。
+- **关键结论：HTTP 转发只建立了游戏流量的旁路观察链路，不提供动作提交能力。** 不能向 `/notify/request` POST 一个猜测的 command 就认为游戏会执行；该 endpoint 会把 body 当作已经发生的游戏请求包交给分析器，而不是转发给游戏客户端。
+
+源码参考：
+- 插件 README：https://github.com/UmamusumeResponseAnalyzer/hachimi-httpforward-plugin/blob/main/README.md
+- 插件 hook/forward 实现：https://github.com/UmamusumeResponseAnalyzer/hachimi-httpforward-plugin/blob/main/src/lib.rs
+- URA 通知路由与分发：https://github.com/UmamusumeResponseAnalyzer/UmamusumeResponseAnalyzer/blob/main/UmamusumeResponseAnalyzer/Server.cs
+
 ## 目前从公开源码确认的事实
 
 - 本项目实际使用 Hachimi Edge 的转发功能；Hachimi 本身主要用于文本替换和图形解锁，不应把它误认为训练决策 AI。
-- Hachimi 的转发链路可用于将游戏请求/响应交给 URADLL 等接收端分析；需要以本机实际配置确认转发目标、协议与覆盖范围。转发收到的游戏流量不等于已具备向游戏提交新动作的能力。
+- Hachimi HTTP 转发插件源码已确认：它通过 hook 游戏 HTTP 层转发已经发生的请求/响应 body、原始 URL 与部分请求头到 URA 的 `/notify/request`、`/notify/response`。这是一条旁路分析链路，不是动作提交通道。
 - Hachimi Edge 也有插件机制，但这属于备用研究方向，不是当前首选集成路线。
 - 公开插件 `SparkCollectPlugin` 展示了 Hachimi 插件可以通过 SDK 查找 IL2CPP 类、安装函数 hook，并拦截 `Gallop.HttpHelper.DecompressResponse`。该插件读取的是游戏已经解密、解压的响应数据，并对指定育成响应进行解析。
 - 因此 Hachimi Edge 插件机制可能是观察游戏响应的可行入口，但这**不等于**已有公开的当前育成状态 API，更不等于可以通过插件直接提交育成操作。
@@ -34,7 +51,7 @@
 
 ## 接下来必须验证
 
-- Hachimi 转发配置的语义与实际转发的请求/响应覆盖范围；当前 `httpforward.json` 已确认目标为 `127.0.0.1:4693`，但仅凭配置文件还不能列出所有被转发的事件类型。
+- 在实际客户端上确认插件是否成功加载，以及关键育成操作对应的 request/response 是否完整转发；源码已确认 hook 点和转发机制，但运行时覆盖率仍未实测。
 - 仅当转发链路无法满足确有必要的结果核验需求时，再调查 Hachimi Edge 插件 SDK 与 hook。
 - `Gallop.HttpHelper.DecompressResponse` 对应响应中，传奇杯建议执行后可观察到哪些确认信号；只做结果核验，不复制完整状态采集管线。
 - 游戏客户端的操作请求如何构造、序列化、发送，以及请求与响应如何关联。不能仅凭响应 hook 反推提交能力。
