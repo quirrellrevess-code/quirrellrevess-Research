@@ -8,8 +8,8 @@
 
 检查对象：会话附件 `ai.zip`（1,890 个条目，约 187 MB 解压数据）。只读取归档目录、配置和 JSON 样本；未执行任何 EXE/DLL，也未将游戏二进制、AI 程序、缓存或回合数据上传到项目仓库。
 
-- 该归档实际包含 `.portable/`（URADLL/UmamusumeResponseAnalyzer 部署结构）、`LegendAI/`、`MechaAI/`、`CookAI/`；在归档清单中未发现 `UnityPlayer_orig.rar`、`UnityPlayer_orig.dll` 或明确的 Hachimi 安装目录/配置。因此本次附件足以研究 URA/LegendAI 侧，但还不能据此验证 Hachimi 转发端的具体设置。
-- `.portable/config.yaml` 显示 URA 监听配置为 `0.0.0.0:4693`，启用了 `AIRedirector` 的 Legend 项，路径为 `../LegendAI/UmaAI.exe`，同时启用了 `SendGameStatusPlugin`。`0.0.0.0` 是全网卡绑定配置；实际部署时应确认防火墙和监听范围，不要默认把本地分析端口暴露给不可信网络。
+- `ai.zip` 实际包含 `.portable/`（URADLL/UmamusumeResponseAnalyzer 部署结构）、`LegendAI/`、`MechaAI/`、`CookAI/`；Hachimi 文件另在仓库 `main` 分支的 `hachimi/` 目录。先前仅检查 `ai.zip` 时说未包含 Hachimi 文件，不代表仓库没有；现在已通过 `hachimi/` 中的配置文件确认转发目标。
+- `.portable/config.yaml` 显示 URA 监听配置为 `0.0.0.0:4693`，启用了 `AIRedirector` 的 Legend 项，路径为 `../LegendAI/UmaAI.exe`，同时启用了 `SendGameStatusPlugin`。Hachimi 的 `hachimi/hachimi/httpforward.json` 将 `notifier_host` 设为 `http://127.0.0.1:4693`，超时 `100` ms，与 URA 使用的端口吻合。`0.0.0.0` 是全网卡绑定配置；实际部署时应确认防火墙和监听范围，不要默认把本地分析端口暴露给不可信网络。
 - `LegendAI/aiConfig_cpu.json` 的 `communicationMode` 是注释状态；同目录副本配置含 `"communicationMode": "urafile"`。所以当前实际运行使用哪一种模式仍未由配置唯一确定。`UmaAi.exe` 静态字符串同时出现 `http://127.0.0.1:4693`、`/UmamusumeResponseAnalyzer/GameData/thisTurn.json`、`gamedata/thisTurn.json` 和 `urafile`，说明程序包含本地 HTTP/文件通信相关路径，但仅靠字符串不能确认当前会走哪条路径。
 - `.portable/PluginData/SendGameStatusPlugin/GameStatusSend_Legend/turn0.json` 及 `LegendAI/log/turn0_2.json` 等样本包含传奇杯每回合状态字段；归档中有 turn0–turn71 一系列样本。这些是状态/输入样本，不是 AI 行动建议本身。
 - 公开的 [AIRedirector 源码](https://github.com/URA-Plugins/AIRedirector) 已明确其会启动配置的 `UmaAI.exe`，以 UTF-8 读取子进程 stdout/stderr；`LegendAiOutputBuffer` 解析 `AI建议...`、五项训练评分、休息/外出评分、心得选项评分和部分摘要，再交给 URA UI 显示。它目前的已证实用途是展示建议，不等于已经提供给外部 Bot 的 IPC/API。
@@ -34,12 +34,12 @@
 
 ## 接下来必须验证
 
-- 本机 Hachimi 转发的实际配置、目标地址、转发的请求/响应类型，以及 URADLL 接收端的协议与运行方式。
+- Hachimi 转发配置的语义与实际转发的请求/响应覆盖范围；当前 `httpforward.json` 已确认目标为 `127.0.0.1:4693`，但仅凭配置文件还不能列出所有被转发的事件类型。
 - 仅当转发链路无法满足确有必要的结果核验需求时，再调查 Hachimi Edge 插件 SDK 与 hook。
 - `Gallop.HttpHelper.DecompressResponse` 对应响应中，传奇杯建议执行后可观察到哪些确认信号；只做结果核验，不复制完整状态采集管线。
 - 游戏客户端的操作请求如何构造、序列化、发送，以及请求与响应如何关联。不能仅凭响应 hook 反推提交能力。
 - 在当前 URA 版本中，AIRedirector 的 stdout 解析结果如何安全地暴露给 Bot；当前源码确认的是 UI 展示，尚无已验证的外部 IPC/API。
-- 本次附件没有 Hachimi 配置或 UnityPlayer_orig 文件，仍需后续对照实际 Hachimi 转发配置确认转发目标与请求/响应覆盖范围。
+- 仓库 `main/hachimi/` 目录当前包含 `config.json`、`httpforward.json`、`hachimi_httpforward_plugin.dll`、`winhttp.dll` 和 `UnityPlayer_orig.rar`。`config.json` 中 `enable_ipc=false`，不能把 Hachimi IPC 当作已启用通道；转发配置则明确指向 URA 本机 `127.0.0.1:4693`。
 - PC 客户端版本、Unity/IL2CPP 架构和 Hachimi 插件 SDK 必须以实际安装版本为准，不能直接照搬针对其他客户端版本的二进制或偏移。
 
 ## 边界与风险
