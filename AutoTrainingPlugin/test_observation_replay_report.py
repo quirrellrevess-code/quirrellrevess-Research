@@ -102,6 +102,44 @@ class ObservationReplayReportTests(unittest.TestCase):
         self.assertEqual(report["streams"]["recommendations"]["turn_quality"]["null_count"], 0)
 
 
+    def test_data_quality_summary_aggregates_anomalies_without_claiming_verification(self):
+        self.write_jsonl(self.observations, [
+            {"captured_at_utc": None, "turn": 4, "command_count": 0, "commands": []},
+            {"captured_at_utc": "bad-time", "turn": 4, "command_count": 0, "commands": []},
+        ])
+        self.write_jsonl(self.requests, [
+            {"captured_at_utc": "2026-01-01T00:00:30Z", "current_turn": 4,
+             "command_type": 1, "command_id": 99},
+        ])
+        self.write_jsonl(self.recommendations, [
+            {"captured_at_utc": "2026-01-01T00:00:20Z", "source": "test",
+             "recommendation_text": "训练", "turn": 4, "turn_association_status": "target_context_available_unverified",
+             "verified": False, "executable": False, "scenario_id": 1},
+        ])
+        report = build_report({
+            "observations": self.observations,
+            "requests": self.requests,
+            "recommendations": self.recommendations,
+        })
+        summary = report["data_quality_summary"]
+        self.assertEqual(summary["status"], "audit_warnings")
+        self.assertEqual(summary["anomaly_counts"]["timestamps_missing_or_invalid"], 2)
+        self.assertEqual(summary["anomaly_counts"]["request_commands_absent_from_snapshots"], 1)
+        self.assertFalse(summary["same_state_verified"])
+        self.assertFalse(summary["causal_link_verified"])
+        self.assertFalse(summary["executable"])
+
+    def test_data_quality_summary_empty_inputs_are_insufficient(self):
+        for path in (self.observations, self.requests, self.recommendations):
+            path.write_text("", encoding="utf-8")
+        report = build_report({
+            "observations": self.observations,
+            "requests": self.requests,
+            "recommendations": self.recommendations,
+        })
+        self.assertEqual(report["data_quality_summary"]["status"], "insufficient_data")
+        self.assertFalse(report["data_quality_summary"]["executable"])
+
     def test_request_command_membership_is_consistency_only(self):
         result = audit_request_command_membership(
             [{"turn": 4, "commands": [{"command_id": 2}, {"command_id": 3}]}],
