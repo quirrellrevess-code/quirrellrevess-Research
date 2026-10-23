@@ -73,7 +73,6 @@ def observation_command_contract_issues(record: dict[str, Any]) -> list[str]:
     if "commands_available" in record and type(available) is not bool:
         issues.append("commands_available_not_boolean")
 
-    # Older observations may predate commands_available; validate the fields that exist.
     if available is True:
         if not isinstance(commands, list):
             issues.append("available_commands_not_array")
@@ -86,18 +85,20 @@ def observation_command_contract_issues(record: dict[str, Any]) -> list[str]:
             issues.append("unavailable_commands_not_null")
         if count is not None:
             issues.append("unavailable_command_count_not_null")
-    elif "commands_available" not in record:
-        if commands is None and count is not None:
-            issues.append("null_commands_with_nonnull_count")
-        elif isinstance(commands, list):
+    else:
+        # Legacy rows without the availability flag, and rows with an invalid flag,
+        # still get shape/count checks wherever the payload permits them.
+        if isinstance(commands, list):
             if type(count) is not int or count < 0:
                 issues.append("available_command_count_invalid")
             elif count != len(commands):
                 issues.append("command_count_length_mismatch")
-        elif "commands" in record and commands is not None:
+        elif commands is None:
+            if count is not None:
+                issues.append("null_commands_with_nonnull_count")
+        elif "commands" in record:
             issues.append("commands_not_array_or_null")
     return issues
-
 
 def analyze_stream(name: str, records: list[dict[str, Any]], parse_errors: list[dict[str, Any]]) -> dict[str, Any]:
     schema = STREAMS[name]
