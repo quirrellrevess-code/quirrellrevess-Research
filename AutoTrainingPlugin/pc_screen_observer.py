@@ -18,6 +18,16 @@ def detect_phase(image, templates_dir: Path, *, allowed_phases: set[str], cv2):
     matches = []
     if not allowed_phases:
         raise ValueError("no allowed phases")
+    # Blank, minimized, or otherwise near-uniform captures are not phase
+    # evidence: TM_CCOEFF_NORMED can produce misleading scores on them.
+    try:
+        image_spread = float(image.std())
+        image_height, image_width = image.shape[:2]
+    except (AttributeError, TypeError, ValueError, IndexError):
+        return classify_phase(matches, allowed_phases=allowed_phases)
+    if (not math.isfinite(image_spread) or image_spread < 1.0
+            or image_height < 1 or image_width < 1):
+        return classify_phase(matches, allowed_phases=allowed_phases)
     for phase in sorted(allowed_phases):
         path = templates_dir / (phase + ".png")
         if not path.is_file():
