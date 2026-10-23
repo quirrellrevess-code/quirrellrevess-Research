@@ -28,6 +28,14 @@ def detect_targets(
         raise ValueError("no allowed targets")
     if not 0.0 < threshold <= 1.0 or not 0.0 <= ambiguity_margin <= 1.0:
         raise ValueError("invalid confidence policy")
+    try:
+        image_spread = float(image.std())
+        image_height, image_width = image.shape[:2]
+    except (AttributeError, TypeError, ValueError, IndexError):
+        return []
+    if (not math.isfinite(image_spread) or image_spread < 1.0
+            or image_height < 1 or image_width < 1):
+        return []
     candidates = []
     for target_id in sorted(allowed_targets):
         path = templates_dir / (target_id + ".png")
