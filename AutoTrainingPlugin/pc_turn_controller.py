@@ -110,10 +110,13 @@ class PcTurnController:
         # to be replayed with different state fields and falsely confirm success.
         if observed_seq <= pending.last_observation_seq:
             return ExecutionResult("pending", "waiting_for_newer_observation")
-        if state.get("fresh_after_submission") is not True:
-            return ExecutionResult("pending", "waiting_for_fresh_observation")
+        # Consume the sequence even if this sample is not eligible to confirm.
+        # Otherwise the exact same sample could be replayed later with a flipped
+        # freshness flag and be misrepresented as post-submission evidence.
         pending = replace(pending, last_observation_seq=observed_seq)
         self.pending = pending
+        if state.get("fresh_after_submission") is not True:
+            return ExecutionResult("pending", "waiting_for_fresh_observation")
         if pending.postcondition == "turn_advance":
             if new_turn == pending.turn:
                 return ExecutionResult("pending", "turn_unchanged")
