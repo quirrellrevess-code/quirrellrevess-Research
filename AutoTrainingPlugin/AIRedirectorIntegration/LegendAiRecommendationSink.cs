@@ -7,16 +7,11 @@ using System.Security;
 
 namespace UmaAutoTraining.AIRedirectorIntegration;
 
-/// <summary>
-/// Passive sink for AIRedirector's existing single-consumer Legend stdout path.
-/// It records recommendations only and never submits game commands.
-/// </summary>
 public sealed class LegendAiRecommendationSink : IDisposable
 {
     private static readonly Regex RecommendationPrefix = new(
         @"^\s*AI建议\s*[:：]\s*(?<body>\S.*)$",
         RegexOptions.Compiled | RegexOptions.CultureInvariant);
-
     private readonly object _gate = new();
     private readonly string _filePath;
     private int? _singleModeCharaId;
@@ -28,15 +23,9 @@ public sealed class LegendAiRecommendationSink : IDisposable
         var root = string.IsNullOrWhiteSpace(pluginDataRoot)
             ? Path.Combine("PluginData", "UmaAutoTraining")
             : pluginDataRoot;
-        // Keep telemetry setup best-effort: a logging path must never prevent
-        // AIRedirector from starting. The directory is created on first write.
         _filePath = Path.Combine(root, "legendai-recommendations.jsonl");
     }
 
-    /// <summary>
-    /// Call beside AIRedirector's existing Legend output bridge SetTarget call.
-    /// A null target deliberately clears association when no valid target is known.
-    /// </summary>
     public void SetTarget(int? singleModeCharaId, int? turn)
     {
         lock (_gate)
@@ -47,19 +36,13 @@ public sealed class LegendAiRecommendationSink : IDisposable
         }
     }
 
-    /// <summary>
-    /// Call only for a line from the Legend UmaAI process, after the existing
-    /// bridge has accepted the line. Recommendations are always non-executable.
-    /// </summary>
     public bool TryRecord(string? rawLine, string source = "AIRedirector.Legend.stdout")
     {
         if (string.IsNullOrWhiteSpace(rawLine))
             return false;
-
         var match = RecommendationPrefix.Match(rawLine);
         if (!match.Success)
             return false;
-
         var body = match.Groups["body"].Value.Trim();
         if (body.Length == 0)
             return false;
@@ -67,12 +50,16 @@ public sealed class LegendAiRecommendationSink : IDisposable
         lock (_gate)
         {
             ObjectDisposedException.ThrowIf(_disposed, this);
+            var hasTargetContext = _singleModeCharaId.HasValue && _turn.HasValue;
             var record = new
             {
                 timestamp_utc = DateTimeOffset.UtcNow.ToString("O", CultureInfo.InvariantCulture),
                 source,
                 single_mode_chara_id = _singleModeCharaId,
                 turn = _turn,
+                turn_association_status = hasTargetContext
+                    ? "target_context_available_unverified"
+                    : "unavailable_in_airredirector_context",
                 raw_line = rawLine,
                 recommendation = body,
                 category = Classify(body),
@@ -89,14 +76,9 @@ public sealed class LegendAiRecommendationSink : IDisposable
                 File.AppendAllText(_filePath, JsonSerializer.Serialize(record) + Environment.NewLine);
             }
             catch (Exception ex) when (
-                ex is IOException or
-                UnauthorizedAccessException or
-                ArgumentException or
-                NotSupportedException or
-                SecurityException)
+                ex is IOException or UnauthorizedAccessException or ArgumentException or
+                NotSupportedException or SecurityException)
             {
-                // Telemetry is optional. Do not take down the existing output
-                // bridge when the path is unavailable or unwritable.
                 return false;
             }
         }
@@ -108,20 +90,17 @@ public sealed class LegendAiRecommendationSink : IDisposable
         if (body.Contains("训练", StringComparison.Ordinal) ||
             body.Contains("トレーニング", StringComparison.Ordinal))
             return "training";
-
         if (body.Contains("休息", StringComparison.Ordinal) ||
             body.Contains("外出", StringComparison.Ordinal) ||
             body.Contains("保健室", StringComparison.Ordinal) ||
             body.Contains("休む", StringComparison.Ordinal))
             return "named_action";
-
         if (body.Contains("第", StringComparison.Ordinal) ||
             body.Contains("选", StringComparison.Ordinal) ||
             body.Contains("選", StringComparison.Ordinal) ||
             body.Contains("个", StringComparison.Ordinal) ||
             body.Contains("番", StringComparison.Ordinal))
             return "selection_text";
-
         return "unknown";
     }
 
