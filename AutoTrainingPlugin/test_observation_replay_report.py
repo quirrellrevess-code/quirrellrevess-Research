@@ -30,9 +30,11 @@ class ObservationReplayReportTests(unittest.TestCase):
         ])
         self.write_jsonl(self.recommendations, [
             {"captured_at_utc": "2026-01-01T00:00:20Z", "source": "legendai_stdout",
-             "recommendation_text": "速", "turn": None, "verified": False, "executable": False},
+             "recommendation_text": "速", "turn": None, "turn_association_status": "unavailable_in_stdout_only",
+             "verified": False, "executable": False},
             {"captured_at_utc": "2026-01-01T00:01:20Z", "source": "legendai_stdout",
-             "recommendation_text": "休息", "turn": 5, "verified": False, "executable": False},
+             "recommendation_text": "休息", "turn": 5, "turn_association_status": "unavailable_in_stdout_only",
+             "verified": False, "executable": False},
         ])
 
     def tearDown(self):
@@ -51,10 +53,10 @@ class ObservationReplayReportTests(unittest.TestCase):
         self.assertEqual(report["streams"]["recommendations"]["records_without_valid_turn"], 1)
         self.assertEqual(report["streams"]["recommendations"]["turn_quality"]["null_count"], 1)
         self.assertEqual(report["streams"]["recommendations"]["turn_association_status"], {
-            "missing_field_count": 2,
+            "missing_field_count": 0,
             "null_count": 0,
             "invalid_type_or_empty_count": 0,
-            "values": {},
+            "values": {"unavailable_in_stdout_only": 2},
         })
         self.assertEqual(report["timing_comparison_coverage"]["recommendations_without_valid_turn_excluded"], 1)
         self.assertEqual(report["timing_comparison_coverage"]["same_turn_pairs_compared"], 0)
@@ -63,8 +65,9 @@ class ObservationReplayReportTests(unittest.TestCase):
     def test_accepts_actual_csharp_sink_field_names(self):
         self.write_jsonl(self.recommendations, [
             {"timestamp_utc": "2026-01-01T00:00:20Z", "source": "AIRedirector.Legend.stdout",
-             "single_mode_chara_id": 123, "turn": 4, "recommendation": "训练速度",
-             "category": "training", "verified": False, "executable": False},
+             "single_mode_chara_id": 123, "turn": 4,
+             "turn_association_status": "target_context_available_unverified",
+             "recommendation": "训练速度", "category": "training", "verified": False, "executable": False},
         ])
         report = build_report({
             "observations": self.observations,
