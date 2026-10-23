@@ -34,6 +34,7 @@ class LegendAiBridgeTests(unittest.TestCase):
             self.assertEqual([r["raw"] for r in rows], ["AI建议：休息", "AI建议：速"])
             self.assertTrue(all(r["executable"] is False and r["verified"] is False for r in rows))
             self.assertTrue(all(r["turn"] is None and r["action_id"] is None for r in rows))
+            self.assertTrue(all(r["turn_association_status"] == "unavailable_in_stdout_only" for r in rows))
 
 
 if __name__ == "__main__":
