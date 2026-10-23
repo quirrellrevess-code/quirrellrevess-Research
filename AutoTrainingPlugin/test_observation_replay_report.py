@@ -49,6 +49,9 @@ class ObservationReplayReportTests(unittest.TestCase):
         self.assertEqual(report["turn_overlap"]["observation_request_shared_turns"], [4])
         self.assertEqual(report["turn_overlap"]["observation_recommendation_shared_turns"], [5])
         self.assertEqual(report["streams"]["recommendations"]["records_without_valid_turn"], 1)
+        self.assertEqual(report["streams"]["recommendations"]["turn_quality"]["null_count"], 1)
+        self.assertEqual(report["timing_comparison_coverage"]["recommendations_without_valid_turn_excluded"], 1)
+        self.assertEqual(report["timing_comparison_coverage"]["same_turn_pairs_compared"], 0)
         self.assertIn("establish causality", report["limitations"][0])
 
     def test_accepts_actual_csharp_sink_field_names(self):
@@ -71,6 +74,8 @@ class ObservationReplayReportTests(unittest.TestCase):
         self.assertEqual(timing[0]["request_minus_recommendation_seconds"], 10.0)
         self.assertEqual(timing[0]["timestamp_order"], "recommendation_timestamp_before_request")
         self.assertFalse(timing[0]["causal_link_verified"])
+        self.assertEqual(report["timing_comparison_coverage"]["same_turn_pairs_compared"], 1)
+        self.assertEqual(report["streams"]["recommendations"]["turn_quality"]["null_count"], 0)
 
     def test_invalid_json_is_reported_and_cli_exits_one(self):
         self.observations.write_text('{"turn":4}\n{broken\n', encoding="utf-8")
