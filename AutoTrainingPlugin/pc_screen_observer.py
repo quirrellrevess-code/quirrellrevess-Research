@@ -32,8 +32,8 @@ def detect_phase(image, templates_dir: Path, *, allowed_phases: set[str], cv2):
         try:
             template_spread = float(template.std())
         except (AttributeError, TypeError, ValueError):
-            template_spread = None
-        if template_spread is not None and (not math.isfinite(template_spread) or template_spread < 1.0):
+            continue
+        if not math.isfinite(template_spread) or template_spread < 1.0:
             continue
         result = cv2.matchTemplate(image, template, cv2.TM_CCOEFF_NORMED)
         _, score, _, _ = cv2.minMaxLoc(result)
