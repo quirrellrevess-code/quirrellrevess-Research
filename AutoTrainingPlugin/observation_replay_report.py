@@ -399,23 +399,44 @@ def audit_request_command_membership(
         if type(command_id) is not int or command_id < 0:
             counts["invalid_or_missing_request_command_id"] += 1
             continue
-        usable: list[tuple[int, bool]] = []
+        usable: list[tuple[int, bool, str]] = []
+        request_time = parse_timestamp(request)
         for snapshot_index, observation in matching_observations:
+            commands_available = observation.get("commands_available")
             commands = observation.get("commands")
-            if not isinstance(commands, list):
+            if commands_available is False or not isinstance(commands, list):
                 continue
+            snapshot_time = parse_timestamp(observation)
+            if request_time is None or snapshot_time is None:
+                temporal_relation = "timestamp_unavailable"
+            elif snapshot_time < request_time:
+                temporal_relation = "snapshot_before_request"
+            elif snapshot_time == request_time:
+                temporal_relation = "same_timestamp"
+            else:
+                temporal_relation = "snapshot_after_request"
             ids = [
                 item.get("command_id") for item in commands
                 if isinstance(item, dict) and type(item.get("command_id")) is int
                 and item["command_id"] >= 0
             ]
-            usable.append((snapshot_index, command_id in ids))
+            usable.append((snapshot_index, command_id in ids, temporal_relation))
         if not usable:
             counts["snapshot_command_list_unavailable"] += 1
             continue
         compared += 1
-        # Multiple snapshots can exist for a turn. Avoid collapsing contradictory evidence.
-        memberships = [present for _, present in usable]
+        # Preserve membership diagnostics, but separately report whether snapshots
+        # could have existed by request time. Same-turn snapshots after the request
+        # must not be presented as evidence of request-time availability.
+        memberships = [present for _, present, _ in usable]
+        prior_or_equal = [item for item in usable if item[2] in {"snapshot_before_request", "same_timestamp"}]
+        if request_time is None or any(item[2] == "timestamp_unavailable" for item in usable):
+            temporal_status = "request_or_snapshot_timestamp_unavailable"
+        elif prior_or_equal:
+            temporal_status = "has_snapshot_at_or_before_request"
+        else:
+            temporal_status = "all_snapshots_after_request"
+        counts[temporal_status] += 1
         if all(memberships):
             status = "present_in_all_same_turn_snapshots"
         elif not any(memberships):
@@ -423,15 +444,17 @@ def audit_request_command_membership(
         else:
             status = "inconsistent_across_same_turn_snapshots"
         counts[status] += 1
-        if status != "present_in_all_same_turn_snapshots" and len(samples) < 20:
-            samples.append({
-                "request_index": request_index,
-                "turn": turn,
-                "command_id": command_id,
-                "status": status,
-                "snapshot_count": len(usable),
-                "snapshot_record_indices": [index for index, _ in usable],
-            })
+        if status != "present_in_all_same_turn_snapshots" or temporal_status != "has_snapshot_at_or_before_request":
+            if len(samples) < 20:
+                samples.append({
+                    "request_index": request_index,
+                    "turn": turn,
+                    "command_id": command_id,
+                    "status": status,
+                    "temporal_status": temporal_status,
+                    "snapshot_count": len(usable),
+                    "snapshot_record_indices": [index for index, _, _ in usable],
+                })
     return {
         "request_count_with_valid_turn": sum(
             1 for row in requests if type(row.get("current_turn")) is int and row["current_turn"] >= 0
@@ -441,7 +464,8 @@ def audit_request_command_membership(
         "non_present_samples": samples,
         "same_state_verified": False,
         "causal_link_verified": False,
-        "interpretation": "Command-ID membership is a same-turn consistency check only; command availability does not prove the request was caused by a recommendation or that snapshots represent the request-time state.",
+        "temporal_status_note": "Temporal statuses are diagnostic only. Snapshots after a request are not evidence that the command was available at request time; missing timestamps prevent temporal confirmation.",
+        "interpretation": "Command-ID membership is a same-turn consistency check only. Temporal ordering is reported separately; neither membership nor a prior timestamp proves same-state alignment, request validity, or causality.",
     }
 
 
