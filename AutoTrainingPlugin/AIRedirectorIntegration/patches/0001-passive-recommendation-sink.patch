@@ -17,11 +17,20 @@ diff --git a/Class1.cs b/Class1.cs
          readonly UmaAiRawOutputWorkspace rawOutput = new();
          readonly CancellationTokenSource outputCancellation = new();
          Task? outputTask;
-@@ -130,6 +132,7 @@
+@@ -122,12 +124,14 @@
+                 await foreach (var output in processOutput.Reader.ReadAllAsync(cancellationToken))
+                 {
++                    if (output.ApplyToLegend && Volatile.Read(ref gameStarted))
++                        _ = recommendationSink.TryRecord(output.Line);
+                     if (!rawOutput.PublishLine(output.Line) ||
+                         !output.ApplyToLegend ||
+                         !Volatile.Read(ref gameStarted) ||
+                         string.IsNullOrEmpty(output.Line) ||
+                         Volatile.Read(ref legendOutput) is not { } bridge ||
+                         !bridge.ProcessLine(output.Line))
                          continue;
  
                      cancellationToken.ThrowIfCancellationRequested();
-+                    _ = recommendationSink.TryRecord(output.Line);
                      _ = bridge.ApplyTargetDisplay(cancellationToken);
                  }
              }
