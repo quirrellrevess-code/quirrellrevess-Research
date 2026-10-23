@@ -16,6 +16,38 @@ from pc_screen_observer import detect_phase
 from pc_window_capture import capture_client_area
 
 
+def build_observation_record(envelope, evidence, rect):
+    """Build a JSONL record while preserving the read-only execution boundary."""
+    record = envelope.record_capture({
+        "phase": evidence.phase,
+        "phase_confidence": evidence.confidence,
+        "phase_verified": evidence.verified,
+        "phase_reason": evidence.reason,
+        "capture_rect": list(rect),
+        "ready": False,
+        "verified": False,
+        "executable": False,
+    })
+    record["mode"] = "read_only"
+    record["verified"] = False
+    record["ready"] = False
+    record["executable"] = False
+    return record
+
+
+def build_failure_record(exc):
+    """Return a minimal fail-closed error record without leaking exception text."""
+    return {
+        "mode": "read_only",
+        "phase": "unknown",
+        "verified": False,
+        "ready": False,
+        "executable": False,
+        "reason": "capture_or_detection_failed",
+        "error_type": type(exc).__name__,
+    }
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--hwnd", type=lambda value: int(value, 0), required=True)
@@ -43,31 +75,16 @@ def main() -> int:
             shot, rect = capture_client_area(args.hwnd, expected_pid=args.expected_pid)
             frame = cv2.cvtColor(np.array(shot), cv2.COLOR_RGB2BGR)
             evidence = detect_phase(frame, args.templates, allowed_phases=set(args.phases), cv2=cv2)
-            # record_capture is called only after the screenshot and classification
-            # complete; its timestamp marks this completed observation envelope.
-            record = envelope.record_capture({
-                "phase": evidence.phase,
-                "phase_confidence": evidence.confidence,
-                "phase_verified": evidence.verified,
-                "phase_reason": evidence.reason,
-                "capture_rect": list(rect),
-                "ready": False,
-                "verified": False,
-                "executable": False,
-            })
-            record["mode"] = "read_only"
+            # The timestamp marks this completed observation envelope, not exact
+            # pixel-exposure time. Record builder always forces execution flags off.
+            record = build_observation_record(envelope, evidence, rect)
             print(json.dumps(record, separators=(",", ":"), allow_nan=False), flush=True)
             elapsed = time.monotonic() - started
             time.sleep(max(0.0, args.interval_ms / 1000.0 - elapsed))
     except KeyboardInterrupt:
         return 0
     except (OSError, RuntimeError, ValueError, cv2.error) as exc:
-        print(json.dumps({
-            "mode": "read_only", "phase": "unknown", "verified": False,
-            "ready": False, "executable": False,
-            "reason": "capture_or_detection_failed",
-            "error_type": type(exc).__name__,
-        }, separators=(",", ":")), flush=True)
+        print(json.dumps(build_failure_record(exc), separators=(",", ":")), flush=True)
         return 2
 
 
