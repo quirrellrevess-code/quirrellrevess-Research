@@ -6,7 +6,7 @@ observation adapter, never inferred from a timestamp supplied by an AI.
 """
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from typing import Any, Mapping, Protocol
 
 from legendai_action_guard import check_action
@@ -32,6 +32,7 @@ class PendingAction:
     expected_phase: str | None
     original_phase: str | None
     observation_seq: int
+    last_observation_seq: int
 
 
 class PcTurnController:
@@ -76,7 +77,7 @@ class PcTurnController:
         key = (run_id, turn, action_id, original or "")
         if key in self.completed_actions:
             return ExecutionResult("blocked", "action_already_completed")
-        self.pending = PendingAction(run_id, turn, action_id, mode, expected, original, observation_seq)
+        self.pending = PendingAction(run_id, turn, action_id, mode, expected, original, observation_seq, observation_seq)
         try:
             accepted = self.backend.submit(action_id)
         except Exception:
@@ -104,10 +105,15 @@ class PcTurnController:
         if type(observed_seq) is not int or observed_seq < 0:
             self.halted = True
             return ExecutionResult("halted", "invalid_observation_sequence")
-        # A caller-provided freshness flag alone is insufficient: the observer
-        # must also advance its monotonic sequence beyond the pre-submit sample.
-        if observed_seq <= pending.observation_seq or state.get("fresh_after_submission") is not True:
+        # Require a strictly newer observer sample each time. Comparing only
+        # with the pre-submit sequence would allow the same post-submit sequence
+        # to be replayed with different state fields and falsely confirm success.
+        if observed_seq <= pending.last_observation_seq:
+            return ExecutionResult("pending", "waiting_for_newer_observation")
+        if state.get("fresh_after_submission") is not True:
             return ExecutionResult("pending", "waiting_for_fresh_observation")
+        pending = replace(pending, last_observation_seq=observed_seq)
+        self.pending = pending
         if pending.postcondition == "turn_advance":
             if new_turn == pending.turn:
                 return ExecutionResult("pending", "turn_unchanged")
