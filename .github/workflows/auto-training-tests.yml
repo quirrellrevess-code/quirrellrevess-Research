@@ -31,3 +31,32 @@ jobs:
       - name: Run offline unit tests
         working-directory: AutoTrainingPlugin
         run: python -m unittest -v test_legendai_stdout_bridge test_legendai_action_guard
+
+  airredirector-patch-check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out research branch
+        uses: actions/checkout@v4
+
+      - name: Fetch pinned upstream source and validate patch
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/airredirector"
+          curl --fail --location --retry 3 --silent --show-error \
+            "https://raw.githubusercontent.com/URA-Plugins/AIRedirector/6e31c415e5774aaab3d5203432f5133c41e47b57/Class1.cs" \
+            -o "$RUNNER_TEMP/airredirector/Class1.cs"
+          test -s "$RUNNER_TEMP/airredirector/Class1.cs"
+          cd "$RUNNER_TEMP/airredirector"
+          git init -q
+          git add Class1.cs
+          git -c user.name=CI -c user.email=ci@example.invalid commit -qm "Pinned AIRedirector source"
+          PATCH="$GITHUB_WORKSPACE/AutoTrainingPlugin/AIRedirectorIntegration/patches/0001-passive-recommendation-sink.patch"
+          git apply --check --verbose "$PATCH"
+          git apply "$PATCH"
+          git diff --check
+          grep -Fq 'recommendationSink.TryRecord(output.Line)' Class1.cs
+          grep -Fq 'recommendationSink.SetTarget(null, null)' Class1.cs
+          grep -Fq 'Capture(recommendationSink.Dispose)' Class1.cs
+          test -s "$GITHUB_WORKSPACE/AutoTrainingPlugin/AIRedirectorIntegration/LegendAiRecommendationSink.cs"
