@@ -114,12 +114,14 @@ jobs:
               using var second = JsonDocument.Parse(lines[1]);
               if (first.RootElement.GetProperty("single_mode_chara_id").GetInt32() != 123 ||
                   first.RootElement.GetProperty("turn").GetInt32() != 17 ||
+                  first.RootElement.GetProperty("turn_association_status").GetString() != "target_context_available_unverified" ||
                   first.RootElement.GetProperty("category").GetString() != "training" ||
                   first.RootElement.GetProperty("verified").GetBoolean() ||
                   first.RootElement.GetProperty("executable").GetBoolean())
                   throw new Exception("First record did not match fail-closed contract");
               if (second.RootElement.GetProperty("single_mode_chara_id").ValueKind != JsonValueKind.Null ||
                   second.RootElement.GetProperty("turn").ValueKind != JsonValueKind.Null ||
+                  second.RootElement.GetProperty("turn_association_status").GetString() != "unavailable_in_airredirector_context" ||
                   second.RootElement.GetProperty("category").GetString() != "named_action")
                   throw new Exception("Cleared target leaked stale context");
               var blockedRoot = Path.Combine(Path.GetTempPath(), "sink-blocked-" + Guid.NewGuid().ToString("N"));
