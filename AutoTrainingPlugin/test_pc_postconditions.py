@@ -51,7 +51,7 @@ class PhasePostconditionTests(unittest.TestCase):
     def test_phase_observation_must_be_fresh(self):
         c = PcTurnController(supported_actions={"event_choice"}, backend=Backend())
         c.request(rec(postcondition="phase_change", expected_phase="event_result"), state())
-        self.assertEqual(c.observe(state(phase="event_result")).reason, "waiting_for_fresh_observation")
+        self.assertEqual(c.observe(state(phase="event_result")).reason, "waiting_for_newer_observation")
 
 
 if __name__ == "__main__":
