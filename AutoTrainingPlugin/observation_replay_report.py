@@ -400,8 +400,16 @@ def audit_request_command_membership(
             counts["invalid_or_missing_request_command_id"] += 1
             continue
         usable: list[tuple[int, bool, str]] = []
+        identity_mismatch_indices: list[int] = []
+        identity_unavailable_indices: list[int] = []
         request_time = parse_timestamp(request)
         for snapshot_index, observation in matching_observations:
+            identity = compare_shared_identity(observation, request)
+            if identity["status"] == "mismatch":
+                identity_mismatch_indices.append(snapshot_index)
+                continue
+            if identity["status"] == "identity_unavailable":
+                identity_unavailable_indices.append(snapshot_index)
             commands_available = observation.get("commands_available")
             commands = observation.get("commands")
             if commands_available is False or not isinstance(commands, list):
@@ -421,8 +429,23 @@ def audit_request_command_membership(
                 and item["command_id"] >= 0
             ]
             usable.append((snapshot_index, command_id in ids, temporal_relation))
+        if identity_mismatch_indices:
+            counts["identity_mismatch_snapshot_count"] += len(identity_mismatch_indices)
+            if len(samples) < 20:
+                samples.append({
+                    "request_index": request_index,
+                    "turn": turn,
+                    "command_id": command_id,
+                    "status": "identity_mismatch_snapshot_excluded",
+                    "snapshot_record_indices": identity_mismatch_indices,
+                })
+        if identity_unavailable_indices:
+            counts["identity_unavailable_snapshot_count"] += len(identity_unavailable_indices)
         if not usable:
-            counts["snapshot_command_list_unavailable"] += 1
+            if identity_mismatch_indices and not identity_unavailable_indices:
+                counts["no_identity_compatible_snapshot"] += 1
+            else:
+                counts["snapshot_command_list_unavailable"] += 1
             continue
         compared += 1
         # Preserve membership diagnostics, but separately report whether snapshots
