@@ -46,7 +46,7 @@ def detect_targets(
         if not math.isfinite(spread) or spread < 1.0:
             continue
         result = cv2.matchTemplate(image, template, cv2.TM_CCOEFF_NORMED)
-        _, best_score, best_loc, _ = cv2.minMaxLoc(result)
+        _, best_score, _, best_loc = cv2.minMaxLoc(result)
         best_score = float(best_score)
         if not math.isfinite(best_score) or not -1.0 <= best_score <= 1.0:
             continue
