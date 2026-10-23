@@ -309,6 +309,51 @@ class ObservationReplayReportTests(unittest.TestCase):
         self.assertEqual(report["data_quality_summary"]["status"], "insufficient_data")
         self.assertFalse(report["data_quality_summary"]["executable"])
 
+    def test_command_telemetry_contract_distinguishes_unavailable_empty_and_inconsistent(self):
+        from observation_replay_report import observation_command_contract_issues
+
+        self.assertEqual([], observation_command_contract_issues({
+            "commands_available": False, "commands": None, "command_count": None,
+        }))
+        self.assertEqual([], observation_command_contract_issues({
+            "commands_available": True, "commands": [], "command_count": 0,
+        }))
+        self.assertEqual(["available_commands_not_array", "available_command_count_invalid"],
+                         observation_command_contract_issues({
+                             "commands_available": True, "commands": None, "command_count": None,
+                         }))
+        self.assertEqual(["command_count_length_mismatch"],
+                         observation_command_contract_issues({
+                             "commands_available": True, "commands": [{"command_id": 2}],
+                             "command_count": 0,
+                         }))
+        self.assertEqual(["commands_available_not_boolean", "command_count_length_mismatch"],
+                         observation_command_contract_issues({
+                             "commands_available": "false", "commands": [], "command_count": 1,
+                         }))
+
+    def test_command_contract_issues_are_reported_with_source_record_index(self):
+        self.write_jsonl(self.observations, [
+            {"captured_at_utc": "2026-01-01T00:00:00Z", "turn": 4,
+             "commands_available": True, "command_count": 2, "commands": []},
+        ])
+        self.write_jsonl(self.requests, [])
+        self.write_jsonl(self.recommendations, [])
+        report = build_report({
+            "observations": self.observations,
+            "requests": self.requests,
+            "recommendations": self.recommendations,
+        })
+        stream = report["streams"]["observations"]
+        self.assertEqual({"command_count_length_mismatch": 1},
+                         stream["command_telemetry_contract_issues"])
+        self.assertTrue(any(
+            row["stream"] == "observations" and row["record_index"] == 0
+            and row["issue"] == "command_count_length_mismatch"
+            for row in report["data_quality_summary"]["record_anomaly_samples"]
+        ))
+        self.assertEqual(1, report["data_quality_summary"]["anomaly_counts"]["observation_command_contract_issues"])
+
     def test_request_command_membership_is_consistency_only(self):
         result = audit_request_command_membership(
             [{"turn": 4, "commands": [{"command_id": 2}, {"command_id": 3}]}],
