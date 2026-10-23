@@ -12,6 +12,7 @@ class FakeEnvelope:
         return {
             "observation_seq": len(self.states),
             "capture_monotonic_ns": 123456,
+            "capture_source": "local_observer_unverified",
             "ready": True,
             "verified": True,
             "executable": True,
