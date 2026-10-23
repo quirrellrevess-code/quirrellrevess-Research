@@ -17,11 +17,13 @@ def resolve_target(
     mapping: Mapping[tuple[str, str], str],
 ) -> dict[str, Any]:
     """Resolve (phase, action_id) to exactly one verified target candidate."""
-    blocked = lambda reason: {
-        "matched": False, "executable": False, "reason": reason, "target": None
-    }
+    def blocked(reason: str) -> dict[str, Any]:
+        return {"matched": False, "executable": False, "reason": reason, "target": None}
+
     if not isinstance(recommendation, Mapping) or not isinstance(state, Mapping):
         return blocked("invalid_input")
+    if not isinstance(mapping, Mapping):
+        return blocked("invalid_mapping")
     if recommendation.get("verified") is not True:
         return blocked("unverified_recommendation")
     run_id = recommendation.get("run_id")
@@ -54,6 +56,8 @@ def resolve_target(
         return blocked("target_not_verified")
     if candidate.get("reason") != "target_candidate":
         return blocked("target_evidence_rejected")
+    if candidate.get("executable") is not False:
+        return blocked("candidate_execution_flag_inconsistent")
     bbox = candidate.get("bbox")
     if (not isinstance(bbox, list) or len(bbox) != 4
             or any(type(v) is not int for v in bbox)
