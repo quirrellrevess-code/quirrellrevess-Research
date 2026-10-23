@@ -60,6 +60,8 @@ def main() -> int:
             parser.error("invalid capture bounds")
     if args.expected_pid is not None and args.expected_pid <= 0:
         parser.error("--expected-pid must be positive")
+    if args.expected_pid is not None and args.hwnd is None:
+        parser.error("--expected-pid requires --hwnd")
     if len(set(args.phases)) != len(args.phases) or not all(p.isidentifier() for p in args.phases):
         parser.error("invalid phase identifiers")
     try:
