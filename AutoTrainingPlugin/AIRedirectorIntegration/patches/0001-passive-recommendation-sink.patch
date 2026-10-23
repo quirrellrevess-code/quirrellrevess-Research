@@ -34,7 +34,7 @@ diff --git a/Class1.cs b/Class1.cs
                      _ = bridge.ApplyTargetDisplay(cancellationToken);
                  }
              }
-@@ -184,7 +188,16 @@
+@@ -184,8 +188,17 @@
              {
                  Volatile.Read(ref legendOutput)?.SetTarget(
                      chara.single_mode_chara_id,
