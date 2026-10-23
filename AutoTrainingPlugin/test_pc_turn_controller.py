@@ -55,6 +55,17 @@ class PcTurnControllerTests(unittest.TestCase):
         self.assertEqual(result.status, "pending")
         self.assertEqual(result.reason, "waiting_for_fresh_observation")
 
+    def test_replayed_post_submit_sequence_cannot_confirm_different_state(self):
+        ctrl = self.controller(Backend())
+        self.assertEqual(ctrl.request(recommendation(), state()).status, "pending")
+        first = ctrl.observe(state(turn=4, observation_seq=11, fresh_after_submission=True))
+        self.assertEqual(first.reason, "turn_unchanged")
+        replay = ctrl.observe(state(turn=5, observation_seq=11, fresh_after_submission=True))
+        self.assertEqual(replay.status, "pending")
+        self.assertEqual(replay.reason, "waiting_for_newer_observation")
+        confirmed = ctrl.observe(state(turn=5, observation_seq=12, fresh_after_submission=True))
+        self.assertEqual(confirmed.status, "confirmed")
+
     def test_invalid_observation_sequence_blocks_request(self):
         backend = Backend()
         ctrl = self.controller(backend)
