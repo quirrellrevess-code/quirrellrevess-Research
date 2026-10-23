@@ -60,3 +60,73 @@ jobs:
           grep -Fq 'recommendationSink.SetTarget(null, null)' Class1.cs
           grep -Fq 'Capture(recommendationSink.Dispose)' Class1.cs
           test -s "$GITHUB_WORKSPACE/AutoTrainingPlugin/AIRedirectorIntegration/LegendAiRecommendationSink.cs"
+
+  recommendation-sink-dotnet-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Set up .NET 10
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
+
+      - name: Compile passive recommendation sink and run smoke tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/sink-smoke"
+          cp AutoTrainingPlugin/AIRedirectorIntegration/LegendAiRecommendationSink.cs "$RUNNER_TEMP/sink-smoke/"
+          cat > "$RUNNER_TEMP/sink-smoke/SinkSmoke.csproj" <<'EOF'
+          <Project Sdk="Microsoft.NET.Sdk">
+            <PropertyGroup>
+              <OutputType>Exe</OutputType>
+              <TargetFramework>net10.0</TargetFramework>
+              <Nullable>enable</Nullable>
+              <ImplicitUsings>enable</ImplicitUsings>
+              <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+            </PropertyGroup>
+          </Project>
+          EOF
+          cat > "$RUNNER_TEMP/sink-smoke/Program.cs" <<'EOF'
+          using System.Text.Json;
+          using UmaAutoTraining.AIRedirectorIntegration;
+
+          var root = Path.Combine(Path.GetTempPath(), "sink-smoke-" + Guid.NewGuid().ToString("N"));
+          try
+          {
+              using (var sink = new LegendAiRecommendationSink(root))
+              {
+                  sink.SetTarget(123, 17);
+                  if (sink.TryRecord("not a recommendation"))
+                      throw new Exception("Non-recommendation accepted");
+                  if (!sink.TryRecord("AI建议：训练速度"))
+                      throw new Exception("Recommendation rejected");
+                  sink.SetTarget(null, null);
+                  if (!sink.TryRecord("AI建议: 休息"))
+                      throw new Exception("Recommendation rejected after clear");
+              }
+              var lines = File.ReadAllLines(Path.Combine(root, "legendai-recommendations.jsonl"));
+              if (lines.Length != 2) throw new Exception("Unexpected record count");
+              using var first = JsonDocument.Parse(lines[0]);
+              using var second = JsonDocument.Parse(lines[1]);
+              if (first.RootElement.GetProperty("single_mode_chara_id").GetInt32() != 123 ||
+                  first.RootElement.GetProperty("turn").GetInt32() != 17 ||
+                  first.RootElement.GetProperty("category").GetString() != "training" ||
+                  first.RootElement.GetProperty("verified").GetBoolean() ||
+                  first.RootElement.GetProperty("executable").GetBoolean())
+                  throw new Exception("First record did not match fail-closed contract");
+              if (second.RootElement.GetProperty("single_mode_chara_id").ValueKind != JsonValueKind.Null ||
+                  second.RootElement.GetProperty("turn").ValueKind != JsonValueKind.Null ||
+                  second.RootElement.GetProperty("category").GetString() != "named_action")
+                  throw new Exception("Cleared target leaked stale context");
+              Console.WriteLine("PASS: C# sink compiled, recorded non-executable output, cleared target");
+          }
+          finally
+          {
+              if (Directory.Exists(root)) Directory.Delete(root, recursive: true);
+          }
+          EOF
+          dotnet run --project "$RUNNER_TEMP/sink-smoke/SinkSmoke.csproj" --configuration Release
