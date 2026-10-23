@@ -115,6 +115,22 @@ class ObservationReplayReportTests(unittest.TestCase):
         self.assertEqual(status["context_mismatch_count"], 1)
         self.assertFalse(report["executable"])
 
+    def test_unknown_association_status_is_invalid(self):
+        self.write_jsonl(self.recommendations, [
+            {"captured_at_utc": "2026-01-01T00:00:20Z", "source": "test",
+             "recommendation_text": "休息", "turn": None, "single_mode_chara_id": None,
+             "turn_association_status": "verified_by_magic", "verified": False, "executable": False},
+        ])
+        report = build_report({
+            "observations": self.observations,
+            "requests": self.requests,
+            "recommendations": self.recommendations,
+        })
+        status = report["streams"]["recommendations"]["turn_association_status"]
+        self.assertEqual(status["invalid_type_or_empty_count"], 1)
+        self.assertEqual(status["values"], {})
+        self.assertFalse(report["executable"])
+
     def test_reports_timestamp_order_duplicates_and_timezone_quality(self):
         self.write_jsonl(self.observations, [
             {"captured_at_utc": "2026-01-01T00:00:10Z", "turn": 1, "command_count": 0, "commands": []},
