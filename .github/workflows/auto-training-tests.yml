@@ -26,11 +26,11 @@ jobs:
           python-version: "3.12"
 
       - name: Compile Python sources
-        run: python -m py_compile AutoTrainingPlugin/legendai_stdout_bridge.py AutoTrainingPlugin/legendai_action_guard.py AutoTrainingPlugin/test_legendai_stdout_bridge.py AutoTrainingPlugin/test_legendai_action_guard.py
+        run: python -m py_compile AutoTrainingPlugin/legendai_stdout_bridge.py AutoTrainingPlugin/legendai_action_guard.py AutoTrainingPlugin/test_legendai_stdout_bridge.py AutoTrainingPlugin/test_legendai_action_guard.py AutoTrainingPlugin/pc_turn_controller.py AutoTrainingPlugin/test_pc_turn_controller.py
 
       - name: Run offline unit tests
         working-directory: AutoTrainingPlugin
-        run: python -m unittest -v test_legendai_stdout_bridge test_legendai_action_guard
+        run: python -m unittest -v test_legendai_stdout_bridge test_legendai_action_guard test_pc_turn_controller
 
   airredirector-patch-check:
     runs-on: ubuntu-latest
