@@ -40,6 +40,16 @@ python .\\pc_screen_observer.py --bbox 100 100 1380 820 --templates .\\templates
 
 The output is JSON with `mode=read_only`, capture rectangle, phase, confidence, verification flag, and reason. It returns an unknown/unverified result when evidence is missing, weak, malformed, or ambiguous. The numeric confidence threshold is a conservative initial heuristic, not a calibrated probability; templates and threshold must be validated against real screenshots before relying on classification.
 
+## Long-running read-only screen stream
+
+On Windows, after identifying the intended visible client HWND/PID and preparing trusted phase templates, run:
+
+```powershell
+python .\\pc_live_screen_stream.py --hwnd 0x123456 --expected-pid 1234 --templates .\\templates --phases training event event_result --interval-ms 500
+```
+
+The process repeatedly captures the selected client area and emits one JSON object per line with a monotonic capture timestamp, process-local observation sequence, phase evidence, and `ready=false` / `executable=false`. Stop it with Ctrl+C. Capture errors emit an unverified error record and terminate the stream rather than continuing with stale data. This remains read-only and does not currently ingest URA state or feed the controller. The timestamp is sampled after capture and classification complete; it is an envelope timestamp, not an exact pixel-exposure time. The live loop has not been validated against a running game client.
+
 ## Read-only UI target candidates
 
 Use `pc_target_observer.py` with manually prepared button/choice templates named by stable identifiers, such as `train_speed.png` or `event_choice.png`:
