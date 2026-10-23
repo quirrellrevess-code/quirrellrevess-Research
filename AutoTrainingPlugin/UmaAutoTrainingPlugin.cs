@@ -67,7 +67,7 @@ public sealed class UmaAutoTrainingPlugin : IPlugin
                 // Null means the source response did not expose command_info_array.
                 // Do not encode missing telemetry as an observed empty command list.
                 ["commands_available"] = commands is not null,
-                ["command_count"] = commands?.Count is int commandCount ? commandCount : JValue.CreateNull(),
+                ["command_count"] = commands is null ? JValue.CreateNull() : new JValue(commands.Count),
                 ["commands"] = commands is null ? JValue.CreateNull() : new JArray(commands.OfType<JObject>().Select(c => new JObject
                 {
                     ["command_id"] = c["command_id"]?.DeepClone(),
