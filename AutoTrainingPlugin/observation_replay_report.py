@@ -496,6 +496,14 @@ def summarize_data_quality(
         status = "no_reported_anomalies"
 
     # Fetch one extra record sample to distinguish exactly-at-limit from truncated output.
+    parse_error_samples_all = [
+        {"stream": name, **error}
+        for name, report in stream_reports.items()
+        for error in report.get("parse_errors", [])
+    ]
+    parse_error_total = sum(report.get("parse_error_count", 0) for report in stream_reports.values())
+    parse_error_samples = parse_error_samples_all[:20]
+    parse_error_samples_truncated = parse_error_total > len(parse_error_samples)
     record_samples_with_sentinel = collect_record_anomaly_samples(loaded, stream_reports, limit=51)
     record_samples_truncated = len(record_samples_with_sentinel) > 50
     record_samples = record_samples_with_sentinel[:50]
@@ -532,11 +540,14 @@ def summarize_data_quality(
         "valid_turn_records_across_streams": valid_turn_count,
         "anomaly_counts": anomalies,
         "record_anomaly_samples": record_samples,
+        "parse_error_samples": parse_error_samples,
         "identity_mismatch_samples": identity_samples,
         "request_command_anomaly_samples": command_samples,
         "sample_coverage": {
             "record_sample_limit": 50,
             "record_samples_truncated": record_samples_truncated,
+            "parse_error_sample_limit": 20,
+            "parse_error_samples_truncated": parse_error_samples_truncated,
             "identity_mismatch_sample_limit": 20,
             "identity_mismatch_samples_truncated": total_identity_mismatches > len(identity_samples),
             "request_command_sample_limit": 20,
