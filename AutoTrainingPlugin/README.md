@@ -10,6 +10,16 @@ This repository contains three separate layers:
 
 **No automated game actions are enabled.** The observed URA `/notify/request` and `/notify/response` routes are notification/dispatch paths, not proof of a supported command-submission channel. Do not treat a successful screenshot match, a backend's input acceptance, or a LegendAI recommendation as proof that an in-game action succeeded.
 
+## Replay report data-quality summary
+
+The read-only replay report includes `data_quality_summary`, an aggregate view of parse/schema problems, turn and timestamp quality, identity inconsistencies, and request-command membership diagnostics.
+
+- `insufficient_data`: no records or no valid turn-bearing records were available.
+- `audit_warnings`: one or more measured data-quality anomalies were found.
+- `no_reported_anomalies`: none of the currently measured anomaly counters were nonzero; this is **not** proof of complete coverage or aligned state.
+
+The summary always keeps `same_state_verified`, `causal_link_verified`, and `executable` false. Missing coverage can produce zero anomaly counts, so interpret the per-stream counts alongside the summary.
+
 ## Read-only PC window discovery
 
 From the `AutoTrainingPlugin` directory on Windows:
