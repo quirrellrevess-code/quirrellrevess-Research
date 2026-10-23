@@ -63,6 +63,42 @@ def normalize_record(name: str, record: dict[str, Any]) -> dict[str, Any]:
     return normalized
 
 
+def observation_command_contract_issues(record: dict[str, Any]) -> list[str]:
+    """Validate command telemetry availability and its cross-field invariants."""
+    issues: list[str] = []
+    available = record.get("commands_available")
+    commands = record.get("commands")
+    count = record.get("command_count")
+
+    if "commands_available" in record and type(available) is not bool:
+        issues.append("commands_available_not_boolean")
+
+    # Older observations may predate commands_available; validate the fields that exist.
+    if available is True:
+        if not isinstance(commands, list):
+            issues.append("available_commands_not_array")
+        if type(count) is not int or count < 0:
+            issues.append("available_command_count_invalid")
+        elif isinstance(commands, list) and count != len(commands):
+            issues.append("command_count_length_mismatch")
+    elif available is False:
+        if commands is not None:
+            issues.append("unavailable_commands_not_null")
+        if count is not None:
+            issues.append("unavailable_command_count_not_null")
+    elif "commands_available" not in record:
+        if commands is None and count is not None:
+            issues.append("null_commands_with_nonnull_count")
+        elif isinstance(commands, list):
+            if type(count) is not int or count < 0:
+                issues.append("available_command_count_invalid")
+            elif count != len(commands):
+                issues.append("command_count_length_mismatch")
+        elif "commands" in record and commands is not None:
+            issues.append("commands_not_array_or_null")
+    return issues
+
+
 def analyze_stream(name: str, records: list[dict[str, Any]], parse_errors: list[dict[str, Any]]) -> dict[str, Any]:
     schema = STREAMS[name]
     records = [normalize_record(name, record) for record in records]
@@ -88,11 +124,14 @@ def analyze_stream(name: str, records: list[dict[str, Any]], parse_errors: list[
     association_status_null = 0
     association_status_invalid = 0
     association_context_mismatch = 0
+    command_contract_issue_counts: Counter[str] = Counter()
 
     for record in records:
         for field in schema["required"]:
             if field not in record:
                 missing[field] += 1
+        if name == "observations":
+            command_contract_issue_counts.update(observation_command_contract_issues(record))
         turn_field = schema["turn_field"]
         turn = record.get(turn_field)
         if type(turn) is int and turn >= 0:
@@ -184,6 +223,8 @@ def analyze_stream(name: str, records: list[dict[str, Any]], parse_errors: list[
             "executable": invalid_executable_flag_types,
         },
     }
+    if name == "observations":
+        result["command_telemetry_contract_issues"] = dict(sorted(command_contract_issue_counts.items()))
     if name == "recommendations":
         result["turn_association_status"] = {
             "missing_field_count": association_status_missing,
@@ -444,6 +485,9 @@ def collect_record_anomaly_samples(
                     samples.append({**location, "issue": "duplicate_timestamp_instant"})
                 seen_timestamp_instants.add(current_utc)
                 previous_valid_timestamp = current_utc
+            if name == "observations":
+                samples.extend({**location, "issue": issue}
+                               for issue in observation_command_contract_issues(record))
             if record.get("executable") is True:
                 samples.append({**location, "issue": "record_marked_executable"})
             if "verified" in record and type(record["verified"]) is not bool:
@@ -494,6 +538,10 @@ def summarize_data_quality(
         totals["parse_errors"] += report["parse_error_count"]
         totals["missing_required_fields"] += sum(report["missing_required_fields"].values())
         totals["records_without_valid_turn"] += report["records_without_valid_turn"]
+        if name == "observations":
+            totals["observation_command_contract_issues"] += sum(
+                report.get("command_telemetry_contract_issues", {}).values()
+            )
         totals["timestamps_missing_or_invalid"] += report["invalid_or_unavailable_timestamp_count"]
         totals["timestamps_out_of_order"] += report["timestamp_quality"]["out_of_order_count"]
         totals["duplicate_timestamp_instants"] += report["timestamp_quality"]["duplicate_instant_count"]
