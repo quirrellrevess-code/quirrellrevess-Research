@@ -30,6 +30,8 @@ Timestamp-order and duplicate-instant issues in the record samples use the same 
 
 The summary also includes bounded `record_anomaly_samples` with stream name, zero-based record index, turn value, and issue code, plus separate identity-mismatch and request-command membership samples. Samples are capped to keep reports manageable; aggregate counts remain authoritative for totals, and samples do not include full recommendation text.
 
+Request-command membership auditing now separates explicit identity mismatches from identity-unavailable snapshots. A request whose usable snapshots have no shared identity fields is still reported for diagnostic membership, but its sample is marked `identity_unavailable_only` and the aggregate `identity_unavailable_only_request_count` makes that weak-evidence case visible. `identity_verified_snapshot_count` counts snapshots with matching shared identity fields; this is not proof of identical full state. Membership and timestamp order remain consistency diagnostics only.
+
 The summary always keeps `same_state_verified`, `causal_link_verified`, and `executable` false. Missing coverage can produce zero anomaly counts, so interpret the per-stream counts alongside the summary.
 
 ## Read-only PC window discovery
