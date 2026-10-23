@@ -389,6 +389,8 @@ def audit_request_command_membership(
     compared = 0
     identity_mismatch_snapshot_count = 0
     identity_unavailable_snapshot_count = 0
+    identity_verified_snapshot_count = 0
+    identity_unavailable_only_request_count = 0
     for request_index, request in enumerate(requests):
         turn = request.get("current_turn")
         if type(turn) is not int or turn < 0:
@@ -401,9 +403,10 @@ def audit_request_command_membership(
         if type(command_id) is not int or command_id < 0:
             counts["invalid_or_missing_request_command_id"] += 1
             continue
-        usable: list[tuple[int, bool, str]] = []
+        usable: list[tuple[int, bool, str, str]] = []
         identity_mismatch_indices: list[int] = []
         identity_unavailable_indices: list[int] = []
+        verified_identity_usable_count = 0
         request_time = parse_timestamp(request)
         for snapshot_index, observation in matching_observations:
             identity = compare_shared_identity(observation, request)
@@ -412,6 +415,8 @@ def audit_request_command_membership(
                 continue
             if identity["status"] == "identity_unavailable":
                 identity_unavailable_indices.append(snapshot_index)
+            elif identity["status"] == "match":
+                identity_verified_snapshot_count += 1
             commands_available = observation.get("commands_available")
             commands = observation.get("commands")
             if commands_available is False or not isinstance(commands, list):
@@ -430,7 +435,9 @@ def audit_request_command_membership(
                 if isinstance(item, dict) and type(item.get("command_id")) is int
                 and item["command_id"] >= 0
             ]
-            usable.append((snapshot_index, command_id in ids, temporal_relation))
+            if identity["status"] == "match":
+                verified_identity_usable_count += 1
+            usable.append((snapshot_index, command_id in ids, temporal_relation, identity["status"]))
         if identity_mismatch_indices:
             identity_mismatch_snapshot_count += len(identity_mismatch_indices)
             if len(samples) < 20:
@@ -450,10 +457,16 @@ def audit_request_command_membership(
                 counts["snapshot_command_list_unavailable"] += 1
             continue
         compared += 1
+        identity_evidence_status = (
+            "verified_shared_identity_present" if verified_identity_usable_count
+            else "identity_unavailable_only"
+        )
+        if not verified_identity_usable_count:
+            identity_unavailable_only_request_count += 1
         # Preserve membership diagnostics, but separately report whether snapshots
         # could have existed by request time. Same-turn snapshots after the request
         # must not be presented as evidence of request-time availability.
-        memberships = [present for _, present, _ in usable]
+        memberships = [present for _, present, _, _ in usable]
         prior_or_equal = [item for item in usable if item[2] in {"snapshot_before_request", "same_timestamp"}]
         if request_time is None or any(item[2] == "timestamp_unavailable" for item in usable):
             temporal_status = "request_or_snapshot_timestamp_unavailable"
@@ -469,7 +482,9 @@ def audit_request_command_membership(
         else:
             status = "inconsistent_across_same_turn_snapshots"
         counts[status] += 1
-        if status != "present_in_all_same_turn_snapshots" or temporal_status != "has_snapshot_at_or_before_request":
+        if (status != "present_in_all_same_turn_snapshots"
+                or temporal_status != "has_snapshot_at_or_before_request"
+                or identity_evidence_status == "identity_unavailable_only"):
             if len(samples) < 20:
                 samples.append({
                     "request_index": request_index,
@@ -477,8 +492,9 @@ def audit_request_command_membership(
                     "command_id": command_id,
                     "status": status,
                     "temporal_status": temporal_status,
+                    "identity_evidence_status": identity_evidence_status,
                     "snapshot_count": len(usable),
-                    "snapshot_record_indices": [index for index, _, _ in usable],
+                    "snapshot_record_indices": [index for index, _, _, _ in usable],
                 })
     return {
         "request_count_with_valid_turn": sum(
@@ -487,6 +503,8 @@ def audit_request_command_membership(
         "request_count_compared": compared,
         "identity_mismatch_snapshot_count": identity_mismatch_snapshot_count,
         "identity_unavailable_snapshot_count": identity_unavailable_snapshot_count,
+        "identity_verified_snapshot_count": identity_verified_snapshot_count,
+        "identity_unavailable_only_request_count": identity_unavailable_only_request_count,
         "status_counts": dict(sorted(counts.items())),
         "non_present_samples": samples,
         "same_state_verified": False,
