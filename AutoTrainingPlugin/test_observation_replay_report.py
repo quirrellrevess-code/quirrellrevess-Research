@@ -96,8 +96,27 @@ class ObservationReplayReportTests(unittest.TestCase):
         self.assertEqual(timing[0]["request_minus_recommendation_seconds"], 10.0)
         self.assertEqual(timing[0]["timestamp_order"], "recommendation_timestamp_before_request")
         self.assertFalse(timing[0]["causal_link_verified"])
+        self.assertFalse(timing[0]["same_state_verified"])
+        self.assertEqual(timing[0]["timestamp_proximity_2s"], "outside_2s_diagnostic_window")
         self.assertEqual(report["timing_comparison_coverage"]["same_turn_pairs_compared"], 1)
         self.assertEqual(report["streams"]["recommendations"]["turn_quality"]["null_count"], 0)
+
+
+    def test_timestamp_proximity_is_diagnostic_not_state_proof(self):
+        recommendations = [{
+            "captured_at_utc": "2026-01-01T00:00:00Z", "turn": 4,
+            "recommendation_text": "速",
+        }]
+        requests = [{
+            "captured_at_utc": "2026-01-01T00:00:01Z", "current_turn": 4,
+            "command_type": 1, "command_id": 2,
+        }]
+        comparison = __import__("observation_replay_report").compare_recommendations_and_requests(
+            recommendations, requests
+        )[0]
+        self.assertEqual(comparison["timestamp_proximity_2s"], "within_2s_diagnostic_window")
+        self.assertFalse(comparison["same_state_verified"])
+        self.assertFalse(comparison["causal_link_verified"])
 
     def test_context_status_inconsistency_is_reported(self):
         self.write_jsonl(self.recommendations, [
