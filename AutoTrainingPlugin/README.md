@@ -18,6 +18,8 @@ The read-only replay report includes `data_quality_summary`, an aggregate view o
 - `audit_warnings`: one or more measured data-quality anomalies were found.
 - `no_reported_anomalies`: none of the currently measured anomaly counters were nonzero; this is **not** proof of complete coverage or aligned state.
 
+The `sample_coverage` object explicitly flags when record, identity-mismatch, or request-command samples were truncated. Aggregate `anomaly_counts` are not limited to the displayed sample count.
+
 Timestamp-order and duplicate-instant issues in the record samples use the same UTC-normalized comparison rules as the per-stream counters. Record indices are zero-based within each parsed JSONL stream (they are not physical line numbers if malformed lines were skipped).
 
 The summary also includes bounded `record_anomaly_samples` with stream name, zero-based record index, turn value, and issue code, plus separate identity-mismatch and request-command membership samples. Samples are capped to keep reports manageable; aggregate counts remain authoritative for totals, and samples do not include full recommendation text.
