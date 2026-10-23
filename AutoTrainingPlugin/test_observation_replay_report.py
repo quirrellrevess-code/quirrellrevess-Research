@@ -123,7 +123,7 @@ class ObservationReplayReportTests(unittest.TestCase):
         for name in ("observations", "requests", "recommendations"):
             self.assertEqual({}, report["streams"][name]["missing_required_fields"])
             self.assertEqual(0, report["streams"][name]["invalid_or_unavailable_timestamp_count"])
-        self.assertEqual("recommendation_timestamp_before_request",
+        self.assertEqual("request_timestamp_before_recommendation",
                          report["same_turn_timing_comparisons"][0]["timestamp_order"])
 
     def test_data_quality_summary_aggregates_anomalies_without_claiming_verification(self):
