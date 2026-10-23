@@ -265,10 +265,29 @@ def build_report(paths: dict[str, Path]) -> dict[str, Any]:
         1 for record in loaded["requests"]
         if type(record.get("current_turn")) is int and record["current_turn"] >= 0
     )
+    shared_observation_request = observed_turns & request_turns
+    shared_observation_recommendation = observed_turns & recommendation_turns
+    shared_request_recommendation = request_turns & recommendation_turns
+
+    def coverage(shared: set[int], denominator: set[int]) -> dict[str, Any]:
+        return {
+            "shared_turn_count": len(shared),
+            "denominator_turn_count": len(denominator),
+            "coverage_ratio": round(len(shared) / len(denominator), 4) if denominator else None,
+        }
+
     return {
         "mode": "read_only_replay_report",
         "executable": False,
         "streams": reports,
+        "turn_coverage": {
+            "observations_with_request_turn": coverage(shared_observation_request, observed_turns),
+            "requests_with_observation_turn": coverage(shared_observation_request, request_turns),
+            "observations_with_recommendation_turn": coverage(shared_observation_recommendation, observed_turns),
+            "recommendations_with_observation_turn": coverage(shared_observation_recommendation, recommendation_turns),
+            "requests_with_recommendation_turn": coverage(shared_request_recommendation, request_turns),
+            "recommendations_with_request_turn": coverage(shared_request_recommendation, recommendation_turns),
+        },
         "timing_comparison_coverage": {
             "recommendations_with_valid_turn": valid_recommendations,
             "requests_with_valid_turn": valid_requests,
@@ -277,9 +296,9 @@ def build_report(paths: dict[str, Path]) -> dict[str, Any]:
             "requests_without_valid_turn_excluded": len(loaded["requests"]) - valid_requests,
         },
         "turn_overlap": {
-            "observation_request_shared_turns": sorted(observed_turns & request_turns),
-            "observation_recommendation_shared_turns": sorted(observed_turns & recommendation_turns),
-            "request_recommendation_shared_turns": sorted(request_turns & recommendation_turns),
+            "observation_request_shared_turns": sorted(shared_observation_request),
+            "observation_recommendation_shared_turns": sorted(shared_observation_recommendation),
+            "request_recommendation_shared_turns": sorted(shared_request_recommendation),
             "observation_turns_without_request": sorted(observed_turns - request_turns),
             "observation_turns_without_recommendation": sorted(observed_turns - recommendation_turns),
         },
