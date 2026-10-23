@@ -66,6 +66,11 @@ class ObservationReplayReportTests(unittest.TestCase):
         self.assertEqual(recommendation_report["missing_required_fields"], {})
         self.assertEqual(recommendation_report["turns"], [4])
         self.assertEqual(report["turn_overlap"]["observation_recommendation_shared_turns"], [4])
+        timing = report["same_turn_timing_comparisons"]
+        self.assertEqual(len(timing), 1)
+        self.assertEqual(timing[0]["request_minus_recommendation_seconds"], 10.0)
+        self.assertEqual(timing[0]["timestamp_order"], "recommendation_timestamp_before_request")
+        self.assertFalse(timing[0]["causal_link_verified"])
 
     def test_invalid_json_is_reported_and_cli_exits_one(self):
         self.observations.write_text('{"turn":4}\n{broken\n', encoding="utf-8")
