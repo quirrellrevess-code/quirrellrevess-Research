@@ -201,7 +201,7 @@ def compare_recommendations_and_requests(
 ) -> list[dict[str, Any]]:
     """Compare same-turn timestamps without inferring causality."""
     request_by_turn: dict[int, list[dict[str, Any]]] = {}
-    for request in requests:
+    for request_index, request in enumerate(requests):
         turn = request.get("current_turn")
         if type(turn) is int and turn >= 0:
             request_by_turn.setdefault(turn, []).append(request)
@@ -364,7 +364,7 @@ def audit_request_command_membership(
             status = "inconsistent_across_same_turn_snapshots"
         counts[status] += 1
         if status != "present_in_all_same_turn_snapshots" and len(samples) < 20:
-            samples.append({"turn": turn, "command_id": command_id, "status": status,
+            samples.append({"request_index": request_index, "turn": turn, "command_id": command_id, "status": status,
                             "snapshot_count": len(usable)})
     return {
         "request_count_with_valid_turn": sum(
