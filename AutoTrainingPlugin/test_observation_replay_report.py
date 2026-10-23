@@ -110,6 +110,28 @@ class ObservationReplayReportTests(unittest.TestCase):
         self.assertEqual(status["context_mismatch_count"], 1)
         self.assertFalse(report["executable"])
 
+    def test_reports_timestamp_order_duplicates_and_timezone_quality(self):
+        self.write_jsonl(self.observations, [
+            {"captured_at_utc": "2026-01-01T00:00:10Z", "turn": 1, "command_count": 0, "commands": []},
+            {"captured_at_utc": "2026-01-01T01:00:10+01:00", "turn": 2, "command_count": 0, "commands": []},
+            {"captured_at_utc": "2026-01-01T00:00:05Z", "turn": 3, "command_count": 0, "commands": []},
+            {"captured_at_utc": "2026-01-01T00:00:20", "turn": 4, "command_count": 0, "commands": []},
+            {"captured_at_utc": None, "turn": 5, "command_count": 0, "commands": []},
+        ])
+        report = build_report({
+            "observations": self.observations,
+            "requests": self.requests,
+            "recommendations": self.recommendations,
+        })
+        quality = report["streams"]["observations"]["timestamp_quality"]
+        self.assertEqual(quality, {
+            "missing_or_null_count": 1,
+            "invalid_format_or_timezone_count": 1,
+            "out_of_order_count": 1,
+            "duplicate_instant_count": 1,
+        })
+        self.assertEqual(report["streams"]["observations"]["invalid_or_unavailable_timestamp_count"], 2)
+
     def test_invalid_json_is_reported_and_cli_exits_one(self):
         self.observations.write_text('{"turn":4}\n{broken\n', encoding="utf-8")
         result = subprocess.run([
