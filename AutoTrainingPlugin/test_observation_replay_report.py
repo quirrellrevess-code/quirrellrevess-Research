@@ -570,5 +570,20 @@ class ObservationReplayReportTests(unittest.TestCase):
         self.assertFalse(matched["same_state_verified"])
 
 
+    def test_weak_identity_snapshot_does_not_conflict_with_matched_identity(self):
+        result = audit_request_command_membership(
+            [
+                {"turn": 4, "scenario_id": "s1", "commands": [{"command_id": 2}]},
+                {"turn": 4, "commands": [{"command_id": 3}]},
+            ],
+            [{"current_turn": 4, "scenario_id": "s1", "command_id": 2}],
+        )
+        self.assertEqual(result["status_counts"]["present_in_all_same_turn_snapshots"], 1)
+        self.assertNotIn("inconsistent_across_same_turn_snapshots", result["status_counts"])
+        self.assertEqual(result["identity_unavailable_snapshot_excluded_count"], 1)
+        self.assertEqual(result["identity_unavailable_only_request_count"], 0)
+        self.assertFalse(result["same_state_verified"])
+
+
 if __name__ == "__main__":
     unittest.main()
