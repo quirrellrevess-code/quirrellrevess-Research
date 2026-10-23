@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import argparse
 import json
+from datetime import datetime
 import sys
 from collections import Counter
 from pathlib import Path
@@ -96,6 +97,65 @@ def analyze_stream(name: str, records: list[dict[str, Any]], parse_errors: list[
     }
 
 
+def parse_timestamp(record: dict[str, Any]) -> datetime | None:
+    value = record.get("captured_at_utc", record.get("timestamp_utc"))
+    if not isinstance(value, str) or not value:
+        return None
+    try:
+        parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
+    except ValueError:
+        return None
+    if parsed.tzinfo is None:
+        return None
+    return parsed
+
+
+def compare_recommendations_and_requests(
+    recommendations: list[dict[str, Any]], requests: list[dict[str, Any]]
+) -> list[dict[str, Any]]:
+    """Compare same-turn timestamps without inferring causality."""
+    request_by_turn: dict[int, list[dict[str, Any]]] = {}
+    for request in requests:
+        turn = request.get("current_turn")
+        if type(turn) is int and turn >= 0:
+            request_by_turn.setdefault(turn, []).append(request)
+
+    comparisons = []
+    for recommendation in recommendations:
+        turn = recommendation.get("turn")
+        if type(turn) is not int or turn < 0:
+            continue
+        rec_time = parse_timestamp(recommendation)
+        for request in request_by_turn.get(turn, []):
+            req_time = parse_timestamp(request)
+            if rec_time is None or req_time is None:
+                relation, delta = "timestamp_unavailable", None
+            else:
+                delta = round((req_time - rec_time).total_seconds(), 3)
+                relation = (
+                    "recommendation_timestamp_before_request"
+                    if delta > 0 else
+                    "request_timestamp_before_recommendation"
+                    if delta < 0 else
+                    "same_timestamp"
+                )
+            comparisons.append({
+                "turn": turn,
+                "recommendation": recommendation.get("recommendation_text"),
+                "request_command_type": request.get("command_type"),
+                "request_command_id": request.get("command_id"),
+                "request_minus_recommendation_seconds": delta,
+                "timestamp_order": relation,
+                "causal_link_verified": False,
+            })
+    comparisons.sort(key=lambda item: (
+        item["turn"],
+        item["request_minus_recommendation_seconds"] is None,
+        item["request_minus_recommendation_seconds"] or 0,
+    ))
+    return comparisons
+
+
 def build_report(paths: dict[str, Path]) -> dict[str, Any]:
     loaded: dict[str, list[dict[str, Any]]] = {}
     reports: dict[str, Any] = {}
@@ -126,8 +186,11 @@ def build_report(paths: dict[str, Path]) -> dict[str, Any]:
             "observation_turns_without_request": sorted(observed_turns - request_turns),
             "observation_turns_without_recommendation": sorted(observed_turns - recommendation_turns),
         },
+        "same_turn_timing_comparisons": compare_recommendations_and_requests(
+            loaded["recommendations"], loaded["requests"]
+        ),
         "limitations": [
-            "Turn overlap is correlation evidence only; it does not establish causality.",
+            "Turn overlap and timestamp order are correlation evidence only; they do not establish causality.",
             "Recommendation records with null turn cannot be associated by turn.",
             "The report does not infer action IDs, verify live provenance, or authorize execution.",
         ],
