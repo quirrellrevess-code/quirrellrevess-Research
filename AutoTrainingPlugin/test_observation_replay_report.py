@@ -50,6 +50,11 @@ class ObservationReplayReportTests(unittest.TestCase):
         self.assertFalse(report["executable"])
         self.assertEqual(report["turn_overlap"]["observation_request_shared_turns"], [4])
         self.assertEqual(report["turn_overlap"]["observation_recommendation_shared_turns"], [5])
+        self.assertEqual(report["turn_coverage"]["observations_with_request_turn"], {
+            "shared_turn_count": 1, "denominator_turn_count": 2, "coverage_ratio": 0.5,
+        })
+        self.assertEqual(report["turn_coverage"]["requests_with_observation_turn"]["coverage_ratio"], 1.0)
+        self.assertEqual(report["turn_coverage"]["recommendations_with_observation_turn"]["coverage_ratio"], 1.0)
         self.assertEqual(report["streams"]["recommendations"]["records_without_valid_turn"], 1)
         self.assertEqual(report["streams"]["recommendations"]["turn_quality"]["null_count"], 1)
         self.assertEqual(report["streams"]["recommendations"]["turn_association_status"], {
