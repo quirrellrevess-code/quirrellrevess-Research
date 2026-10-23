@@ -64,8 +64,11 @@ public sealed class UmaAutoTrainingPlugin : IPlugin
                 ["power"] = ReadInt(chara, "power"),
                 ["guts"] = ReadInt(chara, "guts"),
                 ["wiz"] = ReadInt(chara, "wiz"),
-                ["command_count"] = commands?.Count ?? 0,
-                ["commands"] = commands is null ? new JArray() : new JArray(commands.OfType<JObject>().Select(c => new JObject
+                // Null means the source response did not expose command_info_array.
+                // Do not encode missing telemetry as an observed empty command list.
+                ["commands_available"] = commands is not null,
+                ["command_count"] = commands?.Count is int commandCount ? commandCount : JValue.CreateNull(),
+                ["commands"] = commands is null ? JValue.CreateNull() : new JArray(commands.OfType<JObject>().Select(c => new JObject
                 {
                     ["command_id"] = c["command_id"]?.DeepClone(),
                     ["failure_rate"] = c["failure_rate"]?.DeepClone(),
