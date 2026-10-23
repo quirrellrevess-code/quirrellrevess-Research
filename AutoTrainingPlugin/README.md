@@ -61,6 +61,17 @@ A successful preview means only that the supplied evidence satisfies the mapping
 
 The window helper captures the selected client rectangle through desktop screenshot APIs. This is not a hidden/off-screen capture method: occlusion, minimized windows, display scaling, or desktop changes can affect the captured image. A visible HWND and matching PID guard selection, but do not prove the pixels belong exclusively to the game.
 
+## Offline observation replay report
+
+ Use `observation_replay_report.py` to compare the three JSONL streams emitted by the passive URA plugin and LegendAI bridge. The report checks parse/schema quality and lists overlapping turns; it does not claim that a request was caused by a recommendation, and recommendations with a null turn remain unassociated.
+
+```powershell
+python .\observation_replay_report.py --observations .\PluginData\UmaAutoTraining\observations.jsonl --requests .\PluginData\UmaAutoTraining\action-requests-observed.jsonl --recommendations .\PluginData\UmaAutoTraining\legendai-recommendations.jsonl
+```
+
+Exit code `0` means the streams parsed and required fields were present; `1` means malformed JSON lines or missing required fields were reported; `2` means an input file could not be read. The JSON output is always marked `executable=false`. This is an offline evidence report only: turn overlap is not causal proof, action IDs are not inferred, and no input is sent to the game.
+
+
 ## Guarded controller contract
 
 `pc_turn_controller.py` allows at most one pending action and requires a fresh observation matching an explicit postcondition (`turn_advance` or `phase_change`) before confirming completion. Unsupported actions, stale recommendations, run mismatches, unexpected transitions, backend exceptions, or unconfirmed submissions halt or block execution. With no backend configured, requests are blocked with `pc_backend_unverified`.
