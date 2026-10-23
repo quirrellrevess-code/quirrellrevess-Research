@@ -42,6 +42,9 @@ class MappingTests(unittest.TestCase):
     def test_no_mapping_rejected(self):
         self.assertEqual(self.resolve(mapping={})["reason"], "mapping_not_found")
 
+    def test_invalid_mapping_rejected(self):
+        self.assertEqual(self.resolve(mapping=None)["reason"], "invalid_mapping")
+
     def test_missing_target_rejected(self):
         self.assertEqual(self.resolve(candidates=[])["reason"], "target_not_detected")
 
@@ -52,6 +55,11 @@ class MappingTests(unittest.TestCase):
     def test_unverified_target_rejected(self):
         bad = {**self.candidate, "verified": False}
         self.assertEqual(self.resolve(candidates=[bad])["reason"], "target_not_verified")
+
+    def test_preflagged_executable_candidate_rejected(self):
+        bad = {**self.candidate, "executable": True}
+        self.assertEqual(self.resolve(candidates=[bad])["reason"],
+                         "candidate_execution_flag_inconsistent")
 
     def test_invalid_bounds_rejected(self):
         bad = {**self.candidate, "bbox": [1, 2, 1, 4]}
