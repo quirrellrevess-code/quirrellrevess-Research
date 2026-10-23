@@ -48,6 +48,45 @@ class PcTurnControllerTests(unittest.TestCase):
         self.assertEqual(ctrl.request(recommendation(), state()).reason, "turn_already_completed")
         self.assertEqual(backend.calls, ["training_speed"])
 
+    def test_phase_change_requires_exact_expected_phase(self):
+        ctrl = self.controller(Backend())
+        rec = recommendation(postcondition="phase_change", expected_phase="event")
+        current = state(phase="training")
+        self.assertEqual(ctrl.request(rec, current).status, "pending")
+        self.assertEqual(
+            ctrl.observe(state(phase="training", fresh_after_submission=True)).reason,
+            "phase_unchanged",
+        )
+        self.assertEqual(
+            ctrl.observe(state(phase="event", fresh_after_submission=True)).status,
+            "confirmed",
+        )
+
+    def test_unexpected_phase_change_halts(self):
+        ctrl = self.controller(Backend())
+        ctrl.request(recommendation(postcondition="phase_change", expected_phase="event"),
+                     state(phase="training"))
+        result = ctrl.observe(state(phase="race", fresh_after_submission=True))
+        self.assertEqual(result.status, "halted")
+        self.assertEqual(result.reason, "unexpected_phase_transition")
+
+    def test_invalid_phase_postcondition_never_submits(self):
+        backend = Backend()
+        ctrl = self.controller(backend)
+        result = ctrl.request(
+            recommendation(postcondition="phase_change", expected_phase="training"),
+            state(phase="training"),
+        )
+        self.assertEqual(result.reason, "invalid_phase_postcondition")
+        self.assertEqual(backend.calls, [])
+
+    def test_boolean_observed_turn_is_rejected(self):
+        ctrl = self.controller(Backend())
+        ctrl.request(recommendation(), state())
+        result = ctrl.observe(state(turn=True, fresh_after_submission=True))
+        self.assertEqual(result.status, "halted")
+        self.assertEqual(result.reason, "invalid_observed_turn")
+
     def test_unknown_transition_halts(self):
         ctrl = self.controller(Backend())
         ctrl.request(recommendation(), state())
