@@ -85,6 +85,7 @@ GitHub Actions checks Python syntax and offline unit tests, validates the AIRedi
 1. Build and load the URA plugin against the exact installed URA assemblies.
 2. Validate captured URA state and LegendAI recommendation association over representative turns.
 3. Validate phase templates against real screenshots, including resolution/scaling and occlusion cases.
-4. Add read-only UI target detection with bounding boxes and ambiguity rejection.
-5. Replay observations offline and verify action-to-control mapping before considering a real input backend.
-6. Verify a supported, permitted execution channel and end-to-end postconditions before enabling any automated actions.
+4. Validate read-only UI target detection against representative real screenshots, including repeated controls, uniform/blank frames, resolution changes, and display scaling.
+5. Define and test an explicit recommendation-to-target mapping; keep it non-executable until each mapping is validated against observed game state.
+6. Replay observations offline and verify action-to-control mapping before considering a real input backend.
+7. Verify a supported, permitted execution channel and end-to-end postconditions before enabling any automated actions.
