@@ -79,6 +79,8 @@ def analyze_stream(name: str, records: list[dict[str, Any]], parse_errors: list[
     valid_turns: set[int] = set()
     unverified = 0
     executable_marked = 0
+    invalid_verified_flag_types = 0
+    invalid_executable_flag_types = 0
     association_status_values: Counter[str] = Counter()
     association_status_missing = 0
     association_status_null = 0
@@ -119,8 +121,12 @@ def analyze_stream(name: str, records: list[dict[str, Any]], parse_errors: list[
             previous_timestamp = timestamp_utc
         if record.get("verified") is False:
             unverified += 1
+        if "verified" in record and type(record["verified"]) is not bool:
+            invalid_verified_flag_types += 1
         if record.get("executable") is True:
             executable_marked += 1
+        if "executable" in record and type(record["executable"]) is not bool:
+            invalid_executable_flag_types += 1
         if name == "recommendations":
             if "turn_association_status" not in record:
                 association_status_missing += 1
@@ -171,6 +177,10 @@ def analyze_stream(name: str, records: list[dict[str, Any]], parse_errors: list[
         },
         "explicitly_unverified_count": unverified,
         "marked_executable_count": executable_marked,
+        "invalid_boolean_flag_types": {
+            "verified": invalid_verified_flag_types,
+            "executable": invalid_executable_flag_types,
+        },
     }
     if name == "recommendations":
         result["turn_association_status"] = {
@@ -422,6 +432,10 @@ def collect_record_anomaly_samples(
                 previous_valid_timestamp = current_utc
             if record.get("executable") is True:
                 samples.append({**location, "issue": "record_marked_executable"})
+            if "verified" in record and type(record["verified"]) is not bool:
+                samples.append({**location, "issue": "verified_flag_not_boolean"})
+            if "executable" in record and type(record["executable"]) is not bool:
+                samples.append({**location, "issue": "executable_flag_not_boolean"})
             if name == "recommendations":
                 status = record.get("turn_association_status")
                 if status not in {
@@ -470,6 +484,8 @@ def summarize_data_quality(
         totals["timestamps_out_of_order"] += report["timestamp_quality"]["out_of_order_count"]
         totals["duplicate_timestamp_instants"] += report["timestamp_quality"]["duplicate_instant_count"]
         totals["records_marked_executable"] += report["marked_executable_count"]
+        totals["invalid_verified_flag_types"] += report["invalid_boolean_flag_types"]["verified"]
+        totals["invalid_executable_flag_types"] += report["invalid_boolean_flag_types"]["executable"]
         if name == "recommendations":
             association = report.get("turn_association_status", {})
             totals["recommendation_context_mismatches"] += association.get("context_mismatch_count", 0)
