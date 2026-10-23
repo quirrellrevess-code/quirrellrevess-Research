@@ -364,6 +364,7 @@ class ObservationReplayReportTests(unittest.TestCase):
         self.assertEqual(result["status_counts"], {
             "absent_from_all_same_turn_snapshots": 1,
             "present_in_all_same_turn_snapshots": 1,
+            "request_or_snapshot_timestamp_unavailable": 2,
         })
         self.assertFalse(result["same_state_verified"])
         self.assertFalse(result["causal_link_verified"])
@@ -376,9 +377,25 @@ class ObservationReplayReportTests(unittest.TestCase):
         )
         self.assertEqual(result["status_counts"], {
             "inconsistent_across_same_turn_snapshots": 1,
+            "request_or_snapshot_timestamp_unavailable": 1,
         })
         self.assertEqual(result["non_present_samples"][0]["request_index"], 0)
         self.assertEqual(result["non_present_samples"][0]["snapshot_record_indices"], [0, 1])
+
+    def test_snapshots_after_request_are_not_temporal_evidence_of_availability(self):
+        result = audit_request_command_membership(
+            [{"captured_at_utc": "2026-01-01T00:00:02Z", "turn": 4,
+              "commands_available": True, "commands": [{"command_id": 2}]}],
+            [{"captured_at_utc": "2026-01-01T00:00:01Z", "current_turn": 4, "command_id": 2}],
+        )
+        self.assertEqual(result["status_counts"], {
+            "all_snapshots_after_request": 1,
+            "present_in_all_same_turn_snapshots": 1,
+        })
+        self.assertEqual(result["non_present_samples"][0]["temporal_status"],
+                         "all_snapshots_after_request")
+        self.assertFalse(result["same_state_verified"])
+        self.assertFalse(result["causal_link_verified"])
 
     def test_explicit_identity_mismatch_is_reported_without_claiming_state_proof(self):
         result = compare_shared_identity(
