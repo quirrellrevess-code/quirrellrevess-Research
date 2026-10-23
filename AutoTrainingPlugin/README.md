@@ -40,6 +40,16 @@ python .\pc_screen_observer.py --bbox 100 100 1380 820 --templates .\templates -
 
 The output is JSON with `mode=read_only`, capture rectangle, phase, confidence, verification flag, and reason. It returns an unknown/unverified result when evidence is missing, weak, malformed, or ambiguous. The numeric confidence threshold is a conservative initial heuristic, not a calibrated probability; templates and threshold must be validated against real screenshots before relying on classification.
 
+## Read-only UI target candidates
+
+Use `pc_target_observer.py` with manually prepared button/choice templates named by stable identifiers, such as `train_speed.png` or `event_choice.png`:
+
+```powershell
+python .\pc_target_observer.py --hwnd 0x123456 --expected-pid 1234 --templates .\target-templates --targets train_speed train_stamina event_choice
+```
+
+Each result contains a candidate bounding box in screen coordinates, confidence, and a reason. Similar high-confidence matches at distinct positions are rejected as ambiguous. Even a high-confidence candidate is always marked `executable=false`; target recognition alone does not authorize input, establish which target the policy intended, or prove that an action succeeded. Template matching is resolution/theme sensitive and must be checked against real screenshots before further integration.
+
 The window helper captures the selected client rectangle through desktop screenshot APIs. This is not a hidden/off-screen capture method: occlusion, minimized windows, display scaling, or desktop changes can affect the captured image. A visible HWND and matching PID guard selection, but do not prove the pixels belong exclusively to the game.
 
 ## Guarded controller contract
