@@ -1,9 +1,8 @@
 #!/usr/bin/env python3
-"""PC-first execution boundary. No game input backend is enabled by default.
+"""Fail-closed PC action boundary with explicit postconditions.
 
-A future PC adapter must be independently verified before it can be injected.
-This controller only permits one pending action per turn and requires a fresh
-state observation before acknowledging success. It never retries blindly.
+No real input backend is supplied. Freshness must be established by the
+observation adapter, never inferred from a timestamp supplied by an AI.
 """
 from __future__ import annotations
 
@@ -15,7 +14,7 @@ from legendai_action_guard import check_action
 
 class PcActionBackend(Protocol):
     def submit(self, action_id: str) -> bool:
-        """Return True only if the adapter accepted a single input attempt."""
+        """True means one input attempt was accepted, not game success."""
 
 
 @dataclass(frozen=True)
@@ -24,12 +23,23 @@ class ExecutionResult:
     reason: str
 
 
+@dataclass(frozen=True)
+class PendingAction:
+    run_id: str
+    turn: int
+    action_id: str
+    postcondition: str
+    expected_phase: str | None
+    original_phase: str | None
+
+
 class PcTurnController:
     def __init__(self, *, supported_actions: set[str], backend: PcActionBackend | None = None):
         self.supported_actions = set(supported_actions)
         self.backend = backend
         self.completed_turns: set[tuple[str, int]] = set()
-        self.pending: tuple[str, int, str] | None = None
+        self.completed_actions: set[tuple[str, int, str, str]] = set()
+        self.pending: PendingAction | None = None
         self.halted = False
 
     def request(self, recommendation: Mapping[str, Any], state: Mapping[str, Any]) -> ExecutionResult:
@@ -44,13 +54,23 @@ class PcTurnController:
         )
         if not result.allowed:
             return ExecutionResult("blocked", result.reason)
+        mode = recommendation.get("postcondition", "turn_advance")
+        if mode not in ("turn_advance", "phase_change"):
+            return ExecutionResult("blocked", "unsupported_postcondition")
+        expected = recommendation.get("expected_phase")
+        original = state.get("phase")
+        if mode == "phase_change":
+            if not isinstance(expected, str) or not expected or not isinstance(original, str) or not original or expected == original:
+                return ExecutionResult("blocked", "invalid_phase_postcondition")
+        else:
+            expected, original = None, None
         if self.backend is None:
             return ExecutionResult("blocked", "pc_backend_unverified")
-        run_id = recommendation["run_id"]
-        turn = recommendation["turn"]
-        action_id = recommendation["action_id"]
-        # Reserve before invoking external code; exceptions must never trigger retries.
-        self.pending = (run_id, turn, action_id)
+        run_id, turn, action_id = (recommendation[k] for k in ("run_id", "turn", "action_id"))
+        key = (run_id, turn, action_id, original or "")
+        if key in self.completed_actions:
+            return ExecutionResult("blocked", "action_already_completed")
+        self.pending = PendingAction(run_id, turn, action_id, mode, expected, original)
         try:
             accepted = self.backend.submit(action_id)
         except Exception:
@@ -66,8 +86,8 @@ class PcTurnController:
             return ExecutionResult("blocked", "halted")
         if self.pending is None:
             return ExecutionResult("blocked", "no_pending_action")
-        run_id, turn, _ = self.pending
-        if not isinstance(state, Mapping) or state.get("run_id") != run_id:
+        pending = self.pending
+        if not isinstance(state, Mapping) or state.get("run_id") != pending.run_id:
             self.halted = True
             return ExecutionResult("halted", "run_changed")
         new_turn = state.get("turn")
@@ -76,14 +96,31 @@ class PcTurnController:
             return ExecutionResult("halted", "invalid_observed_turn")
         if state.get("fresh_after_submission") is not True:
             return ExecutionResult("pending", "waiting_for_fresh_observation")
-        if new_turn == turn:
-            return ExecutionResult("pending", "turn_unchanged")
-        if new_turn != turn + 1:
-            self.halted = True
-            return ExecutionResult("halted", "unexpected_turn_transition")
-        self.completed_turns.add((run_id, turn))
+        if pending.postcondition == "turn_advance":
+            if new_turn == pending.turn:
+                return ExecutionResult("pending", "turn_unchanged")
+            if new_turn != pending.turn + 1:
+                self.halted = True
+                return ExecutionResult("halted", "unexpected_turn_transition")
+            self.completed_turns.add((pending.run_id, pending.turn))
+            reason = "turn_advanced"
+        else:
+            if new_turn != pending.turn:
+                self.halted = True
+                return ExecutionResult("halted", "unexpected_turn_transition")
+            phase = state.get("phase")
+            if not isinstance(phase, str) or not phase:
+                self.halted = True
+                return ExecutionResult("halted", "invalid_observed_phase")
+            if phase == pending.original_phase:
+                return ExecutionResult("pending", "phase_unchanged")
+            if phase != pending.expected_phase:
+                self.halted = True
+                return ExecutionResult("halted", "unexpected_phase_transition")
+            reason = "phase_changed"
+        self.completed_actions.add((pending.run_id, pending.turn, pending.action_id, pending.original_phase or ""))
         self.pending = None
-        return ExecutionResult("confirmed", "turn_advanced")
+        return ExecutionResult("confirmed", reason)
 
 
-__all__ = ["PcActionBackend", "PcTurnController", "ExecutionResult"]
+__all__ = ["PcActionBackend", "PcTurnController", "ExecutionResult", "PendingAction"]
