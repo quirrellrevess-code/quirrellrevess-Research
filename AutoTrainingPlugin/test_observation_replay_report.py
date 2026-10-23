@@ -252,6 +252,28 @@ class ObservationReplayReportTests(unittest.TestCase):
         self.assertTrue(summary["sample_coverage"]["parse_error_samples_truncated"])
         self.assertEqual(25, summary["anomaly_counts"]["parse_errors"])
 
+    def test_boolean_flags_reject_string_and_integer_values(self):
+        self.write_jsonl(self.observations, [
+            {"captured_at_utc": "2026-01-01T00:00:00Z", "turn": 1,
+             "command_count": 0, "commands": [], "verified": "false", "executable": 0}
+        ])
+        self.write_jsonl(self.requests, [])
+        self.write_jsonl(self.recommendations, [])
+        report = build_report({
+            "observations": self.observations,
+            "requests": self.requests,
+            "recommendations": self.recommendations,
+        })
+        stream = report["streams"]["observations"]
+        self.assertEqual(1, stream["invalid_boolean_flag_types"]["verified"])
+        self.assertEqual(1, stream["invalid_boolean_flag_types"]["executable"])
+        summary = report["data_quality_summary"]
+        self.assertEqual(1, summary["anomaly_counts"]["invalid_verified_flag_types"])
+        self.assertEqual(1, summary["anomaly_counts"]["invalid_executable_flag_types"])
+        issues = {row["issue"] for row in summary["record_anomaly_samples"]}
+        self.assertIn("verified_flag_not_boolean", issues)
+        self.assertIn("executable_flag_not_boolean", issues)
+
     def test_data_quality_summary_empty_inputs_are_insufficient(self):
         for path in (self.observations, self.requests, self.recommendations):
             path.write_text("", encoding="utf-8")
