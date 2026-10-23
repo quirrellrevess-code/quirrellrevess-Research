@@ -299,25 +299,30 @@ def build_identity_consistency(loaded: dict[str, list[dict[str, Any]]]) -> dict[
     )
     output: dict[str, Any] = {}
     for left_name, right_name, left_turn_key, right_turn_key in specs:
-        left_by_turn: dict[int, list[dict[str, Any]]] = {}
-        right_by_turn: dict[int, list[dict[str, Any]]] = {}
-        for row in loaded[left_name]:
+        left_by_turn: dict[int, list[tuple[int, dict[str, Any]]]] = {}
+        right_by_turn: dict[int, list[tuple[int, dict[str, Any]]]] = {}
+        for record_index, row in enumerate(loaded[left_name]):
             turn = row.get(left_turn_key)
             if type(turn) is int and turn >= 0:
-                left_by_turn.setdefault(turn, []).append(row)
-        for row in loaded[right_name]:
+                left_by_turn.setdefault(turn, []).append((record_index, row))
+        for record_index, row in enumerate(loaded[right_name]):
             turn = row.get(right_turn_key)
             if type(turn) is int and turn >= 0:
-                right_by_turn.setdefault(turn, []).append(row)
+                right_by_turn.setdefault(turn, []).append((record_index, row))
         counts: Counter[str] = Counter()
         samples: list[dict[str, Any]] = []
         for turn in sorted(set(left_by_turn) & set(right_by_turn)):
-            for left in left_by_turn[turn]:
-                for right in right_by_turn[turn]:
+            for left_index, left in left_by_turn[turn]:
+                for right_index, right in right_by_turn[turn]:
                     result = compare_shared_identity(left, right)
                     counts[result["status"]] += 1
                     if result["status"] == "mismatch" and len(samples) < 20:
-                        samples.append({"turn": turn, **result})
+                        samples.append({
+                            "turn": turn,
+                            "left_record_index": left_index,
+                            "right_record_index": right_index,
+                            **result,
+                        })
         output[f"{left_name}_vs_{right_name}"] = {
             "same_turn_pairs": sum(counts.values()),
             "status_counts": dict(sorted(counts.items())),
@@ -352,8 +357,10 @@ def audit_request_command_membership(
         if type(command_id) is not int or command_id < 0:
             counts["invalid_or_missing_request_command_id"] += 1
             continue
-        usable = []
-        for observation in matching_observations:
+        usable: list[tuple[int, bool]] = []
+        for snapshot_index, observation in enumerate(observations):
+            if observation not in matching_observations:
+                continue
             commands = observation.get("commands")
             if not isinstance(commands, list):
                 continue
@@ -362,22 +369,29 @@ def audit_request_command_membership(
                 if isinstance(item, dict) and type(item.get("command_id")) is int
                 and item["command_id"] >= 0
             ]
-            usable.append(command_id in ids)
+            usable.append((snapshot_index, command_id in ids))
         if not usable:
             counts["snapshot_command_list_unavailable"] += 1
             continue
         compared += 1
         # Multiple snapshots can exist for a turn. Avoid collapsing contradictory evidence.
-        if all(usable):
+        memberships = [present for _, present in usable]
+        if all(memberships):
             status = "present_in_all_same_turn_snapshots"
-        elif not any(usable):
+        elif not any(memberships):
             status = "absent_from_all_same_turn_snapshots"
         else:
             status = "inconsistent_across_same_turn_snapshots"
         counts[status] += 1
         if status != "present_in_all_same_turn_snapshots" and len(samples) < 20:
-            samples.append({"request_index": request_index, "turn": turn, "command_id": command_id, "status": status,
-                            "snapshot_count": len(usable)})
+            samples.append({
+                "request_index": request_index,
+                "turn": turn,
+                "command_id": command_id,
+                "status": status,
+                "snapshot_count": len(usable),
+                "snapshot_record_indices": [index for index, _ in usable],
+            })
     return {
         "request_count_with_valid_turn": sum(
             1 for row in requests if type(row.get("current_turn")) is int and row["current_turn"] >= 0
