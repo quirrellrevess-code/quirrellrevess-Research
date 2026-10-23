@@ -45,7 +45,9 @@ def classify_phase(
         return PhaseEvidence("unknown", top_confidence, False, "low_confidence")
     # Duplicate matches for the same phase do not create ambiguity.
     competing = max((value for phase, value in candidates if phase != top_phase), default=-1.0)
-    if top_confidence - competing < margin:
+    separation = top_confidence - competing
+    # Even a configured zero margin must never make an exact tie actionable.
+    if competing == top_confidence or separation < margin:
         return PhaseEvidence("unknown", top_confidence, False, "ambiguous_phase")
     return PhaseEvidence(top_phase, top_confidence, True, "phase_recognized")
 
