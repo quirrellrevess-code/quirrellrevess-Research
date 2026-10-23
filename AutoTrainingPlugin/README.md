@@ -18,6 +18,8 @@ The read-only replay report includes `data_quality_summary`, an aggregate view o
 - `audit_warnings`: one or more measured data-quality anomalies were found.
 - `no_reported_anomalies`: none of the currently measured anomaly counters were nonzero; this is **not** proof of complete coverage or aligned state.
 
+For URA observation records, the report also validates the command telemetry contract: `commands_available` must be a boolean; when true, `commands` must be an array and `command_count` must equal its length; when false, both `commands` and `command_count` must be null. Legacy records without the availability flag receive shape/count checks where possible. Contract violations are counted under `observation_command_contract_issues` and reported with a zero-based source record index. This catches unavailable data mislabeled as an empty list and internally inconsistent counts without treating either as executable evidence.
+
 The stream audit also counts `verified` and `executable` values that are present but not actual JSON booleans. For example, strings such as `"false"` and integers such as `0` are not silently treated as trustworthy flags; their record samples use `verified_flag_not_boolean` or `executable_flag_not_boolean`.
 
 Malformed JSONL entries are separately exposed as `parse_error_samples`, with stream name, original physical line number, and parse reason (up to 20 samples). The corresponding `parse_errors` anomaly count includes all malformed/non-object lines, and `sample_coverage.parse_error_samples_truncated` signals omitted examples.
