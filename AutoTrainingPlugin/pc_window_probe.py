@@ -54,6 +54,7 @@ def discover_windows(*, include_titles: bool = False) -> list[dict[str, object]]
         if width <= 0 or height <= 0:
             return True
         record: dict[str, object] = {
+            "hwnd": int(hwnd),
             "pid": pid.value,
             "class_name": class_buf.value,
             "rect": [rect.left, rect.top, rect.right, rect.bottom],
