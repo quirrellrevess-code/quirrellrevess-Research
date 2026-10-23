@@ -211,6 +211,47 @@ class ObservationReplayReportTests(unittest.TestCase):
         self.assertEqual(20, len(report["data_quality_summary"]["identity_mismatch_samples"]))
         self.assertEqual(20, len(report["data_quality_summary"]["request_command_anomaly_samples"]))
 
+    def test_parse_errors_are_addressable_by_stream_and_physical_line(self):
+        self.observations.write_text(
+            '{"captured_at_utc":"2026-01-01T00:00:00Z","turn":1,"command_count":0,"commands":[]}\\n'
+            '{broken json}\\n'
+            '[]\\n',
+            encoding="utf-8",
+        )
+        self.write_jsonl(self.requests, [])
+        self.write_jsonl(self.recommendations, [])
+        report = build_report({
+            "observations": self.observations,
+            "requests": self.requests,
+            "recommendations": self.recommendations,
+        })
+        summary = report["data_quality_summary"]
+        samples = summary["parse_error_samples"]
+        self.assertEqual(
+            [("observations", 2, "invalid_json"), ("observations", 3, "record_not_object")],
+            [(row["stream"], row["line"], row["reason"]) for row in samples],
+        )
+        self.assertEqual(2, summary["anomaly_counts"]["parse_errors"])
+        self.assertFalse(summary["sample_coverage"]["parse_error_samples_truncated"])
+
+    def test_parse_error_sample_truncation_is_explicit(self):
+        self.observations.write_text(
+            '{"captured_at_utc":"2026-01-01T00:00:00Z","turn":1,"command_count":0,"commands":[]}\\n'
+            + '{broken}\\n' * 25,
+            encoding="utf-8",
+        )
+        self.write_jsonl(self.requests, [])
+        self.write_jsonl(self.recommendations, [])
+        report = build_report({
+            "observations": self.observations,
+            "requests": self.requests,
+            "recommendations": self.recommendations,
+        })
+        summary = report["data_quality_summary"]
+        self.assertEqual(20, len(summary["parse_error_samples"]))
+        self.assertTrue(summary["sample_coverage"]["parse_error_samples_truncated"])
+        self.assertEqual(25, summary["anomaly_counts"]["parse_errors"])
+
     def test_data_quality_summary_empty_inputs_are_insufficient(self):
         for path in (self.observations, self.requests, self.recommendations):
             path.write_text("", encoding="utf-8")
