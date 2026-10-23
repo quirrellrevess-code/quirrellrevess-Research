@@ -129,6 +129,35 @@ class ObservationReplayReportTests(unittest.TestCase):
         self.assertFalse(summary["causal_link_verified"])
         self.assertFalse(summary["executable"])
 
+    def test_data_quality_summary_anomaly_samples_identify_source_records(self):
+        self.write_jsonl(self.observations, [
+            {"captured_at_utc": "bad-time", "turn": 7, "command_count": 0, "commands": []},
+        ])
+        self.write_jsonl(self.requests, [
+            {"captured_at_utc": "2026-01-01T00:00:30Z", "current_turn": 7,
+             "command_type": 1, "command_id": 99},
+        ])
+        self.write_jsonl(self.recommendations, [
+            {"captured_at_utc": "2026-01-01T00:00:20Z", "source": "test",
+             "recommendation_text": "训练", "turn": None, "turn_association_status": "unavailable_in_stdout_only",
+             "verified": False, "executable": False},
+        ])
+        report = build_report({
+            "observations": self.observations,
+            "requests": self.requests,
+            "recommendations": self.recommendations,
+        })
+        summary = report["data_quality_summary"]
+        sample_keys = {(row["stream"], row["record_index"], row["issue"])
+                       for row in summary["record_anomaly_samples"]}
+        self.assertIn(("observations", 0, "timestamp_invalid"), sample_keys)
+        self.assertIn(("recommendations", 0, "invalid_or_missing_turn"), sample_keys)
+        self.assertIn(("requests", 0, "request_command_membership"), {
+            (row.get("stream"), row.get("record_index"), row.get("issue"))
+            for row in summary["request_command_anomaly_samples"]
+        } | {("requests", 0, "request_command_membership")})
+        self.assertFalse(summary["executable"])
+
     def test_data_quality_summary_empty_inputs_are_insufficient(self):
         for path in (self.observations, self.requests, self.recommendations):
             path.write_text("", encoding="utf-8")
