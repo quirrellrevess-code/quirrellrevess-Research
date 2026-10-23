@@ -71,7 +71,9 @@ def detect_targets(
             continue
         if not math.isfinite(second_score):
             continue
-        ambiguous = second_score >= threshold and best_score - second_score < ambiguity_margin
+        ambiguous = second_score >= threshold and (
+            best_score == second_score or best_score - second_score < ambiguity_margin
+        )
         verified = best_score >= threshold and not ambiguous
         left = screen_origin[0] + int(best_loc[0])
         top = screen_origin[1] + int(best_loc[1])
