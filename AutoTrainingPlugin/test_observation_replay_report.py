@@ -195,10 +195,13 @@ class ObservationReplayReportTests(unittest.TestCase):
              "verified": False, "executable": False}
             for i in range(25)
         ]
+        self.write_jsonl(self.observations, observations)
+        self.write_jsonl(self.requests, requests)
+        self.write_jsonl(self.recommendations, recommendations)
         report = build_report({
-            "observations": observations,
-            "requests": requests,
-            "recommendations": recommendations,
+            "observations": self.observations,
+            "requests": self.requests,
+            "recommendations": self.recommendations,
         })
         coverage = report["data_quality_summary"]["sample_coverage"]
         self.assertTrue(coverage["record_samples_truncated"])
