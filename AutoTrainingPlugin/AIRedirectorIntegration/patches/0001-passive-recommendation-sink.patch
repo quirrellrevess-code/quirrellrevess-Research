@@ -17,7 +17,7 @@ diff --git a/Class1.cs b/Class1.cs
          readonly UmaAiRawOutputWorkspace rawOutput = new();
          readonly CancellationTokenSource outputCancellation = new();
          Task? outputTask;
-@@ -122,12 +124,14 @@
+@@ -122,14 +124,16 @@
                  await foreach (var output in processOutput.Reader.ReadAllAsync(cancellationToken))
                  {
 +                    if (output.ApplyToLegend && Volatile.Read(ref gameStarted))
@@ -34,7 +34,7 @@ diff --git a/Class1.cs b/Class1.cs
                      _ = bridge.ApplyTargetDisplay(cancellationToken);
                  }
              }
-@@ -184,7 +187,14 @@
+@@ -184,7 +188,16 @@
              {
                  Volatile.Read(ref legendOutput)?.SetTarget(
                      chara.single_mode_chara_id,
@@ -49,7 +49,7 @@ diff --git a/Class1.cs b/Class1.cs
              }
              return ValueTask.CompletedTask;
          }
-@@ -455,4 +465,5 @@
+@@ -455,4 +468,5 @@
                  if (legendBridge is not null)
                      Capture(legendBridge.Dispose);
 +                Capture(recommendationSink.Dispose);
