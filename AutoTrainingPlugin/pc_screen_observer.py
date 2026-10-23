@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import math
 from pathlib import Path
 
 from pc_phase_evidence import classify_phase
@@ -28,9 +29,24 @@ def detect_phase(image, templates_dir: Path, *, allowed_phases: set[str], cv2):
             continue
         if template.shape[0] < 8 or template.shape[1] < 8:
             continue
+        # Constant/near-constant templates produce meaningless normalized
+        # correlation scores (often 1.0 everywhere). Reject them rather than
+        # treating a visually uninformative patch as phase evidence.
+        try:
+            template_spread = float(template.std())
+        except (AttributeError, TypeError, ValueError):
+            template_spread = None
+        if template_spread is not None and (not math.isfinite(template_spread) or template_spread < 1.0):
+            continue
+
         result = cv2.matchTemplate(image, template, cv2.TM_CCOEFF_NORMED)
         _, score, _, _ = cv2.minMaxLoc(result)
-        matches.append({"phase": phase, "confidence": float(score)})
+        score = float(score)
+        # OpenCV can emit NaN for degenerate inputs. Do not pass invalid
+        # values to the classifier or accidentally promote them to evidence.
+        if not math.isfinite(score) or not -1.0 <= score <= 1.0:
+            continue
+        matches.append({"phase": phase, "confidence": score})
     return classify_phase(matches, allowed_phases=allowed_phases)
 
 
