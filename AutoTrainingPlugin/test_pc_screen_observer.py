@@ -1,7 +1,12 @@
+import contextlib
+import io
+import sys
 import tempfile
 import unittest
 from pathlib import Path
-from unittest.mock import Mock
+from unittest.mock import Mock, patch
+
+import pc_screen_observer
 
 from pc_screen_observer import detect_phase
 
@@ -79,6 +84,25 @@ class ScreenObserverTests(unittest.TestCase):
                 allowed_phases={"training"}, cv2=fake)
             self.assertEqual(result.phase, "unknown")
             self.assertEqual(result.reason, "no_known_phase")
+
+
+    def test_expected_pid_requires_hwnd(self):
+        with patch.object(sys, "argv", [
+            "pc_screen_observer.py", "--bbox", "0", "0", "100", "100",
+            "--expected-pid", "123", "--templates", "templates", "--phases", "training"
+        ]):
+            with contextlib.redirect_stderr(io.StringIO()):
+                with self.assertRaises(SystemExit) as error:
+                    pc_screen_observer.main()
+            self.assertEqual(error.exception.code, 2)
+
+    def test_hwnd_accepts_hex_handle_syntax(self):
+        with patch.object(sys, "argv", [
+            "pc_screen_observer.py", "--hwnd", "0x1234", "--expected-pid", "123",
+            "--templates", "templates", "--phases", "training"
+        ]), patch.object(pc_screen_observer, "capture_client_area", side_effect=RuntimeError("capture stopped")):
+            with contextlib.redirect_stdout(io.StringIO()):
+                self.assertEqual(pc_screen_observer.main(), 2)
 
 
 if __name__ == "__main__":
