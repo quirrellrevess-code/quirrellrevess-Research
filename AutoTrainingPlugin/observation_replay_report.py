@@ -387,6 +387,8 @@ def audit_request_command_membership(
     counts: Counter[str] = Counter()
     samples: list[dict[str, Any]] = []
     compared = 0
+    identity_mismatch_snapshot_count = 0
+    identity_unavailable_snapshot_count = 0
     for request_index, request in enumerate(requests):
         turn = request.get("current_turn")
         if type(turn) is not int or turn < 0:
@@ -430,7 +432,7 @@ def audit_request_command_membership(
             ]
             usable.append((snapshot_index, command_id in ids, temporal_relation))
         if identity_mismatch_indices:
-            counts["identity_mismatch_snapshot_count"] += len(identity_mismatch_indices)
+            identity_mismatch_snapshot_count += len(identity_mismatch_indices)
             if len(samples) < 20:
                 samples.append({
                     "request_index": request_index,
@@ -440,7 +442,7 @@ def audit_request_command_membership(
                     "snapshot_record_indices": identity_mismatch_indices,
                 })
         if identity_unavailable_indices:
-            counts["identity_unavailable_snapshot_count"] += len(identity_unavailable_indices)
+            identity_unavailable_snapshot_count += len(identity_unavailable_indices)
         if not usable:
             if identity_mismatch_indices and not identity_unavailable_indices:
                 counts["no_identity_compatible_snapshot"] += 1
@@ -483,6 +485,8 @@ def audit_request_command_membership(
             1 for row in requests if type(row.get("current_turn")) is int and row["current_turn"] >= 0
         ),
         "request_count_compared": compared,
+        "identity_mismatch_snapshot_count": identity_mismatch_snapshot_count,
+        "identity_unavailable_snapshot_count": identity_unavailable_snapshot_count,
         "status_counts": dict(sorted(counts.items())),
         "non_present_samples": samples,
         "same_state_verified": False,
