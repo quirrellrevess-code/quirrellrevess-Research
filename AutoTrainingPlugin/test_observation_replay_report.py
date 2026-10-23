@@ -102,6 +102,30 @@ class ObservationReplayReportTests(unittest.TestCase):
         self.assertEqual(report["streams"]["recommendations"]["turn_quality"]["null_count"], 0)
 
 
+    def test_timestamp_alias_normalizes_for_all_streams(self):
+        self.write_jsonl(self.observations, [
+            {"timestamp_utc": "2026-01-01T00:00:01Z", "turn": 1,
+             "command_count": 0, "commands": []},
+        ])
+        self.write_jsonl(self.requests, [
+            {"timestamp_utc": "2026-01-01T00:00:02Z", "current_turn": 1,
+             "command_type": 1, "command_id": 2},
+        ])
+        self.write_jsonl(self.recommendations, [
+            {"timestamp_utc": "2026-01-01T00:00:03Z", "source": "test",
+             "recommendation": "训练", "turn": 1, "verified": False, "executable": False},
+        ])
+        report = build_report({
+            "observations": self.observations,
+            "requests": self.requests,
+            "recommendations": self.recommendations,
+        })
+        for name in ("observations", "requests", "recommendations"):
+            self.assertEqual({}, report["streams"][name]["missing_required_fields"])
+            self.assertEqual(0, report["streams"][name]["invalid_or_unavailable_timestamp_count"])
+        self.assertEqual("recommendation_timestamp_before_request",
+                         report["same_turn_timing_comparisons"][0]["timestamp_order"])
+
     def test_data_quality_summary_aggregates_anomalies_without_claiming_verification(self):
         self.write_jsonl(self.observations, [
             {"captured_at_utc": None, "turn": 4, "command_count": 0, "commands": []},
