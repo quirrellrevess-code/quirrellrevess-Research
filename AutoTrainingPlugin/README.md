@@ -79,7 +79,7 @@ Exit code `0` means the streams parsed and required fields were present; `1` mea
 
 ## Guarded controller contract
 
-`pc_turn_controller.py` allows at most one pending action and requires a fresh observation matching an explicit postcondition (`turn_advance` or `phase_change`) before confirming completion. Unsupported actions, stale recommendations, run mismatches, unexpected transitions, backend exceptions, or unconfirmed submissions halt or block execution. With no backend configured, requests are blocked with `pc_backend_unverified`.
+`pc_turn_controller.py` allows at most one pending action and requires a fresh observation matching an explicit postcondition (`turn_advance` or `phase_change`) before confirming completion. A `fresh_after_submission` flag alone is not sufficient: the observer must provide a non-negative integer `observation_seq` that advances beyond the sequence captured before submission. The controller can reject stale/repeated sequence numbers, but the observation adapter remains responsible for sourcing that sequence from its own monotonic capture counter rather than AI-supplied metadata. Unsupported actions, stale recommendations, run mismatches, unexpected transitions, backend exceptions, or unconfirmed submissions halt or block execution. With no backend configured, requests are blocked with `pc_backend_unverified`.
 
 These checks are defense-in-depth, not authorization to enable a real input backend. Before implementation, establish a supported input method and verify UI target detection, action-to-control mapping, focus handling, and post-action state evidence. No fixed-coordinate clicks, blind retries, memory injection, or protocol replay are used.
 
