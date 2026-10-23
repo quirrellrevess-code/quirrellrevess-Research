@@ -122,7 +122,20 @@ jobs:
                   second.RootElement.GetProperty("turn").ValueKind != JsonValueKind.Null ||
                   second.RootElement.GetProperty("category").GetString() != "named_action")
                   throw new Exception("Cleared target leaked stale context");
-              Console.WriteLine("PASS: C# sink compiled, recorded non-executable output, cleared target");
+              var blockedRoot = Path.Combine(Path.GetTempPath(), "sink-blocked-" + Guid.NewGuid().ToString("N"));
+          File.WriteAllText(blockedRoot, "not a directory");
+          try
+          {
+              using var blockedSink = new LegendAiRecommendationSink(blockedRoot);
+              blockedSink.SetTarget(1, 1);
+              if (blockedSink.TryRecord("AI建议：训练速度"))
+                  throw new Exception("Unavailable telemetry path should not report success");
+          }
+          finally
+          {
+              File.Delete(blockedRoot);
+          }
+          Console.WriteLine("PASS: C# sink compiled, recorded non-executable output, cleared target, tolerated I/O failure");
           }
           finally
           {
