@@ -48,6 +48,27 @@ class PcTurnControllerTests(unittest.TestCase):
         self.assertEqual(ctrl.request(recommendation(), state()).reason, "turn_already_completed")
         self.assertEqual(backend.calls, ["training_speed"])
 
+    def test_freshness_flag_without_sequence_advance_is_ignored(self):
+        ctrl = self.controller(Backend())
+        self.assertEqual(ctrl.request(recommendation(), state()).status, "pending")
+        result = ctrl.observe(state(turn=5, observation_seq=10, fresh_after_submission=True))
+        self.assertEqual(result.status, "pending")
+        self.assertEqual(result.reason, "waiting_for_fresh_observation")
+
+    def test_invalid_observation_sequence_blocks_request(self):
+        backend = Backend()
+        ctrl = self.controller(backend)
+        result = ctrl.request(recommendation(), state(observation_seq=True))
+        self.assertEqual(result.reason, "invalid_observation_sequence")
+        self.assertEqual(backend.calls, [])
+
+    def test_invalid_observed_sequence_halts(self):
+        ctrl = self.controller(Backend())
+        ctrl.request(recommendation(), state())
+        result = ctrl.observe(state(turn=5, observation_seq=True, fresh_after_submission=True))
+        self.assertEqual(result.status, "halted")
+        self.assertEqual(result.reason, "invalid_observation_sequence")
+
     def test_phase_change_requires_exact_expected_phase(self):
         ctrl = self.controller(Backend())
         rec = recommendation(postcondition="phase_change", expected_phase="event")
