@@ -30,11 +30,15 @@ class FakeEvidence:
 class LiveScreenStreamRecordTests(unittest.TestCase):
     def test_observation_record_forces_non_executable_flags(self):
         envelope = FakeEnvelope()
-        record = build_observation_record(envelope, FakeEvidence(), (10, 20, 640, 480))
+        record = build_observation_record(
+            envelope, FakeEvidence(), (10, 20, 640, 480), hwnd=1234, expected_pid=5678
+        )
         self.assertEqual(record["mode"], "read_only")
         self.assertEqual(record["phase"], "training")
         self.assertEqual(record["phase_confidence"], 0.97)
         self.assertEqual(record["capture_rect"], [10, 20, 640, 480])
+        self.assertEqual(record["window_hwnd"], 1234)
+        self.assertEqual(record["window_pid"], 5678)
         self.assertFalse(record["ready"])
         self.assertFalse(record["verified"])
         self.assertFalse(record["executable"])
