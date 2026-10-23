@@ -336,11 +336,11 @@ def audit_request_command_membership(
     observations: list[dict[str, Any]], requests: list[dict[str, Any]]
 ) -> dict[str, Any]:
     """Check whether observed request command IDs appear in same-turn snapshots."""
-    obs_by_turn: dict[int, list[dict[str, Any]]] = {}
-    for observation in observations:
+    obs_by_turn: dict[int, list[tuple[int, dict[str, Any]]]] = {}
+    for snapshot_index, observation in enumerate(observations):
         turn = observation.get("turn")
         if type(turn) is int and turn >= 0:
-            obs_by_turn.setdefault(turn, []).append(observation)
+            obs_by_turn.setdefault(turn, []).append((snapshot_index, observation))
 
     counts: Counter[str] = Counter()
     samples: list[dict[str, Any]] = []
@@ -358,9 +358,7 @@ def audit_request_command_membership(
             counts["invalid_or_missing_request_command_id"] += 1
             continue
         usable: list[tuple[int, bool]] = []
-        for snapshot_index, observation in enumerate(observations):
-            if observation not in matching_observations:
-                continue
+        for snapshot_index, observation in matching_observations:
             commands = observation.get("commands")
             if not isinstance(commands, list):
                 continue
