@@ -12,6 +12,18 @@ class PhaseEvidenceTests(unittest.TestCase):
     def test_ambiguous(self):
         self.assertEqual(self.classify([{"phase": "event", "confidence": .96}, {"phase": "training", "confidence": .94}]).reason, "ambiguous_phase")
 
+    def test_exact_tie_stays_ambiguous_when_margin_is_zero(self):
+        result = classify_phase(
+            [{"phase": "event", "confidence": .95},
+             {"phase": "training", "confidence": .95}],
+            allowed_phases={"event", "training"},
+            threshold=.90,
+            margin=0.0,
+        )
+        self.assertEqual(result.phase, "unknown")
+        self.assertEqual(result.reason, "ambiguous_phase")
+        self.assertFalse(result.verified)
+
     def test_low_confidence(self):
         self.assertFalse(self.classify([{"phase": "event", "confidence": .75}]).verified)
 
