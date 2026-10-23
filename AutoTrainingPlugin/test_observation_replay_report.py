@@ -158,6 +158,25 @@ class ObservationReplayReportTests(unittest.TestCase):
         ))
         self.assertFalse(summary["executable"])
 
+    def test_timestamp_order_and_duplicate_counts_have_record_samples(self):
+        self.write_jsonl(self.observations, [
+            {"captured_at_utc": "2026-01-01T00:00:02Z", "turn": 1, "command_count": 0, "commands": []},
+            {"captured_at_utc": "2026-01-01T00:00:01Z", "turn": 1, "command_count": 0, "commands": []},
+            {"captured_at_utc": "2026-01-01T00:00:01Z", "turn": 1, "command_count": 0, "commands": []},
+        ])
+        self.write_jsonl(self.requests, [])
+        self.write_jsonl(self.recommendations, [])
+        report = build_report({
+            "observations": self.observations,
+            "requests": self.requests,
+            "recommendations": self.recommendations,
+        })
+        samples = report["data_quality_summary"]["record_anomaly_samples"]
+        self.assertTrue(any(row["stream"] == "observations" and row["record_index"] == 1
+                            and row["issue"] == "timestamp_out_of_order" for row in samples))
+        self.assertTrue(any(row["stream"] == "observations" and row["record_index"] == 2
+                            and row["issue"] == "duplicate_timestamp_instant" for row in samples))
+
     def test_data_quality_summary_empty_inputs_are_insufficient(self):
         for path in (self.observations, self.requests, self.recommendations):
             path.write_text("", encoding="utf-8")
