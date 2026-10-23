@@ -27,13 +27,16 @@ class PcObservationAdapter:
 
     def capture(self, observation: Mapping[str, Any]) -> dict[str, Any]:
         """Stamp one newly captured state; caller-provided freshness is ignored."""
-        stamped = self._sequencer.stamp(observation)
+        # Serialize sequence assignment with the submission-boundary snapshot.
+        # Otherwise a concurrent capture could receive a sequence before the
+        # boundary but read the baseline after it and be mislabeled as fresh.
         with self._lock:
+            stamped = self._sequencer.stamp(observation)
             baseline = self._submission_sequence
-        stamped["fresh_after_submission"] = (
-            baseline is not None and stamped["observation_seq"] > baseline
-        )
-        return stamped
+            stamped["fresh_after_submission"] = (
+                baseline is not None and stamped["observation_seq"] > baseline
+            )
+            return stamped
 
     def mark_submission(self) -> int:
         """Mark the current sequence as the pre-submit baseline."""
