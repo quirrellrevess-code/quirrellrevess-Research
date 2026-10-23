@@ -10,7 +10,7 @@ class MappingTests(unittest.TestCase):
         self.mapping = {("training", "train_speed"): "train_speed_button"}
         self.candidate = {
             "target_id": "train_speed_button", "bbox": [100, 200, 160, 240],
-            "verified": True, "reason": "target_candidate", "executable": False,
+            "verified": True, "confidence": 0.97, "reason": "target_candidate", "executable": False,
         }
 
     def resolve(self, rec=None, state=None, candidates=None, mapping=None):
@@ -60,6 +60,21 @@ class MappingTests(unittest.TestCase):
         bad = {**self.candidate, "executable": True}
         self.assertEqual(self.resolve(candidates=[bad])["reason"],
                          "candidate_execution_flag_inconsistent")
+
+    def test_missing_or_nonfinite_confidence_rejected(self):
+        for confidence in (None, float("nan"), float("inf"), True, -0.1, 1.1):
+            with self.subTest(confidence=confidence):
+                bad = {k: v for k, v in self.candidate.items() if k != "confidence"}
+                bad["confidence"] = confidence
+                self.assertEqual(self.resolve(candidates=[bad])["reason"], "invalid_target_confidence")
+
+    def test_low_confidence_rejected(self):
+        bad = {**self.candidate, "confidence": 0.91}
+        self.assertEqual(self.resolve(candidates=[bad])["reason"], "target_confidence_below_policy")
+
+    def test_invalid_confidence_policy_rejected(self):
+        self.assertEqual(resolve_target(self.rec, self.state, [self.candidate], mapping=self.mapping,
+                                        min_confidence=float("nan"))["reason"], "invalid_confidence_policy")
 
     def test_invalid_bounds_rejected(self):
         bad = {**self.candidate, "bbox": [1, 2, 1, 4]}
