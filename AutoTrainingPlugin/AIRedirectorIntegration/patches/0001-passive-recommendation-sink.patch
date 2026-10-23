@@ -1,24 +1,31 @@
 diff --git a/Class1.cs b/Class1.cs
-index 0000000..0000000 100644
 --- a/Class1.cs
 +++ b/Class1.cs
-@@
+@@ -7,6 +7,7 @@
+ using Terminal.Gui.ViewBase;
  using Terminal.Gui.Views;
  using UmamusumeResponseAnalyzer.Plugin;
 +using UmaAutoTraining.AIRedirectorIntegration;
-@@
+ 
+ namespace AIRedirector
+ {
+@@ -26,6 +27,7 @@
+         ChildProcessManager? _childProcessManager;
+         AIRedirectorConfig config = new();
          ILegendAiOutputBridge? legendOutput;
-         readonly UmaAiRawOutputWorkspace rawOutput = new();
 +        readonly LegendAiRecommendationSink recommendationSink = new();
+         readonly UmaAiRawOutputWorkspace rawOutput = new();
          readonly CancellationTokenSource outputCancellation = new();
-@@
+         Task? outputTask;
+@@ -129,6 +131,7 @@
+                         continue;
+ 
                      cancellationToken.ThrowIfCancellationRequested();
 +                    _ = recommendationSink.TryRecord(output.Line);
                      _ = bridge.ApplyTargetDisplay(cancellationToken);
-@@
-         ValueTask SetLegendDisplayId(SingleModeChara? chara)
-         {
-             if (chara is not null)
+                 }
+             }
+@@ -181,12 +184,19 @@
              {
                  Volatile.Read(ref legendOutput)?.SetTarget(
                      chara.single_mode_chara_id,
@@ -26,14 +33,14 @@ index 0000000..0000000 100644
 +                recommendationSink.SetTarget(
 +                    chara.single_mode_chara_id,
 +                    chara.turn);
-             }
++            }
 +            else
 +            {
 +                recommendationSink.SetTarget(null, null);
-+            }
+             }
              return ValueTask.CompletedTask;
          }
-@@
+@@ -452,6 +462,7 @@
                  if (legendBridge is not null)
                      Capture(legendBridge.Dispose);
 +                Capture(recommendationSink.Dispose);
