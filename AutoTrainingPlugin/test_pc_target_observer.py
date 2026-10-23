@@ -67,6 +67,17 @@ class TargetObserverTests(unittest.TestCase):
             self.assertFalse(found[0]["verified"])
             self.assertEqual(found[0]["reason"], "ambiguous_multiple_matches")
 
+    def test_exact_tie_stays_ambiguous_when_margin_is_zero(self):
+        with tempfile.TemporaryDirectory() as temp:
+            (Path(temp) / "event_choice.png").write_bytes(b"fake")
+            found = detect_targets(
+                Mock(shape=(200, 300, 3), std=Mock(return_value=20.0)), Path(temp),
+                allowed_targets={"event_choice"}, cv2=FakeCv2(0.97, 0.97),
+                ambiguity_margin=0.0)
+            self.assertFalse(found[0]["verified"])
+            self.assertEqual(found[0]["reason"], "ambiguous_multiple_matches")
+            self.assertFalse(found[0]["executable"])
+
     def test_low_confidence_is_not_verified(self):
         with tempfile.TemporaryDirectory() as temp:
             (Path(temp) / "train_speed.png").write_bytes(b"fake")
