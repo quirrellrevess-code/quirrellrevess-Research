@@ -126,7 +126,14 @@ def analyze_stream(name: str, records: list[dict[str, Any]], parse_errors: list[
                 association_status_missing += 1
             elif record["turn_association_status"] is None:
                 association_status_null += 1
-            elif not isinstance(record["turn_association_status"], str) or not record["turn_association_status"].strip():
+            elif (
+                not isinstance(record["turn_association_status"], str)
+                or record["turn_association_status"] not in {
+                    "target_context_available_unverified",
+                    "unavailable_in_airredirector_context",
+                    "unavailable_in_stdout_only",
+                }
+            ):
                 association_status_invalid += 1
             else:
                 status = record["turn_association_status"]
