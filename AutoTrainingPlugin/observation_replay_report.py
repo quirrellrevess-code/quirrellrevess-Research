@@ -379,6 +379,69 @@ def audit_request_command_membership(
     }
 
 
+
+def summarize_data_quality(
+    loaded: dict[str, list[dict[str, Any]]],
+    stream_reports: dict[str, dict[str, Any]],
+    identity_consistency: dict[str, Any],
+    command_membership: dict[str, Any],
+) -> dict[str, Any]:
+    """Aggregate known data-quality anomalies without claiming state alignment."""
+    totals: Counter[str] = Counter()
+    record_count = 0
+    valid_turn_count = 0
+    for name, records in loaded.items():
+        report = stream_reports[name]
+        record_count += len(records)
+        valid_turn_count += report["valid_turn_count"]
+        totals["parse_errors"] += report["parse_error_count"]
+        totals["missing_required_fields"] += sum(report["missing_required_fields"].values())
+        totals["records_without_valid_turn"] += report["records_without_valid_turn"]
+        totals["timestamps_missing_or_invalid"] += report["invalid_or_unavailable_timestamp_count"]
+        totals["timestamps_out_of_order"] += report["timestamp_quality"]["out_of_order_count"]
+        totals["duplicate_timestamp_instants"] += report["timestamp_quality"]["duplicate_instant_count"]
+        totals["records_marked_executable"] += report["marked_executable_count"]
+        if name == "recommendations":
+            association = report.get("turn_association_status", {})
+            totals["recommendation_context_mismatches"] += association.get("context_mismatch_count", 0)
+            totals["recommendation_association_status_invalid"] += association.get("invalid_type_or_empty_count", 0)
+
+    for pair_report in identity_consistency.values():
+        counts = pair_report.get("status_counts", {})
+        totals["identity_mismatch_pairs"] += counts.get("mismatch", 0)
+        totals["identity_unavailable_pairs"] += counts.get("identity_unavailable", 0)
+
+    membership_counts = command_membership.get("status_counts", {})
+    totals["request_commands_absent_from_snapshots"] += membership_counts.get("absent_from_all_same_turn_snapshots", 0)
+    totals["request_commands_inconsistent_across_snapshots"] += membership_counts.get("inconsistent_across_same_turn_snapshots", 0)
+    totals["requests_without_same_turn_observation"] += membership_counts.get("no_same_turn_observation", 0)
+    totals["request_command_ids_invalid"] += membership_counts.get("invalid_or_missing_request_command_id", 0)
+    totals["snapshot_command_lists_unavailable"] += membership_counts.get("snapshot_command_list_unavailable", 0)
+
+    anomalies = {key: value for key, value in sorted(totals.items()) if value > 0}
+    if record_count == 0 or valid_turn_count == 0:
+        status = "insufficient_data"
+    elif anomalies:
+        status = "audit_warnings"
+    else:
+        status = "no_reported_anomalies"
+
+    return {
+        "status": status,
+        "record_count": record_count,
+        "valid_turn_records_across_streams": valid_turn_count,
+        "anomaly_counts": anomalies,
+        "interpretation": (
+            "This is a data-quality summary only. 'no_reported_anomalies' does not prove records describe the same state, "
+            "establish causality, validate live provenance, or authorize execution. "
+            "A zero count can also reflect missing coverage."
+        ),
+        "same_state_verified": False,
+        "causal_link_verified": False,
+        "executable": False,
+    }
+
+
 def build_report(paths: dict[str, Path]) -> dict[str, Any]:
     loaded: dict[str, list[dict[str, Any]]] = {}
     reports: dict[str, Any] = {}
@@ -420,9 +483,16 @@ def build_report(paths: dict[str, Path]) -> dict[str, Any]:
             "coverage_ratio": round(len(shared) / len(denominator), 4) if denominator else None,
         }
 
+    identity_consistency = build_identity_consistency(loaded)
+    request_command_membership = audit_request_command_membership(loaded["observations"], loaded["requests"])
+    data_quality_summary = summarize_data_quality(
+        loaded, reports, identity_consistency, request_command_membership
+    )
+
     return {
         "mode": "read_only_replay_report",
         "executable": False,
+        "data_quality_summary": data_quality_summary,
         "streams": reports,
         "turn_coverage": {
             "observations_with_request_turn": coverage(shared_observation_request, observed_turns),
@@ -447,8 +517,8 @@ def build_report(paths: dict[str, Path]) -> dict[str, Any]:
             "observation_turns_without_recommendation": sorted(observed_turns - recommendation_turns),
         },
         "same_turn_timing_comparisons": timing_comparisons,
-        "identity_consistency": build_identity_consistency(loaded),
-        "request_command_membership": audit_request_command_membership(loaded["observations"], loaded["requests"]),
+        "identity_consistency": identity_consistency,
+        "request_command_membership": request_command_membership,
         "limitations": [
             "Turn overlap and timestamp order are correlation evidence only; they do not establish causality.",
             "The 2-second timestamp proximity label is diagnostic only; it does not prove same-state alignment or recommendation ownership.",
