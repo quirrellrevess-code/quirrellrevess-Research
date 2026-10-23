@@ -5,7 +5,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from observation_replay_report import build_report, compare_shared_identity
+from observation_replay_report import build_report, compare_shared_identity, audit_request_command_membership
 
 
 SCRIPT = Path(__file__).with_name("observation_replay_report.py")
@@ -101,6 +101,30 @@ class ObservationReplayReportTests(unittest.TestCase):
         self.assertEqual(report["timing_comparison_coverage"]["same_turn_pairs_compared"], 1)
         self.assertEqual(report["streams"]["recommendations"]["turn_quality"]["null_count"], 0)
 
+
+    def test_request_command_membership_is_consistency_only(self):
+        result = audit_request_command_membership(
+            [{"turn": 4, "commands": [{"command_id": 2}, {"command_id": 3}]}],
+            [{"current_turn": 4, "command_id": 2},
+             {"current_turn": 4, "command_id": 8}],
+        )
+        self.assertEqual(result["request_count_compared"], 2)
+        self.assertEqual(result["status_counts"], {
+            "absent_from_all_same_turn_snapshots": 1,
+            "present_in_all_same_turn_snapshots": 1,
+        })
+        self.assertFalse(result["same_state_verified"])
+        self.assertFalse(result["causal_link_verified"])
+
+    def test_multiple_snapshots_with_conflicting_membership_are_not_collapsed(self):
+        result = audit_request_command_membership(
+            [{"turn": 4, "commands": [{"command_id": 2}]},
+             {"turn": 4, "commands": [{"command_id": 3}]}],
+            [{"current_turn": 4, "command_id": 2}],
+        )
+        self.assertEqual(result["status_counts"], {
+            "inconsistent_across_same_turn_snapshots": 1,
+        })
 
     def test_explicit_identity_mismatch_is_reported_without_claiming_state_proof(self):
         result = compare_shared_identity(
