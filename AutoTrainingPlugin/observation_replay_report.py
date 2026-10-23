@@ -408,6 +408,19 @@ def collect_record_anomaly_samples(
                     **location,
                     "issue": "timestamp_missing" if value is None or value == "" else "timestamp_invalid",
                 })
+            else:
+                parsed_timestamp = parse_timestamp(record)
+                # Reproduce analyze_stream's per-stream ordering and duplicate semantics.
+                prior_valid = [
+                    parse_timestamp(normalize_record(name, previous))
+                    for previous in records[:index]
+                ]
+                prior_valid = [value.astimezone(timezone.utc) for value in prior_valid if value is not None]
+                current_utc = parsed_timestamp.astimezone(timezone.utc)
+                if prior_valid and current_utc < prior_valid[-1]:
+                    samples.append({**location, "issue": "timestamp_out_of_order"})
+                if current_utc in prior_valid:
+                    samples.append({**location, "issue": "duplicate_timestamp_instant"})
             if record.get("executable") is True:
                 samples.append({**location, "issue": "record_marked_executable"})
             if name == "recommendations":
