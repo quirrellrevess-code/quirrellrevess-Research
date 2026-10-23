@@ -405,9 +405,10 @@ class ObservationReplayReportTests(unittest.TestCase):
         self.assertEqual(result["request_count_compared"], 0)
         self.assertEqual(result["identity_mismatch_snapshot_count"], 1)
         self.assertEqual(result["status_counts"], {
-            "identity_mismatch_snapshot_excluded": 1,
             "no_identity_compatible_snapshot": 1,
         })
+        self.assertEqual(result["non_present_samples"][0]["status"],
+                         "identity_mismatch_snapshot_excluded")
         self.assertFalse(result["same_state_verified"])
         self.assertFalse(result["causal_link_verified"])
 
