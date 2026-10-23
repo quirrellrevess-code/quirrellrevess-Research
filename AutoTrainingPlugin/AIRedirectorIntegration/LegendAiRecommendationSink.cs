@@ -7,8 +7,8 @@ using System.Text.RegularExpressions;
 namespace UmaAutoTraining.AIRedirectorIntegration;
 
 /// <summary>
-/// Passive sink to be called from AIRedirector's existing single-consumer stdout path.
-/// It records recommendations only; it never submits game commands.
+/// Passive sink for AIRedirector's existing single-consumer Legend stdout path.
+/// It records recommendations only and never submits game commands.
 /// </summary>
 public sealed class LegendAiRecommendationSink : IDisposable
 {
@@ -18,6 +18,8 @@ public sealed class LegendAiRecommendationSink : IDisposable
 
     private readonly object _gate = new();
     private readonly string _filePath;
+    private int? _singleModeCharaId;
+    private int? _turn;
     private bool _disposed;
 
     public LegendAiRecommendationSink(string? pluginDataRoot = null)
@@ -30,15 +32,24 @@ public sealed class LegendAiRecommendationSink : IDisposable
     }
 
     /// <summary>
-    /// Call only for a line from the Legend UmaAI process. The target is a snapshot
-    /// obtained from AIRedirector's existing Legend output bridge; pass nulls when
-    /// no target is known. This method never infers a turn from recommendation text.
+    /// Call beside AIRedirector's existing Legend output bridge SetTarget call.
+    /// A null target deliberately clears association when no valid target is known.
     /// </summary>
-    public bool TryRecord(
-        string? rawLine,
-        int? singleModeCharaId,
-        int? turn,
-        string source = "AIRedirector.Legend.stdout")
+    public void SetTarget(int? singleModeCharaId, int? turn)
+    {
+        lock (_gate)
+        {
+            ObjectDisposedException.ThrowIf(_disposed, this);
+            _singleModeCharaId = singleModeCharaId;
+            _turn = turn;
+        }
+    }
+
+    /// <summary>
+    /// Call only for a line from the Legend UmaAI process, after the existing
+    /// bridge has accepted the line. Recommendations are always non-executable.
+    /// </summary>
+    public bool TryRecord(string? rawLine, string source = "AIRedirector.Legend.stdout")
     {
         if (string.IsNullOrWhiteSpace(rawLine))
             return false;
@@ -51,24 +62,23 @@ public sealed class LegendAiRecommendationSink : IDisposable
         if (body.Length == 0)
             return false;
 
-        var record = new
-        {
-            timestamp_utc = DateTimeOffset.UtcNow.ToString("O", CultureInfo.InvariantCulture),
-            source,
-            single_mode_chara_id = singleModeCharaId,
-            turn,
-            raw_line = rawLine,
-            recommendation = body,
-            category = Classify(body),
-            verified = false,
-            executable = false
-        };
-
-        var json = JsonSerializer.Serialize(record);
         lock (_gate)
         {
             ObjectDisposedException.ThrowIf(_disposed, this);
-            File.AppendAllText(_filePath, json + Environment.NewLine);
+            var record = new
+            {
+                timestamp_utc = DateTimeOffset.UtcNow.ToString("O", CultureInfo.InvariantCulture),
+                source,
+                single_mode_chara_id = _singleModeCharaId,
+                turn = _turn,
+                raw_line = rawLine,
+                recommendation = body,
+                category = Classify(body),
+                verified = false,
+                executable = false
+            };
+
+            File.AppendAllText(_filePath, JsonSerializer.Serialize(record) + Environment.NewLine);
         }
         return true;
     }
