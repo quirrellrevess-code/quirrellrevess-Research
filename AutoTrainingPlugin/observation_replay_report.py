@@ -415,7 +415,7 @@ def audit_request_command_membership(
                 continue
             if identity["status"] == "identity_unavailable":
                 identity_unavailable_indices.append(snapshot_index)
-            elif identity["status"] == "match":
+            elif identity["status"] == "matched_shared_fields":
                 identity_verified_snapshot_count += 1
             commands_available = observation.get("commands_available")
             commands = observation.get("commands")
@@ -435,7 +435,7 @@ def audit_request_command_membership(
                 if isinstance(item, dict) and type(item.get("command_id")) is int
                 and item["command_id"] >= 0
             ]
-            if identity["status"] == "match":
+            if identity["status"] == "matched_shared_fields":
                 verified_identity_usable_count += 1
             usable.append((snapshot_index, command_id in ids, temporal_relation, identity["status"]))
         if identity_mismatch_indices:
