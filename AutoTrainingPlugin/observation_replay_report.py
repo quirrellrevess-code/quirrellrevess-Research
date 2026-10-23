@@ -380,6 +380,63 @@ def audit_request_command_membership(
 
 
 
+def collect_record_anomaly_samples(
+    loaded: dict[str, list[dict[str, Any]]],
+    stream_reports: dict[str, dict[str, Any]],
+    limit: int = 50,
+) -> list[dict[str, Any]]:
+    """Return bounded, record-addressable samples for directly inspectable anomalies."""
+    samples: list[dict[str, Any]] = []
+    for name, records in loaded.items():
+        schema = STREAMS[name]
+        for index, raw in enumerate(records):
+            record = normalize_record(name, raw)
+            location = {
+                "stream": name,
+                "record_index": index,
+                "turn": record.get(schema["turn_field"]),
+            }
+            for field in schema["required"]:
+                if field not in record:
+                    samples.append({**location, "issue": "missing_required_field", "field": field})
+            turn = record.get(schema["turn_field"])
+            if type(turn) is not int or turn < 0:
+                samples.append({**location, "issue": "invalid_or_missing_turn"})
+            if parse_timestamp(record) is None:
+                value = record.get("captured_at_utc", record.get("timestamp_utc"))
+                samples.append({
+                    **location,
+                    "issue": "timestamp_missing" if value is None or value == "" else "timestamp_invalid",
+                })
+            if record.get("executable") is True:
+                samples.append({**location, "issue": "record_marked_executable"})
+            if name == "recommendations":
+                status = record.get("turn_association_status")
+                if status not in {
+                    "target_context_available_unverified",
+                    "unavailable_in_airredirector_context",
+                    "unavailable_in_stdout_only",
+                }:
+                    samples.append({**location, "issue": "invalid_turn_association_status"})
+                elif stream_reports[name]["turn_association_status"]["context_mismatch_count"]:
+                    # Recheck the local row rather than assigning the stream-wide count to every row.
+                    chara = record.get("single_mode_chara_id")
+                    has_turn = type(turn) is int and turn >= 0
+                    has_chara = type(chara) is int and chara >= 0
+                    mismatch = (
+                        status == "target_context_available_unverified" and not (has_turn and has_chara)
+                    ) or (
+                        status == "unavailable_in_airredirector_context" and has_turn and has_chara
+                    ) or (
+                        status == "unavailable_in_stdout_only" and (turn is not None or chara is not None)
+                    )
+                    if mismatch:
+                        samples.append({**location, "issue": "recommendation_context_mismatch"})
+            if len(samples) >= limit:
+                return samples[:limit]
+    return samples[:limit]
+
+
 def summarize_data_quality(
     loaded: dict[str, list[dict[str, Any]]],
     stream_reports: dict[str, dict[str, Any]],
@@ -426,11 +483,25 @@ def summarize_data_quality(
     else:
         status = "no_reported_anomalies"
 
+    record_samples = collect_record_anomaly_samples(loaded, stream_reports)
+    identity_samples = [
+        {"issue": "identity_mismatch", "stream_pair": pair, **sample}
+        for pair, pair_report in identity_consistency.items()
+        for sample in pair_report.get("mismatch_samples", [])
+    ][:20]
+    command_samples = [
+        {"issue": "request_command_membership", **sample}
+        for sample in command_membership.get("non_present_samples", [])
+    ][:20]
+
     return {
         "status": status,
         "record_count": record_count,
         "valid_turn_records_across_streams": valid_turn_count,
         "anomaly_counts": anomalies,
+        "record_anomaly_samples": record_samples,
+        "identity_mismatch_samples": identity_samples,
+        "request_command_anomaly_samples": command_samples,
         "interpretation": (
             "This is a data-quality summary only. 'no_reported_anomalies' does not prove records describe the same state, "
             "establish causality, validate live provenance, or authorize execution. "
