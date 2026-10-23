@@ -391,6 +391,7 @@ def audit_request_command_membership(
     identity_unavailable_snapshot_count = 0
     identity_verified_snapshot_count = 0
     identity_unavailable_only_request_count = 0
+    identity_unavailable_snapshot_excluded_count = 0
     for request_index, request in enumerate(requests):
         turn = request.get("current_turn")
         if type(turn) is not int or turn < 0:
@@ -438,6 +439,15 @@ def audit_request_command_membership(
             if identity["status"] == "matched_shared_fields":
                 verified_identity_usable_count += 1
             usable.append((snapshot_index, command_id in ids, temporal_relation, identity["status"]))
+        # When at least one snapshot has matching shared identity fields,
+        # keep weak-identity snapshots out of the stronger membership comparison.
+        # Otherwise retain them only as explicitly weak diagnostic evidence.
+        matched_usable = [item for item in usable if item[3] == "matched_shared_fields"]
+        if matched_usable:
+            identity_unavailable_snapshot_excluded_count += sum(
+                1 for item in usable if item[3] == "identity_unavailable"
+            )
+            usable = matched_usable
         if identity_mismatch_indices:
             identity_mismatch_snapshot_count += len(identity_mismatch_indices)
             if len(samples) < 20:
@@ -505,6 +515,7 @@ def audit_request_command_membership(
         "identity_unavailable_snapshot_count": identity_unavailable_snapshot_count,
         "identity_verified_snapshot_count": identity_verified_snapshot_count,
         "identity_unavailable_only_request_count": identity_unavailable_only_request_count,
+        "identity_unavailable_snapshot_excluded_count": identity_unavailable_snapshot_excluded_count,
         "status_counts": dict(sorted(counts.items())),
         "non_present_samples": samples,
         "same_state_verified": False,
