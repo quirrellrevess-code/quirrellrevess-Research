@@ -397,6 +397,20 @@ class ObservationReplayReportTests(unittest.TestCase):
         self.assertFalse(result["same_state_verified"])
         self.assertFalse(result["causal_link_verified"])
 
+    def test_command_membership_excludes_explicit_identity_mismatch(self):
+        result = audit_request_command_membership(
+            [{"turn": 4, "scenario_id": "other", "commands": [{"command_id": 2}]}],
+            [{"current_turn": 4, "scenario_id": "expected", "command_id": 2}],
+        )
+        self.assertEqual(result["request_count_compared"], 0)
+        self.assertEqual(result["identity_mismatch_snapshot_count"], 1)
+        self.assertEqual(result["status_counts"], {
+            "identity_mismatch_snapshot_excluded": 1,
+            "no_identity_compatible_snapshot": 1,
+        })
+        self.assertFalse(result["same_state_verified"])
+        self.assertFalse(result["causal_link_verified"])
+
     def test_explicit_identity_mismatch_is_reported_without_claiming_state_proof(self):
         result = compare_shared_identity(
             {"scenario_id": 1, "chara_id": 123},
