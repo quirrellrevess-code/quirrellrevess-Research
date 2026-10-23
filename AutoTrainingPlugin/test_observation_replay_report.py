@@ -177,6 +177,37 @@ class ObservationReplayReportTests(unittest.TestCase):
         self.assertTrue(any(row["stream"] == "observations" and row["record_index"] == 2
                             and row["issue"] == "duplicate_timestamp_instant" for row in samples))
 
+    def test_sample_coverage_flags_truncated_record_identity_and_request_samples(self):
+        observations = [
+            {"captured_at_utc": "2026-01-01T00:00:01Z", "turn": 1,
+             "command_count": 0, "commands": []}
+            for _ in range(55)
+        ]
+        requests = [
+            {"captured_at_utc": f"2026-01-01T00:00:{i % 60:02d}Z", "current_turn": 1,
+             "command_type": 1, "command_id": 999}
+            for i in range(25)
+        ]
+        recommendations = [
+            {"captured_at_utc": f"2026-01-01T00:01:{i % 60:02d}Z", "source": "test",
+             "recommendation_text": "训练", "turn": 1, "single_mode_chara_id": i + 100,
+             "turn_association_status": "target_context_available_unverified",
+             "verified": False, "executable": False}
+            for i in range(25)
+        ]
+        report = build_report({
+            "observations": observations,
+            "requests": requests,
+            "recommendations": recommendations,
+        })
+        coverage = report["data_quality_summary"]["sample_coverage"]
+        self.assertTrue(coverage["record_samples_truncated"])
+        self.assertTrue(coverage["identity_mismatch_samples_truncated"])
+        self.assertTrue(coverage["request_command_samples_truncated"])
+        self.assertEqual(50, len(report["data_quality_summary"]["record_anomaly_samples"]))
+        self.assertEqual(20, len(report["data_quality_summary"]["identity_mismatch_samples"]))
+        self.assertEqual(20, len(report["data_quality_summary"]["request_command_anomaly_samples"]))
+
     def test_data_quality_summary_empty_inputs_are_insufficient(self):
         for path in (self.observations, self.requests, self.recommendations):
             path.write_text("", encoding="utf-8")
