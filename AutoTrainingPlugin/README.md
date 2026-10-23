@@ -50,6 +50,15 @@ python .\pc_target_observer.py --hwnd 0x123456 --expected-pid 1234 --templates .
 
 Each result contains a candidate bounding box in screen coordinates, confidence, and a reason. Similar high-confidence matches at distinct positions are rejected as ambiguous. Even a high-confidence candidate is always marked `executable=false`; target recognition alone does not authorize input, establish which target the policy intended, or prove that an action succeeded. Template matching is resolution/theme sensitive and must be checked against real screenshots before further integration. The separate `pc_action_target_mapping.py` module can resolve an explicit local `(phase, action_id) -> target_id` mapping only when the recommendation, run/turn, readiness, and unique target evidence all pass checks. Its output remains `executable=false`; free-form LegendAI text is not promoted into a verified action ID.
 
+For offline inspection, `pc_action_preview.py` accepts a JSON file (or stdin) containing `recommendation`, `state`, `candidates`, and a `mapping` list of `phase/action_id/target_id` records. It prints a dry-run JSON result and never interacts with the game or submits input:
+
+```powershell
+python .\\pc_action_preview.py .\\sample-preview.json
+Get-Content .\\sample-preview.json -Raw | python .\\pc_action_preview.py
+```
+
+A successful preview means only that the supplied evidence satisfies the mapping checks. It does not prove the supplied data came from a trusted live observer and does not authorize execution.
+
 The window helper captures the selected client rectangle through desktop screenshot APIs. This is not a hidden/off-screen capture method: occlusion, minimized windows, display scaling, or desktop changes can affect the captured image. A visible HWND and matching PID guard selection, but do not prove the pixels belong exclusively to the game.
 
 ## Guarded controller contract
@@ -86,6 +95,6 @@ GitHub Actions checks Python syntax and offline unit tests, validates the AIRedi
 2. Validate captured URA state and LegendAI recommendation association over representative turns.
 3. Validate phase templates against real screenshots, including resolution/scaling and occlusion cases.
 4. Validate read-only UI target detection against representative real screenshots, including repeated controls, uniform/blank frames, resolution changes, and display scaling.
-5. Define and test an explicit recommendation-to-target mapping; keep it non-executable until each mapping is validated against observed game state.
+5. Validate dry-run recommendation-to-target association against recorded observations; keep it non-executable.
 6. Replay observations offline and verify action-to-control mapping before considering a real input backend.
 7. Verify a supported, permitted execution channel and end-to-end postconditions before enabling any automated actions.
