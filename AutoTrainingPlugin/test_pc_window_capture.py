@@ -11,7 +11,7 @@ class WindowCaptureTests(unittest.TestCase):
 
     def test_invalid_handle_rejected_before_api(self):
         with patch.object(pc_window_capture.sys, "platform", "win32"):
-            with patch.object(pc_window_capture.ctypes, "WinDLL", side_effect=AssertionError("should not call API")):
+            with patch.object(pc_window_capture.ctypes, "WinDLL", side_effect=AssertionError("should not call API"), create=True):
                 with self.assertRaisesRegex(ValueError, "invalid_hwnd"):
                     pc_window_capture.get_client_capture_rect(0)
 
