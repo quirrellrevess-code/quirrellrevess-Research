@@ -49,8 +49,20 @@ def read_jsonl(path: Path) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
     return records, errors
 
 
+def normalize_record(name: str, record: dict[str, Any]) -> dict[str, Any]:
+    """Normalize known field names from both the Python bridge and C# sink."""
+    normalized = dict(record)
+    if name == "recommendations":
+        if "captured_at_utc" not in normalized and "timestamp_utc" in normalized:
+            normalized["captured_at_utc"] = normalized["timestamp_utc"]
+        if "recommendation_text" not in normalized and "recommendation" in normalized:
+            normalized["recommendation_text"] = normalized["recommendation"]
+    return normalized
+
+
 def analyze_stream(name: str, records: list[dict[str, Any]], parse_errors: list[dict[str, Any]]) -> dict[str, Any]:
     schema = STREAMS[name]
+    records = [normalize_record(name, record) for record in records]
     missing = Counter()
     invalid_turns = 0
     valid_turns: set[int] = set()
@@ -91,6 +103,7 @@ def build_report(paths: dict[str, Path]) -> dict[str, Any]:
 
     for name, path in paths.items():
         records, errors = read_jsonl(path)
+        records = [normalize_record(name, record) for record in records]
         loaded[name] = records
         reports[name] = analyze_stream(name, records, errors)
         turn_field = STREAMS[name]["turn_field"]
