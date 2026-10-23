@@ -83,7 +83,7 @@ def main() -> int:
             time.sleep(max(0.0, args.interval_ms / 1000.0 - elapsed))
     except KeyboardInterrupt:
         return 0
-    except (OSError, RuntimeError, ValueError, cv2.error) as exc:
+    except Exception as exc:
         print(json.dumps(build_failure_record(exc), separators=(",", ":")), flush=True)
         return 2
 
