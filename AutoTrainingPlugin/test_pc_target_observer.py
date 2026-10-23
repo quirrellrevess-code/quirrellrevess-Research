@@ -50,7 +50,7 @@ class TargetObserverTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temp:
             (Path(temp) / "train_speed.png").write_bytes(b"fake")
             found = detect_targets(
-                Mock(shape=(200, 300, 3)), Path(temp),
+                Mock(shape=(200, 300, 3), std=Mock(return_value=20.0)), Path(temp),
                 allowed_targets={"train_speed"}, cv2=FakeCv2(),
                 screen_origin=(100, 200))
             self.assertEqual(len(found), 1)
@@ -62,7 +62,7 @@ class TargetObserverTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temp:
             (Path(temp) / "event_choice.png").write_bytes(b"fake")
             found = detect_targets(
-                Mock(shape=(200, 300, 3)), Path(temp),
+                Mock(shape=(200, 300, 3), std=Mock(return_value=20.0)), Path(temp),
                 allowed_targets={"event_choice"}, cv2=FakeCv2(0.97, 0.95))
             self.assertFalse(found[0]["verified"])
             self.assertEqual(found[0]["reason"], "ambiguous_multiple_matches")
@@ -71,7 +71,7 @@ class TargetObserverTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temp:
             (Path(temp) / "train_speed.png").write_bytes(b"fake")
             found = detect_targets(
-                Mock(shape=(200, 300, 3)), Path(temp),
+                Mock(shape=(200, 300, 3), std=Mock(return_value=20.0)), Path(temp),
                 allowed_targets={"train_speed"}, cv2=FakeCv2(0.75, 0.2))
             self.assertFalse(found[0]["verified"])
             self.assertEqual(found[0]["reason"], "low_confidence")
@@ -81,7 +81,7 @@ class TargetObserverTests(unittest.TestCase):
             (Path(temp) / "unlisted.png").write_bytes(b"fake")
             fake = FakeCv2()
             found = detect_targets(
-                Mock(shape=(200, 300, 3)), Path(temp),
+                Mock(shape=(200, 300, 3), std=Mock(return_value=20.0)), Path(temp),
                 allowed_targets={"train_speed"}, cv2=fake)
             self.assertEqual(found, [])
             self.assertEqual(fake.imread_calls, [])
