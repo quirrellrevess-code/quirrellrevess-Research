@@ -16,7 +16,7 @@ from pc_screen_observer import detect_phase
 from pc_window_capture import capture_client_area
 
 
-def build_observation_record(envelope, evidence, rect):
+def build_observation_record(envelope, evidence, rect, *, hwnd, expected_pid):
     """Build a JSONL record while preserving the read-only execution boundary."""
     record = envelope.record_capture({
         "phase": evidence.phase,
@@ -29,6 +29,8 @@ def build_observation_record(envelope, evidence, rect):
         "executable": False,
     })
     record["mode"] = "read_only"
+    record["window_hwnd"] = hwnd
+    record["window_pid"] = expected_pid
     record["verified"] = False
     record["ready"] = False
     record["executable"] = False
@@ -77,7 +79,9 @@ def main() -> int:
             evidence = detect_phase(frame, args.templates, allowed_phases=set(args.phases), cv2=cv2)
             # The timestamp marks this completed observation envelope, not exact
             # pixel-exposure time. Record builder always forces execution flags off.
-            record = build_observation_record(envelope, evidence, rect)
+            record = build_observation_record(
+                envelope, evidence, rect, hwnd=args.hwnd, expected_pid=args.expected_pid
+            )
             print(json.dumps(record, separators=(",", ":"), allow_nan=False), flush=True)
             elapsed = time.monotonic() - started
             time.sleep(max(0.0, args.interval_ms / 1000.0 - elapsed))
