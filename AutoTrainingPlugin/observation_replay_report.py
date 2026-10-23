@@ -77,6 +77,7 @@ def analyze_stream(name: str, records: list[dict[str, Any]], parse_errors: list[
     association_status_missing = 0
     association_status_null = 0
     association_status_invalid = 0
+    association_context_mismatch = 0
 
     for record in records:
         for field in schema["required"]:
@@ -108,7 +109,18 @@ def analyze_stream(name: str, records: list[dict[str, Any]], parse_errors: list[
             elif not isinstance(record["turn_association_status"], str) or not record["turn_association_status"].strip():
                 association_status_invalid += 1
             else:
-                association_status_values[record["turn_association_status"]] += 1
+                status = record["turn_association_status"]
+                association_status_values[status] += 1
+                turn_value = record.get("turn")
+                chara_value = record.get("single_mode_chara_id")
+                has_valid_turn = type(turn_value) is int and turn_value >= 0
+                has_valid_chara = type(chara_value) is int and chara_value >= 0
+                if status == "target_context_available_unverified" and not (has_valid_turn and has_valid_chara):
+                    association_context_mismatch += 1
+                elif status == "unavailable_in_airredirector_context" and has_valid_turn and has_valid_chara:
+                    association_context_mismatch += 1
+                elif status == "unavailable_in_stdout_only" and (turn_value is not None or chara_value is not None):
+                    association_context_mismatch += 1
 
     result = {
         "record_count": len(records),
@@ -132,6 +144,7 @@ def analyze_stream(name: str, records: list[dict[str, Any]], parse_errors: list[
             "missing_field_count": association_status_missing,
             "null_count": association_status_null,
             "invalid_type_or_empty_count": association_status_invalid,
+            "context_mismatch_count": association_context_mismatch,
             "values": dict(sorted(association_status_values.items())),
         }
     return result
