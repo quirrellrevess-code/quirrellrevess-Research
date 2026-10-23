@@ -43,7 +43,7 @@ class MappingTests(unittest.TestCase):
         self.assertEqual(self.resolve(mapping={})["reason"], "mapping_not_found")
 
     def test_invalid_mapping_rejected(self):
-        self.assertEqual(self.resolve(mapping=None)["reason"], "invalid_mapping")
+        self.assertEqual(self.resolve(mapping="not-a-mapping")["reason"], "invalid_mapping")
 
     def test_missing_target_rejected(self):
         self.assertEqual(self.resolve(candidates=[])["reason"], "target_not_detected")
