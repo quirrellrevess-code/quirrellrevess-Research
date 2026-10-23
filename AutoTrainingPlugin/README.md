@@ -22,7 +22,7 @@ The stream audit also counts `verified` and `executable` values that are present
 
 Malformed JSONL entries are separately exposed as `parse_error_samples`, with stream name, original physical line number, and parse reason (up to 20 samples). The corresponding `parse_errors` anomaly count includes all malformed/non-object lines, and `sample_coverage.parse_error_samples_truncated` signals omitted examples.
 
-The `sample_coverage` object explicitly flags when record, identity-mismatch, or request-command samples were truncated. Aggregate `anomaly_counts` are not limited to the displayed sample count.
+The `sample_coverage` object explicitly flags when record, identity-mismatch, or request-command samples were truncated. Identity mismatch samples include zero-based source record indices for both streams; request-command membership samples include the request index and the zero-based indices of snapshots actually compared. Aggregate `anomaly_counts` are not limited to the displayed sample count.
 
 Timestamp-order and duplicate-instant issues in the record samples use the same UTC-normalized comparison rules as the per-stream counters. Record indices are zero-based within each parsed JSONL stream (they are not physical line numbers if malformed lines were skipped).
 
