@@ -4,6 +4,7 @@
 Consumes lines from the existing AIRedirector Legend AI stdout stream and
 records recommendation candidates. This is an observation adapter only:
 it does not start another AI process, invent game command IDs, or submit input.
+The stdout-only path cannot reliably associate a recommendation with a turn.
 """
 from __future__ import annotations
 
@@ -61,6 +62,7 @@ def record_stream(lines, destination: Path) -> int:
                 "source": "legendai_stdout",
                 **parsed,
                 "turn": None,
+                "turn_association_status": "unavailable_in_stdout_only",
                 "single_mode_chara_id": None,
                 "action_id": None,
                 "verified": False,
@@ -77,8 +79,8 @@ def main() -> int:
     parser.add_argument(
         "--output",
         type=Path,
-        default=Path("PluginData/UmaAutoTraining/legendai-recommendations.jsonl"),
-        help="append-only JSONL destination",
+        default=Path("PluginData/UmaAutoTraining/legendai-stdout-recommendations.jsonl"),
+        help="append-only JSONL destination (separate from AIRedirector sink output)",
     )
     args = parser.parse_args()
     try:
