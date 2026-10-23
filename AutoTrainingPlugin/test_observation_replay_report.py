@@ -332,6 +332,8 @@ class ObservationReplayReportTests(unittest.TestCase):
         self.assertEqual(result["status_counts"], {
             "inconsistent_across_same_turn_snapshots": 1,
         })
+        self.assertEqual(result["non_present_samples"][0]["request_index"], 0)
+        self.assertEqual(result["non_present_samples"][0]["snapshot_record_indices"], [0, 1])
 
     def test_explicit_identity_mismatch_is_reported_without_claiming_state_proof(self):
         result = compare_shared_identity(
@@ -341,6 +343,32 @@ class ObservationReplayReportTests(unittest.TestCase):
         self.assertEqual(result["status"], "mismatch")
         self.assertEqual(result["mismatch_fields"], ["scenario_id"])
         self.assertFalse(result["same_state_verified"])
+
+    def test_identity_mismatch_samples_include_source_record_indices(self):
+        self.write_jsonl(self.observations, [
+            {"captured_at_utc": "2026-01-01T00:00:00Z", "turn": 4,
+             "command_count": 0, "commands": [], "scenario_id": "obs"},
+        ])
+        self.write_jsonl(self.requests, [])
+        self.write_jsonl(self.recommendations, [
+            {"captured_at_utc": "2026-01-01T00:00:01Z", "source": "test",
+             "recommendation_text": "训练", "turn": 4, "scenario_id": "rec",
+             "turn_association_status": "target_context_available_unverified",
+             "single_mode_chara_id": 123, "verified": False, "executable": False},
+        ])
+        report = build_report({
+            "observations": self.observations,
+            "requests": self.requests,
+            "recommendations": self.recommendations,
+        })
+        samples = report["data_quality_summary"]["identity_mismatch_samples"]
+        self.assertTrue(any(
+            row["stream_pair"] == "observations_vs_recommendations"
+            and row["left_record_index"] == 0
+            and row["right_record_index"] == 0
+            and row["mismatch_fields"] == ["scenario_id"]
+            for row in samples
+        ))
 
     def test_missing_identity_is_not_inferred(self):
         result = compare_shared_identity(
