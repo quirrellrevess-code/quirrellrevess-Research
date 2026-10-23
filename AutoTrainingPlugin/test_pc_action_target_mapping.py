@@ -36,7 +36,7 @@ class MappingTests(unittest.TestCase):
                          "stale_or_missing_turn")
 
     def test_not_ready_rejected(self):
-        self.assertEqual(self.resolve(state={**self.state, "ready": False})["reason],
+        self.assertEqual(self.resolve(state={**self.state, "ready": False})["reason"],
                          "state_not_ready")
 
     def test_no_mapping_rejected(self):
