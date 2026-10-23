@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import argparse
 import json
-from datetime import datetime
+from datetime import datetime, timezone
 import sys
 from collections import Counter
 from pathlib import Path
@@ -70,6 +70,12 @@ def analyze_stream(name: str, records: list[dict[str, Any]], parse_errors: list[
     null_turns = 0
     invalid_turn_types = 0
     invalid_timestamps = 0
+    timestamp_missing_or_null = 0
+    timestamp_invalid_format_or_timezone = 0
+    timestamp_out_of_order = 0
+    timestamp_duplicates = 0
+    seen_timestamps: set[datetime] = set()
+    previous_timestamp: datetime | None = None
     valid_turns: set[int] = set()
     unverified = 0
     executable_marked = 0
@@ -95,8 +101,22 @@ def analyze_stream(name: str, records: list[dict[str, Any]], parse_errors: list[
                 null_turns += 1
             else:
                 invalid_turn_types += 1
-        if parse_timestamp(record) is None:
+        timestamp_value = record.get("captured_at_utc", record.get("timestamp_utc"))
+        parsed_timestamp = parse_timestamp(record)
+        if parsed_timestamp is None:
             invalid_timestamps += 1
+            if timestamp_value is None or timestamp_value == "":
+                timestamp_missing_or_null += 1
+            else:
+                timestamp_invalid_format_or_timezone += 1
+        else:
+            timestamp_utc = parsed_timestamp.astimezone(timezone.utc)
+            if timestamp_utc in seen_timestamps:
+                timestamp_duplicates += 1
+            seen_timestamps.add(timestamp_utc)
+            if previous_timestamp is not None and timestamp_utc < previous_timestamp:
+                timestamp_out_of_order += 1
+            previous_timestamp = timestamp_utc
         if record.get("verified") is False:
             unverified += 1
         if record.get("executable") is True:
@@ -136,6 +156,12 @@ def analyze_stream(name: str, records: list[dict[str, Any]], parse_errors: list[
             "invalid_type_or_range_count": invalid_turn_types,
         },
         "invalid_or_unavailable_timestamp_count": invalid_timestamps,
+        "timestamp_quality": {
+            "missing_or_null_count": timestamp_missing_or_null,
+            "invalid_format_or_timezone_count": timestamp_invalid_format_or_timezone,
+            "out_of_order_count": timestamp_out_of_order,
+            "duplicate_instant_count": timestamp_duplicates,
+        },
         "explicitly_unverified_count": unverified,
         "marked_executable_count": executable_marked,
     }
