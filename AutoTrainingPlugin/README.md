@@ -5,7 +5,7 @@
 This repository contains three separate layers:
 
 - **URA observations:** the C# plugin uses URADLL's `IPlugin` and response analyzer extension points to record normalized state snapshots to `PluginData/UmaAutoTraining/observations.jsonl`.
-- **LegendAI recommendations:** the stdout bridge and optional AIRedirector patch record recommendation text as unverified, non-executable telemetry. They do not translate free-form text into game commands.
+- **LegendAI recommendations:** the optional AIRedirector patch writes enriched recommendation telemetry to `legendai-recommendations.jsonl`, using the target character/turn context known to AIRedirector. The standalone Python stdout bridge is a fallback observer and writes to the separate `legendai-stdout-recommendations.jsonl` by default. Do not point both writers at the same file or treat the Python bridge's null turn as an association.
 - **PC visual observation:** read-only helpers enumerate visible windows, capture a selected window's client-area screen rectangle, and classify a screen phase against user-supplied templates. The controller defines postconditions but has no verified input backend by default.
 
 **No automated game actions are enabled.** The observed URA `/notify/request` and `/notify/response` routes are notification/dispatch paths, not proof of a supported command-submission channel. Do not treat a successful screenshot match, a backend's input acceptance, or a LegendAI recommendation as proof that an in-game action succeeded.
@@ -15,7 +15,7 @@ This repository contains three separate layers:
 From the `AutoTrainingPlugin` directory on Windows:
 
 ```powershell
-python .\pc_window_probe.py
+python .\\pc_window_probe.py
 ```
 
 The output includes visible windows' HWND, PID, class name, and outer rectangle. Window titles are omitted unless `--include-titles` is explicitly supplied. Use the output to identify the intended client window; do not assume the first listed window is the game.
@@ -29,13 +29,13 @@ Provide a local directory of phase templates named exactly for the phase identif
 Window-bound capture (replace the sample values with the actual HWND and PID reported by the probe):
 
 ```powershell
-python .\pc_screen_observer.py --hwnd 0x123456 --expected-pid 1234 --templates .\templates --phases training event event_result
+python .\\pc_screen_observer.py --hwnd 0x123456 --expected-pid 1234 --templates .\\templates --phases training event event_result
 ```
 
 Or use an explicit desktop-coordinate bounding box:
 
 ```powershell
-python .\pc_screen_observer.py --bbox 100 100 1380 820 --templates .\templates --phases training event event_result
+python .\\pc_screen_observer.py --bbox 100 100 1380 820 --templates .\\templates --phases training event event_result
 ```
 
 The output is JSON with `mode=read_only`, capture rectangle, phase, confidence, verification flag, and reason. It returns an unknown/unverified result when evidence is missing, weak, malformed, or ambiguous. The numeric confidence threshold is a conservative initial heuristic, not a calibrated probability; templates and threshold must be validated against real screenshots before relying on classification.
@@ -45,7 +45,7 @@ The output is JSON with `mode=read_only`, capture rectangle, phase, confidence, 
 Use `pc_target_observer.py` with manually prepared button/choice templates named by stable identifiers, such as `train_speed.png` or `event_choice.png`:
 
 ```powershell
-python .\pc_target_observer.py --hwnd 0x123456 --expected-pid 1234 --templates .\target-templates --targets train_speed train_stamina event_choice
+python .\\pc_target_observer.py --hwnd 0x123456 --expected-pid 1234 --templates .\\target-templates --targets train_speed train_stamina event_choice
 ```
 
 Each result contains a candidate bounding box in screen coordinates, confidence, and a reason. Similar high-confidence matches at distinct positions are rejected as ambiguous. Even a high-confidence candidate is always marked `executable=false`; target recognition alone does not authorize input, establish which target the policy intended, or prove that an action succeeded. Template matching is resolution/theme sensitive and must be checked against real screenshots before further integration. The separate `pc_action_target_mapping.py` module can resolve an explicit local `(phase, action_id) -> target_id` mapping only when the recommendation, run/turn, readiness, and unique target evidence all pass checks. Its output remains `executable=false`; free-form LegendAI text is not promoted into a verified action ID.
@@ -63,14 +63,19 @@ The window helper captures the selected client rectangle through desktop screens
 
 ## Offline observation replay report
 
- Use `observation_replay_report.py` to compare the three JSONL streams emitted by the passive URA plugin and LegendAI bridge. The report checks parse/schema quality, lists overlapping turns, and compares timestamps for recommendation/request records sharing a turn. Per-stream diagnostics distinguish missing, null, and invalid turn values, count unavailable/invalid timestamps, and summarize how many records/pairs were eligible for timing comparison. It does not claim that a request was caused by a recommendation; timestamp order is correlation evidence only, and recommendations with a null turn remain unassociated. It accepts both the Python bridge's `captured_at_utc` / `recommendation_text` fields and the C# sink's `timestamp_utc` / `recommendation` fields.
+Use `observation_replay_report.py` to compare the three JSONL streams emitted by the passive URA plugin and one selected LegendAI recommendation writer. The report checks parse/schema quality, lists overlapping turns, and compares timestamps for recommendation/request records sharing a turn. Per-stream diagnostics distinguish missing, null, and invalid turn values, count unavailable/invalid timestamps, and summarize how many records/pairs were eligible for timing comparison. It does not claim that a request was caused by a recommendation; timestamp order is correlation evidence only.
+
+The AIRedirector sink has explicit target context when AIRedirector reports a valid target. The standalone Python stdout bridge cannot infer this safely and marks `turn=null` with `turn_association_status=unavailable_in_stdout_only`. Never fill that turn using nearest timestamps. Use one writer's output for a report, e.g.:
 
 ```powershell
-python .\observation_replay_report.py --observations .\PluginData\UmaAutoTraining\observations.jsonl --requests .\PluginData\UmaAutoTraining\action-requests-observed.jsonl --recommendations .\PluginData\UmaAutoTraining\legendai-recommendations.jsonl
+# AIRedirector patch sink output
+python .\\observation_replay_report.py --observations .\\PluginData\\UmaAutoTraining\\observations.jsonl --requests .\\PluginData\\UmaAutoTraining\\action-requests-observed.jsonl --recommendations .\\PluginData\\UmaAutoTraining\\legendai-recommendations.jsonl
+
+# Or standalone Python bridge output
+python .\\observation_replay_report.py --observations .\\PluginData\\UmaAutoTraining\\observations.jsonl --requests .\\PluginData\\UmaAutoTraining\\action-requests-observed.jsonl --recommendations .\\PluginData\\UmaAutoTraining\\legendai-stdout-recommendations.jsonl
 ```
 
 Exit code `0` means the streams parsed and required fields were present; `1` means malformed JSON lines or missing required fields were reported; `2` means an input file could not be read. The JSON output is always marked `executable=false`. This is an offline evidence report only: turn overlap is not causal proof, action IDs are not inferred, and no input is sent to the game.
-
 
 ## Guarded controller contract
 
@@ -83,7 +88,7 @@ These checks are defense-in-depth, not authorization to enable a real input back
 Requirements: .NET 10 SDK and the matching URA runtime assemblies.
 
 ```powershell
-dotnet build .\AutoTrainingPlugin.csproj -c Release -p:UraReferenceDir="D:\path\to\URA"
+dotnet build .\\AutoTrainingPlugin.csproj -c Release -p:UraReferenceDir="D:\\path\\to\\URA"
 ```
 
 Set `UraReferenceDir` to the directory containing `UmamusumeResponseAnalyzer.dll`, `Newtonsoft.Json.dll`, and `Spectre.Console.dll`.
@@ -91,7 +96,7 @@ Set `UraReferenceDir` to the directory containing `UmamusumeResponseAnalyzer.dll
 To copy the built DLL into an installed URA Plugins directory during build, add:
 
 ```powershell
--p:UraPluginDir="D:\path\to\UmamusumeResponseAnalyzer\Plugins"
+-p:UraPluginDir="D:\\path\\to\\UmamusumeResponseAnalyzer\\Plugins"
 ```
 
 The plugin target framework and references must match the actual URA runtime. Full plugin build/load verification and live game-window capture have not yet been performed.
