@@ -11,11 +11,11 @@ class Backend:
 
 
 def rec(**kwargs):
-    return dict(run_id="r", turn=7, action_id="event_choice", verified=True, **kwargs)
+    return {"run_id": "r", "turn": 7, "action_id": "event_choice", "verified": True} | kwargs
 
 
 def state(**kwargs):
-    return dict(run_id="r", turn=7, ready=True, phase="event", **kwargs)
+    return {"run_id": "r", "turn": 7, "ready": True, "phase": "event"} | kwargs
 
 
 class PhasePostconditionTests(unittest.TestCase):
