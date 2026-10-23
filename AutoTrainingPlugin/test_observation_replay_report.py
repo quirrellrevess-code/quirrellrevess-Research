@@ -50,6 +50,12 @@ class ObservationReplayReportTests(unittest.TestCase):
         self.assertEqual(report["turn_overlap"]["observation_recommendation_shared_turns"], [5])
         self.assertEqual(report["streams"]["recommendations"]["records_without_valid_turn"], 1)
         self.assertEqual(report["streams"]["recommendations"]["turn_quality"]["null_count"], 1)
+        self.assertEqual(report["streams"]["recommendations"]["turn_association_status"], {
+            "missing_field_count": 2,
+            "null_count": 0,
+            "invalid_type_or_empty_count": 0,
+            "values": {},
+        })
         self.assertEqual(report["timing_comparison_coverage"]["recommendations_without_valid_turn_excluded"], 1)
         self.assertEqual(report["timing_comparison_coverage"]["same_turn_pairs_compared"], 0)
         self.assertIn("establish causality", report["limitations"][0])
@@ -68,6 +74,12 @@ class ObservationReplayReportTests(unittest.TestCase):
         recommendation_report = report["streams"]["recommendations"]
         self.assertEqual(recommendation_report["missing_required_fields"], {})
         self.assertEqual(recommendation_report["turns"], [4])
+        self.assertEqual(recommendation_report["turn_association_status"], {
+            "missing_field_count": 0,
+            "null_count": 0,
+            "invalid_type_or_empty_count": 0,
+            "values": {"target_context_available_unverified": 1},
+        })
         self.assertEqual(report["turn_overlap"]["observation_recommendation_shared_turns"], [4])
         timing = report["same_turn_timing_comparisons"]
         self.assertEqual(len(timing), 1)
