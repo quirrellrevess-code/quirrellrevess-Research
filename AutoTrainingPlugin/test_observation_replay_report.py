@@ -5,7 +5,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from observation_replay_report import build_report
+from observation_replay_report import build_report, compare_shared_identity
 
 
 SCRIPT = Path(__file__).with_name("observation_replay_report.py")
@@ -101,6 +101,24 @@ class ObservationReplayReportTests(unittest.TestCase):
         self.assertEqual(report["timing_comparison_coverage"]["same_turn_pairs_compared"], 1)
         self.assertEqual(report["streams"]["recommendations"]["turn_quality"]["null_count"], 0)
 
+
+    def test_explicit_identity_mismatch_is_reported_without_claiming_state_proof(self):
+        result = compare_shared_identity(
+            {"scenario_id": 1, "chara_id": 123},
+            {"scenario_id": 2, "chara_id": 123},
+        )
+        self.assertEqual(result["status"], "mismatch")
+        self.assertEqual(result["mismatch_fields"], ["scenario_id"])
+        self.assertFalse(result["same_state_verified"])
+
+    def test_missing_identity_is_not_inferred(self):
+        result = compare_shared_identity(
+            {"turn": 4},
+            {"turn": 4, "single_mode_chara_id": 123},
+        )
+        self.assertEqual(result["status"], "identity_unavailable")
+        self.assertEqual(result["compared_fields"], {})
+        self.assertFalse(result["same_state_verified"])
 
     def test_timestamp_proximity_is_diagnostic_not_state_proof(self):
         recommendations = [{
