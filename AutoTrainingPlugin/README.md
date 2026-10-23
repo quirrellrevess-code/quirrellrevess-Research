@@ -18,6 +18,8 @@ The read-only replay report includes `data_quality_summary`, an aggregate view o
 - `audit_warnings`: one or more measured data-quality anomalies were found.
 - `no_reported_anomalies`: none of the currently measured anomaly counters were nonzero; this is **not** proof of complete coverage or aligned state.
 
+Malformed JSONL entries are separately exposed as `parse_error_samples`, with stream name, original physical line number, and parse reason (up to 20 samples). The corresponding `parse_errors` anomaly count includes all malformed/non-object lines, and `sample_coverage.parse_error_samples_truncated` signals omitted examples.
+
 The `sample_coverage` object explicitly flags when record, identity-mismatch, or request-command samples were truncated. Aggregate `anomaly_counts` are not limited to the displayed sample count.
 
 Timestamp-order and duplicate-instant issues in the record samples use the same UTC-normalized comparison rules as the per-stream counters. Record indices are zero-based within each parsed JSONL stream (they are not physical line numbers if malformed lines were skipped).
