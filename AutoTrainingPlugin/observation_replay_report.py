@@ -495,16 +495,36 @@ def summarize_data_quality(
     else:
         status = "no_reported_anomalies"
 
-    record_samples = collect_record_anomaly_samples(loaded, stream_reports)
-    identity_samples = [
+    # Fetch one extra record sample to distinguish exactly-at-limit from truncated output.
+    record_samples_with_sentinel = collect_record_anomaly_samples(loaded, stream_reports, limit=51)
+    record_samples_truncated = len(record_samples_with_sentinel) > 50
+    record_samples = record_samples_with_sentinel[:50]
+    identity_samples_all = [
         {"issue": "identity_mismatch", "stream_pair": pair, **sample}
         for pair, pair_report in identity_consistency.items()
         for sample in pair_report.get("mismatch_samples", [])
-    ][:20]
-    command_samples = [
+    ]
+    identity_samples = identity_samples_all[:20]
+    total_identity_mismatches = sum(
+        pair_report.get("status_counts", {}).get("mismatch", 0)
+        for pair_report in identity_consistency.values()
+    )
+    command_samples_all = [
         {"issue": "request_command_membership", **sample}
         for sample in command_membership.get("non_present_samples", [])
-    ][:20]
+    ]
+    command_samples = command_samples_all[:20]
+    membership_counts = command_membership.get("status_counts", {})
+    total_non_present_requests = sum(
+        membership_counts.get(key, 0)
+        for key in (
+            "absent_from_all_same_turn_snapshots",
+            "inconsistent_across_same_turn_snapshots",
+            "no_same_turn_observation",
+            "invalid_or_missing_request_command_id",
+            "snapshot_command_list_unavailable",
+        )
+    )
 
     return {
         "status": status,
@@ -514,6 +534,15 @@ def summarize_data_quality(
         "record_anomaly_samples": record_samples,
         "identity_mismatch_samples": identity_samples,
         "request_command_anomaly_samples": command_samples,
+        "sample_coverage": {
+            "record_sample_limit": 50,
+            "record_samples_truncated": record_samples_truncated,
+            "identity_mismatch_sample_limit": 20,
+            "identity_mismatch_samples_truncated": total_identity_mismatches > len(identity_samples),
+            "request_command_sample_limit": 20,
+            "request_command_samples_truncated": total_non_present_requests > len(command_samples),
+            "interpretation": "Truncation flags mean additional anomalies exist beyond the displayed samples; anomaly_counts remain aggregate counts.",
+        },
         "interpretation": (
             "This is a data-quality summary only. 'no_reported_anomalies' does not prove records describe the same state, "
             "establish causality, validate live provenance, or authorize execution. "
