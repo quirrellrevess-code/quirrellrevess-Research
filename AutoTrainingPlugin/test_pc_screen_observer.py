@@ -10,7 +10,7 @@ class FakeCv2:
     IMREAD_COLOR = 1
     TM_CCOEFF_NORMED = 5
 
-    def __init__(self, scores, *, template_std=None):
+    def __init__(self, scores, *, template_std=20.0):
         self.scores = scores
         self.template_std = template_std
         self.imread_calls = []
@@ -66,6 +66,17 @@ class ScreenObserverTests(unittest.TestCase):
             result = detect_phase(
                 Mock(shape=(200, 200)), Path(temp),
                 allowed_phases={"training"}, cv2=FakeCv2({"score": float("nan")}))
+            self.assertEqual(result.phase, "unknown")
+            self.assertEqual(result.reason, "no_known_phase")
+
+    def test_unmeasurable_template_is_rejected(self):
+        with tempfile.TemporaryDirectory() as temp:
+            (Path(temp) / "training.png").write_bytes(b"fake-image")
+            fake = FakeCv2({})
+            fake.imread = lambda path, mode: Mock(shape=(20, 20), size=400)
+            result = detect_phase(
+                Mock(shape=(200, 200)), Path(temp),
+                allowed_phases={"training"}, cv2=fake)
             self.assertEqual(result.phase, "unknown")
             self.assertEqual(result.reason, "no_known_phase")
 
