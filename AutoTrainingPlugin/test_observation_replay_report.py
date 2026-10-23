@@ -56,6 +56,7 @@ class ObservationReplayReportTests(unittest.TestCase):
             "missing_field_count": 0,
             "null_count": 0,
             "invalid_type_or_empty_count": 0,
+            "context_mismatch_count": 1,
             "values": {"unavailable_in_stdout_only": 2},
         })
         self.assertEqual(report["timing_comparison_coverage"]["recommendations_without_valid_turn_excluded"], 1)
@@ -81,6 +82,7 @@ class ObservationReplayReportTests(unittest.TestCase):
             "missing_field_count": 0,
             "null_count": 0,
             "invalid_type_or_empty_count": 0,
+            "context_mismatch_count": 0,
             "values": {"target_context_available_unverified": 1},
         })
         self.assertEqual(report["turn_overlap"]["observation_recommendation_shared_turns"], [4])
@@ -91,6 +93,22 @@ class ObservationReplayReportTests(unittest.TestCase):
         self.assertFalse(timing[0]["causal_link_verified"])
         self.assertEqual(report["timing_comparison_coverage"]["same_turn_pairs_compared"], 1)
         self.assertEqual(report["streams"]["recommendations"]["turn_quality"]["null_count"], 0)
+
+    def test_context_status_inconsistency_is_reported(self):
+        self.write_jsonl(self.recommendations, [
+            {"captured_at_utc": "2026-01-01T00:00:20Z", "source": "test",
+             "recommendation_text": "休息", "turn": None, "single_mode_chara_id": 123,
+             "turn_association_status": "target_context_available_unverified",
+             "verified": False, "executable": False},
+        ])
+        report = build_report({
+            "observations": self.observations,
+            "requests": self.requests,
+            "recommendations": self.recommendations,
+        })
+        status = report["streams"]["recommendations"]["turn_association_status"]
+        self.assertEqual(status["context_mismatch_count"], 1)
+        self.assertFalse(report["executable"])
 
     def test_invalid_json_is_reported_and_cli_exits_one(self):
         self.observations.write_text('{"turn":4}\n{broken\n', encoding="utf-8")
