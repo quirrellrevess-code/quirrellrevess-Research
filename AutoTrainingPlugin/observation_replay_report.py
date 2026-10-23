@@ -225,6 +225,11 @@ def compare_recommendations_and_requests(
                     if delta < 0 else
                     "same_timestamp"
                 )
+            proximity = (
+                "unavailable" if delta is None else
+                "within_2s_diagnostic_window" if abs(delta) <= 2.0 else
+                "outside_2s_diagnostic_window"
+            )
             comparisons.append({
                 "turn": turn,
                 "recommendation": recommendation.get("recommendation_text"),
@@ -232,6 +237,8 @@ def compare_recommendations_and_requests(
                 "request_command_id": request.get("command_id"),
                 "request_minus_recommendation_seconds": delta,
                 "timestamp_order": relation,
+                "timestamp_proximity_2s": proximity,
+                "same_state_verified": False,
                 "causal_link_verified": False,
             })
     comparisons.sort(key=lambda item: (
@@ -312,6 +319,7 @@ def build_report(paths: dict[str, Path]) -> dict[str, Any]:
         "same_turn_timing_comparisons": timing_comparisons,
         "limitations": [
             "Turn overlap and timestamp order are correlation evidence only; they do not establish causality.",
+            "The 2-second timestamp proximity label is diagnostic only; it does not prove same-state alignment or recommendation ownership.",
             "Recommendation records with null turn cannot be associated by turn.",
             "The report does not infer action IDs, verify live provenance, or authorize execution.",
         ],
