@@ -18,6 +18,8 @@ The read-only replay report includes `data_quality_summary`, an aggregate view o
 - `audit_warnings`: one or more measured data-quality anomalies were found.
 - `no_reported_anomalies`: none of the currently measured anomaly counters were nonzero; this is **not** proof of complete coverage or aligned state.
 
+The summary also includes bounded `record_anomaly_samples` with stream name, zero-based record index, turn value, and issue code, plus separate identity-mismatch and request-command membership samples. Samples are capped to keep reports manageable; aggregate counts remain authoritative for totals, and samples do not include full recommendation text.
+
 The summary always keeps `same_state_verified`, `causal_link_verified`, and `executable` false. Missing coverage can produce zero anomaly counts, so interpret the per-stream counts alongside the summary.
 
 ## Read-only PC window discovery
