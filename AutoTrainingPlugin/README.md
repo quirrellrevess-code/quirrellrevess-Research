@@ -63,7 +63,7 @@ The window helper captures the selected client rectangle through desktop screens
 
 ## Offline observation replay report
 
- Use `observation_replay_report.py` to compare the three JSONL streams emitted by the passive URA plugin and LegendAI bridge. The report checks parse/schema quality and lists overlapping turns; it does not claim that a request was caused by a recommendation, and recommendations with a null turn remain unassociated.
+ Use `observation_replay_report.py` to compare the three JSONL streams emitted by the passive URA plugin and LegendAI bridge. The report checks parse/schema quality, lists overlapping turns, and compares timestamps for recommendation/request records sharing a turn. It does not claim that a request was caused by a recommendation; timestamp order is correlation evidence only, and recommendations with a null turn remain unassociated. It accepts both the Python bridge's `captured_at_utc` / `recommendation_text` fields and the C# sink's `timestamp_utc` / `recommendation` fields.
 
 ```powershell
 python .\observation_replay_report.py --observations .\PluginData\UmaAutoTraining\observations.jsonl --requests .\PluginData\UmaAutoTraining\action-requests-observed.jsonl --recommendations .\PluginData\UmaAutoTraining\legendai-recommendations.jsonl
