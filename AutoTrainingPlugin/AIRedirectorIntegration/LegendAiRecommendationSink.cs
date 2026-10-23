@@ -3,6 +3,7 @@ using System.Globalization;
 using System.IO;
 using System.Text.Json;
 using System.Text.RegularExpressions;
+using System.Security;
 
 namespace UmaAutoTraining.AIRedirectorIntegration;
 
@@ -27,7 +28,8 @@ public sealed class LegendAiRecommendationSink : IDisposable
         var root = string.IsNullOrWhiteSpace(pluginDataRoot)
             ? Path.Combine("PluginData", "UmaAutoTraining")
             : pluginDataRoot;
-        Directory.CreateDirectory(root);
+        // Keep telemetry setup best-effort: a logging path must never prevent
+        // AIRedirector from starting. The directory is created on first write.
         _filePath = Path.Combine(root, "legendai-recommendations.jsonl");
     }
 
@@ -78,7 +80,25 @@ public sealed class LegendAiRecommendationSink : IDisposable
                 executable = false
             };
 
-            File.AppendAllText(_filePath, JsonSerializer.Serialize(record) + Environment.NewLine);
+            try
+            {
+                var directory = Path.GetDirectoryName(_filePath);
+                if (string.IsNullOrWhiteSpace(directory))
+                    return false;
+                Directory.CreateDirectory(directory);
+                File.AppendAllText(_filePath, JsonSerializer.Serialize(record) + Environment.NewLine);
+            }
+            catch (Exception ex) when (
+                ex is IOException or
+                UnauthorizedAccessException or
+                ArgumentException or
+                NotSupportedException or
+                SecurityException)
+            {
+                // Telemetry is optional. Do not take down the existing output
+                // bridge when the path is unavailable or unwritable.
+                return false;
+            }
         }
         return true;
     }
