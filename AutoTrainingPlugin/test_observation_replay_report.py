@@ -550,5 +550,25 @@ class ObservationReplayReportTests(unittest.TestCase):
         self.assertFalse(json.loads(result.stdout)["executable"])
 
 
+    def test_identity_unavailable_membership_is_explicitly_weak_evidence(self):
+        weak = audit_request_command_membership(
+            [{"turn": 4, "commands": [{"command_id": 2}]}],
+            [{"current_turn": 4, "command_id": 2}],
+        )
+        self.assertEqual(weak["status_counts"]["present_in_all_same_turn_snapshots"], 1)
+        self.assertEqual(weak["identity_unavailable_only_request_count"], 1)
+        self.assertEqual(weak["non_present_samples"][0]["identity_evidence_status"],
+                         "identity_unavailable_only")
+        self.assertFalse(weak["same_state_verified"])
+
+        matched = audit_request_command_membership(
+            [{"turn": 4, "scenario_id": "s1", "commands": [{"command_id": 2}]}],
+            [{"current_turn": 4, "scenario_id": "s1", "command_id": 2}],
+        )
+        self.assertEqual(matched["identity_unavailable_only_request_count"], 0)
+        self.assertEqual(matched["identity_verified_snapshot_count"], 1)
+        self.assertFalse(matched["same_state_verified"])
+
+
 if __name__ == "__main__":
     unittest.main()
