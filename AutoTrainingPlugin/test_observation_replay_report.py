@@ -179,7 +179,7 @@ class ObservationReplayReportTests(unittest.TestCase):
 
     def test_sample_coverage_flags_truncated_record_identity_and_request_samples(self):
         observations = [
-            {"captured_at_utc": "2026-01-01T00:00:01Z", "turn": 1,
+            {"captured_at_utc": "2026-01-01T00:00:01Z", "turn": 1, "scenario_id": "obs",
              "command_count": 0, "commands": []}
             for _ in range(55)
         ]
@@ -190,8 +190,8 @@ class ObservationReplayReportTests(unittest.TestCase):
         ]
         recommendations = [
             {"captured_at_utc": f"2026-01-01T00:01:{i % 60:02d}Z", "source": "test",
-             "recommendation_text": "训练", "turn": 1, "single_mode_chara_id": i + 100,
-             "turn_association_status": "target_context_available_unverified",
+             "recommendation_text": "训练", "turn": 1, "scenario_id": f"rec-{i}",
+             "single_mode_chara_id": i + 100, "turn_association_status": "target_context_available_unverified",
              "verified": False, "executable": False}
             for i in range(25)
         ]
