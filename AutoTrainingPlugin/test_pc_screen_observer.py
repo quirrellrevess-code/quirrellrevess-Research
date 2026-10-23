@@ -10,16 +10,20 @@ class FakeCv2:
     IMREAD_COLOR = 1
     TM_CCOEFF_NORMED = 5
 
-    def __init__(self, scores):
+    def __init__(self, scores, *, template_std=None):
         self.scores = scores
+        self.template_std = template_std
         self.imread_calls = []
 
     def imread(self, path, mode):
         self.imread_calls.append(path)
-        return Mock(shape=(20, 20), size=400)
+        template = Mock(shape=(20, 20), size=400)
+        if self.template_std is not None:
+            template.std.return_value = self.template_std
+        return template
 
     def matchTemplate(self, image, template, method):
-        return 0.97
+        return self.scores.get("score", 0.97)
 
     def minMaxLoc(self, result):
         return (0, result, (0, 0), (0, 0))
@@ -46,6 +50,24 @@ class ScreenObserverTests(unittest.TestCase):
             result = detect_phase(Mock(shape=(200, 200)), Path(temp), allowed_phases={"training"}, cv2=fake)
             self.assertEqual(result.phase, "unknown")
             self.assertEqual(fake.imread_calls, [])
+
+    def test_near_constant_template_is_not_evidence(self):
+        with tempfile.TemporaryDirectory() as temp:
+            (Path(temp) / "training.png").write_bytes(b"fake-image")
+            result = detect_phase(
+                Mock(shape=(200, 200)), Path(temp),
+                allowed_phases={"training"}, cv2=FakeCv2({}, template_std=0.2))
+            self.assertEqual(result.phase, "unknown")
+            self.assertEqual(result.reason, "no_known_phase")
+
+    def test_non_finite_match_is_not_evidence(self):
+        with tempfile.TemporaryDirectory() as temp:
+            (Path(temp) / "training.png").write_bytes(b"fake-image")
+            result = detect_phase(
+                Mock(shape=(200, 200)), Path(temp),
+                allowed_phases={"training"}, cv2=FakeCv2({"score": float("nan")}))
+            self.assertEqual(result.phase, "unknown")
+            self.assertEqual(result.reason, "no_known_phase")
 
 
 if __name__ == "__main__":
