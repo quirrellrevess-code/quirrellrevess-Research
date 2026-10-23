@@ -90,9 +90,16 @@ class TargetObserverTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temp:
             (Path(temp) / "train_speed.png").write_bytes(b"fake")
             found = detect_targets(
-                Mock(shape=(200, 300, 3)), Path(temp),
+                Mock(shape=(200, 300, 3), std=Mock(return_value=20.0)), Path(temp),
                 allowed_targets={"train_speed"}, cv2=FakeCv2(spread=0.2))
             self.assertEqual(found, [])
+
+    def test_uniform_frame_rejected(self):
+        with tempfile.TemporaryDirectory() as temp:
+            (Path(temp) / "train_speed.png").write_bytes(b"fake")
+            frame = Mock(shape=(200, 300, 3), std=Mock(return_value=0.0))
+            self.assertEqual(detect_targets(
+                frame, Path(temp), allowed_targets={"train_speed"}, cv2=FakeCv2()), [])
 
 
 if __name__ == "__main__":
