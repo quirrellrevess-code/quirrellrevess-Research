@@ -66,6 +66,10 @@ def analyze_stream(name: str, records: list[dict[str, Any]], parse_errors: list[
     records = [normalize_record(name, record) for record in records]
     missing = Counter()
     invalid_turns = 0
+    missing_turns = 0
+    null_turns = 0
+    invalid_turn_types = 0
+    invalid_timestamps = 0
     valid_turns: set[int] = set()
     unverified = 0
     executable_marked = 0
@@ -74,11 +78,20 @@ def analyze_stream(name: str, records: list[dict[str, Any]], parse_errors: list[
         for field in schema["required"]:
             if field not in record:
                 missing[field] += 1
-        turn = record.get(schema["turn_field"])
+        turn_field = schema["turn_field"]
+        turn = record.get(turn_field)
         if type(turn) is int and turn >= 0:
             valid_turns.add(turn)
         else:
             invalid_turns += 1
+            if turn_field not in record:
+                missing_turns += 1
+            elif turn is None:
+                null_turns += 1
+            else:
+                invalid_turn_types += 1
+        if parse_timestamp(record) is None:
+            invalid_timestamps += 1
         if record.get("verified") is False:
             unverified += 1
         if record.get("executable") is True:
@@ -92,6 +105,12 @@ def analyze_stream(name: str, records: list[dict[str, Any]], parse_errors: list[
         "valid_turn_count": len(valid_turns),
         "turns": sorted(valid_turns),
         "records_without_valid_turn": invalid_turns,
+        "turn_quality": {
+            "missing_field_count": missing_turns,
+            "null_count": null_turns,
+            "invalid_type_or_range_count": invalid_turn_types,
+        },
+        "invalid_or_unavailable_timestamp_count": invalid_timestamps,
         "explicitly_unverified_count": unverified,
         "marked_executable_count": executable_marked,
     }
@@ -175,10 +194,28 @@ def build_report(paths: dict[str, Path]) -> dict[str, Any]:
     observed_turns = turns_by_stream["observations"]
     request_turns = turns_by_stream["requests"]
     recommendation_turns = turns_by_stream["recommendations"]
+    timing_comparisons = compare_recommendations_and_requests(
+        loaded["recommendations"], loaded["requests"]
+    )
+    valid_recommendations = sum(
+        1 for record in loaded["recommendations"]
+        if type(record.get("turn")) is int and record["turn"] >= 0
+    )
+    valid_requests = sum(
+        1 for record in loaded["requests"]
+        if type(record.get("current_turn")) is int and record["current_turn"] >= 0
+    )
     return {
         "mode": "read_only_replay_report",
         "executable": False,
         "streams": reports,
+        "timing_comparison_coverage": {
+            "recommendations_with_valid_turn": valid_recommendations,
+            "requests_with_valid_turn": valid_requests,
+            "same_turn_pairs_compared": len(timing_comparisons),
+            "recommendations_without_valid_turn_excluded": len(loaded["recommendations"]) - valid_recommendations,
+            "requests_without_valid_turn_excluded": len(loaded["requests"]) - valid_requests,
+        },
         "turn_overlap": {
             "observation_request_shared_turns": sorted(observed_turns & request_turns),
             "observation_recommendation_shared_turns": sorted(observed_turns & recommendation_turns),
@@ -186,9 +223,7 @@ def build_report(paths: dict[str, Path]) -> dict[str, Any]:
             "observation_turns_without_request": sorted(observed_turns - request_turns),
             "observation_turns_without_recommendation": sorted(observed_turns - recommendation_turns),
         },
-        "same_turn_timing_comparisons": compare_recommendations_and_requests(
-            loaded["recommendations"], loaded["requests"]
-        ),
+        "same_turn_timing_comparisons": timing_comparisons,
         "limitations": [
             "Turn overlap and timestamp order are correlation evidence only; they do not establish causality.",
             "Recommendation records with null turn cannot be associated by turn.",
