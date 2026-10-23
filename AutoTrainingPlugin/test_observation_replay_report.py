@@ -51,6 +51,22 @@ class ObservationReplayReportTests(unittest.TestCase):
         self.assertEqual(report["streams"]["recommendations"]["records_without_valid_turn"], 1)
         self.assertIn("does not establish causality", report["limitations"][0])
 
+    def test_accepts_actual_csharp_sink_field_names(self):
+        self.write_jsonl(self.recommendations, [
+            {"timestamp_utc": "2026-01-01T00:00:20Z", "source": "AIRedirector.Legend.stdout",
+             "single_mode_chara_id": 123, "turn": 4, "recommendation": "训练速度",
+             "category": "training", "verified": False, "executable": False},
+        ])
+        report = build_report({
+            "observations": self.observations,
+            "requests": self.requests,
+            "recommendations": self.recommendations,
+        })
+        recommendation_report = report["streams"]["recommendations"]
+        self.assertEqual(recommendation_report["missing_required_fields"], {})
+        self.assertEqual(recommendation_report["turns"], [4])
+        self.assertEqual(report["turn_overlap"]["observation_recommendation_shared_turns"], [4])
+
     def test_invalid_json_is_reported_and_cli_exits_one(self):
         self.observations.write_text('{"turn":4}\n{broken\n', encoding="utf-8")
         result = subprocess.run([
