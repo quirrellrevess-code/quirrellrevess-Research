@@ -152,10 +152,10 @@ class ObservationReplayReportTests(unittest.TestCase):
                        for row in summary["record_anomaly_samples"]}
         self.assertIn(("observations", 0, "timestamp_invalid"), sample_keys)
         self.assertIn(("recommendations", 0, "invalid_or_missing_turn"), sample_keys)
-        self.assertIn(("requests", 0, "request_command_membership"), {
-            (row.get("stream"), row.get("record_index"), row.get("issue"))
+        self.assertTrue(any(
+            row.get("request_index") == 0 and row.get("issue") == "request_command_membership"
             for row in summary["request_command_anomaly_samples"]
-        } | {("requests", 0, "request_command_membership")})
+        ))
         self.assertFalse(summary["executable"])
 
     def test_data_quality_summary_empty_inputs_are_insufficient(self):
