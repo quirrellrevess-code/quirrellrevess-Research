@@ -1,0 +1,33 @@
+name: Auto-training offline tests
+
+on:
+  push:
+    branches:
+      - feature/auto-training-plugin
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  python-offline-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Compile Python sources
+        run: python -m py_compile AutoTrainingPlugin/legendai_stdout_bridge.py AutoTrainingPlugin/legendai_action_guard.py AutoTrainingPlugin/test_legendai_stdout_bridge.py AutoTrainingPlugin/test_legendai_action_guard.py
+
+      - name: Run offline unit tests
+        working-directory: AutoTrainingPlugin
+        run: python -m unittest -v test_legendai_stdout_bridge test_legendai_action_guard
