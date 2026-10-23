@@ -213,9 +213,9 @@ class ObservationReplayReportTests(unittest.TestCase):
 
     def test_parse_errors_are_addressable_by_stream_and_physical_line(self):
         self.observations.write_text(
-            '{"captured_at_utc":"2026-01-01T00:00:00Z","turn":1,"command_count":0,"commands":[]}\\n'
-            '{broken json}\\n'
-            '[]\\n',
+            '{"captured_at_utc":"2026-01-01T00:00:00Z","turn":1,"command_count":0,"commands":[]}\n'
+            '{broken json}\n'
+            '[]\n',
             encoding="utf-8",
         )
         self.write_jsonl(self.requests, [])
@@ -236,8 +236,8 @@ class ObservationReplayReportTests(unittest.TestCase):
 
     def test_parse_error_sample_truncation_is_explicit(self):
         self.observations.write_text(
-            '{"captured_at_utc":"2026-01-01T00:00:00Z","turn":1,"command_count":0,"commands":[]}\\n'
-            + '{broken}\\n' * 25,
+            '{"captured_at_utc":"2026-01-01T00:00:00Z","turn":1,"command_count":0,"commands":[]}\n'
+            + '{broken}\n' * 25,
             encoding="utf-8",
         )
         self.write_jsonl(self.requests, [])
