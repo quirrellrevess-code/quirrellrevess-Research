@@ -315,6 +315,70 @@ def build_identity_consistency(loaded: dict[str, list[dict[str, Any]]]) -> dict[
     return output
 
 
+def audit_request_command_membership(
+    observations: list[dict[str, Any]], requests: list[dict[str, Any]]
+) -> dict[str, Any]:
+    """Check whether observed request command IDs appear in same-turn snapshots."""
+    obs_by_turn: dict[int, list[dict[str, Any]]] = {}
+    for observation in observations:
+        turn = observation.get("turn")
+        if type(turn) is int and turn >= 0:
+            obs_by_turn.setdefault(turn, []).append(observation)
+
+    counts: Counter[str] = Counter()
+    samples: list[dict[str, Any]] = []
+    compared = 0
+    for request in requests:
+        turn = request.get("current_turn")
+        if type(turn) is not int or turn < 0:
+            continue
+        matching_observations = obs_by_turn.get(turn, [])
+        if not matching_observations:
+            counts["no_same_turn_observation"] += 1
+            continue
+        command_id = request.get("command_id")
+        if type(command_id) is not int or command_id < 0:
+            counts["invalid_or_missing_request_command_id"] += 1
+            continue
+        usable = []
+        for observation in matching_observations:
+            commands = observation.get("commands")
+            if not isinstance(commands, list):
+                continue
+            ids = [
+                item.get("command_id") for item in commands
+                if isinstance(item, dict) and type(item.get("command_id")) is int
+                and item["command_id"] >= 0
+            ]
+            usable.append(command_id in ids)
+        if not usable:
+            counts["snapshot_command_list_unavailable"] += 1
+            continue
+        compared += 1
+        # Multiple snapshots can exist for a turn. Avoid collapsing contradictory evidence.
+        if all(usable):
+            status = "present_in_all_same_turn_snapshots"
+        elif not any(usable):
+            status = "absent_from_all_same_turn_snapshots"
+        else:
+            status = "inconsistent_across_same_turn_snapshots"
+        counts[status] += 1
+        if status != "present_in_all_same_turn_snapshots" and len(samples) < 20:
+            samples.append({"turn": turn, "command_id": command_id, "status": status,
+                            "snapshot_count": len(usable)})
+    return {
+        "request_count_with_valid_turn": sum(
+            1 for row in requests if type(row.get("current_turn")) is int and row["current_turn"] >= 0
+        ),
+        "request_count_compared": compared,
+        "status_counts": dict(sorted(counts.items())),
+        "non_present_samples": samples,
+        "same_state_verified": False,
+        "causal_link_verified": False,
+        "interpretation": "Command-ID membership is a same-turn consistency check only; command availability does not prove the request was caused by a recommendation or that snapshots represent the request-time state.",
+    }
+
+
 def build_report(paths: dict[str, Path]) -> dict[str, Any]:
     loaded: dict[str, list[dict[str, Any]]] = {}
     reports: dict[str, Any] = {}
@@ -384,10 +448,12 @@ def build_report(paths: dict[str, Path]) -> dict[str, Any]:
         },
         "same_turn_timing_comparisons": timing_comparisons,
         "identity_consistency": build_identity_consistency(loaded),
+        "request_command_membership": audit_request_command_membership(loaded["observations"], loaded["requests"]),
         "limitations": [
             "Turn overlap and timestamp order are correlation evidence only; they do not establish causality.",
             "The 2-second timestamp proximity label is diagnostic only; it does not prove same-state alignment or recommendation ownership.",
             "Shared-turn identity comparison checks only fields explicitly present in both records; missing identity is not inferred and matching values do not prove that records describe the same state.",
+            "Request command-ID membership in a same-turn observation is a consistency check only; it does not prove request-time state alignment or causality.",
             "Recommendation records with null turn cannot be associated by turn.",
             "The report does not infer action IDs, verify live provenance, or authorize execution.",
         ],
