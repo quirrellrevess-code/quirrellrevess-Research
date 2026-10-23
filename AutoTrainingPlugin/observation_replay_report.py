@@ -328,7 +328,7 @@ def audit_request_command_membership(
     counts: Counter[str] = Counter()
     samples: list[dict[str, Any]] = []
     compared = 0
-    for request in requests:
+    for request_index, request in enumerate(requests):
         turn = request.get("current_turn")
         if type(turn) is not int or turn < 0:
             continue
