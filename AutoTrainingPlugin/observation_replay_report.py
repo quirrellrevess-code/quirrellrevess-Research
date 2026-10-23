@@ -53,9 +53,11 @@ def read_jsonl(path: Path) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
 def normalize_record(name: str, record: dict[str, Any]) -> dict[str, Any]:
     """Normalize known field names from both the Python bridge and C# sink."""
     normalized = dict(record)
+    # Both bridge and sink may emit timestamp_utc; normalize it consistently
+    # across streams before required-field, ordering, and sample audits.
+    if "captured_at_utc" not in normalized and "timestamp_utc" in normalized:
+        normalized["captured_at_utc"] = normalized["timestamp_utc"]
     if name == "recommendations":
-        if "captured_at_utc" not in normalized and "timestamp_utc" in normalized:
-            normalized["captured_at_utc"] = normalized["timestamp_utc"]
         if "recommendation_text" not in normalized and "recommendation" in normalized:
             normalized["recommendation_text"] = normalized["recommendation"]
     return normalized
