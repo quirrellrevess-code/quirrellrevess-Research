@@ -249,6 +249,72 @@ def compare_recommendations_and_requests(
     return comparisons
 
 
+IDENTITY_FIELDS = ("run_id", "scenario_id", "single_mode_chara_id", "chara_id")
+
+
+def compare_shared_identity(left: dict[str, Any], right: dict[str, Any]) -> dict[str, Any]:
+    """Compare only explicit, shared identity fields; never infer missing identity."""
+    compared: dict[str, dict[str, Any]] = {}
+    mismatches: list[str] = []
+    for field in IDENTITY_FIELDS:
+        if field not in left or field not in right:
+            continue
+        lv, rv = left[field], right[field]
+        if lv is None or rv is None:
+            continue
+        # IDs are accepted only as non-negative integers or non-empty strings.
+        valid_left = (type(lv) is int and lv >= 0) or (isinstance(lv, str) and bool(lv.strip()))
+        valid_right = (type(rv) is int and rv >= 0) or (isinstance(rv, str) and bool(rv.strip()))
+        if not valid_left or not valid_right:
+            continue
+        compared[field] = {"left": lv, "right": rv, "match": lv == rv}
+        if lv != rv:
+            mismatches.append(field)
+    return {
+        "status": "mismatch" if mismatches else "matched_shared_fields" if compared else "identity_unavailable",
+        "compared_fields": compared,
+        "mismatch_fields": mismatches,
+        "same_state_verified": False,
+    }
+
+
+def build_identity_consistency(loaded: dict[str, list[dict[str, Any]]]) -> dict[str, Any]:
+    """Audit same-turn identity fields across streams without treating turn as identity proof."""
+    specs = (
+        ("observations", "requests", "turn", "current_turn"),
+        ("observations", "recommendations", "turn", "turn"),
+        ("requests", "recommendations", "current_turn", "turn"),
+    )
+    output: dict[str, Any] = {}
+    for left_name, right_name, left_turn_key, right_turn_key in specs:
+        left_by_turn: dict[int, list[dict[str, Any]]] = {}
+        right_by_turn: dict[int, list[dict[str, Any]]] = {}
+        for row in loaded[left_name]:
+            turn = row.get(left_turn_key)
+            if type(turn) is int and turn >= 0:
+                left_by_turn.setdefault(turn, []).append(row)
+        for row in loaded[right_name]:
+            turn = row.get(right_turn_key)
+            if type(turn) is int and turn >= 0:
+                right_by_turn.setdefault(turn, []).append(row)
+        counts: Counter[str] = Counter()
+        samples: list[dict[str, Any]] = []
+        for turn in sorted(set(left_by_turn) & set(right_by_turn)):
+            for left in left_by_turn[turn]:
+                for right in right_by_turn[turn]:
+                    result = compare_shared_identity(left, right)
+                    counts[result["status"]] += 1
+                    if result["status"] == "mismatch" and len(samples) < 20:
+                        samples.append({"turn": turn, **result})
+        output[f"{left_name}_vs_{right_name}"] = {
+            "same_turn_pairs": sum(counts.values()),
+            "status_counts": dict(sorted(counts.items())),
+            "mismatch_samples": samples,
+            "interpretation": "Identity field comparison only; shared turn and matching identifiers do not prove same-state alignment or causality.",
+        }
+    return output
+
+
 def build_report(paths: dict[str, Path]) -> dict[str, Any]:
     loaded: dict[str, list[dict[str, Any]]] = {}
     reports: dict[str, Any] = {}
@@ -317,9 +383,11 @@ def build_report(paths: dict[str, Path]) -> dict[str, Any]:
             "observation_turns_without_recommendation": sorted(observed_turns - recommendation_turns),
         },
         "same_turn_timing_comparisons": timing_comparisons,
+        "identity_consistency": build_identity_consistency(loaded),
         "limitations": [
             "Turn overlap and timestamp order are correlation evidence only; they do not establish causality.",
             "The 2-second timestamp proximity label is diagnostic only; it does not prove same-state alignment or recommendation ownership.",
+            "Shared-turn identity comparison checks only fields explicitly present in both records; missing identity is not inferred and matching values do not prove that records describe the same state.",
             "Recommendation records with null turn cannot be associated by turn.",
             "The report does not infer action IDs, verify live provenance, or authorize execution.",
         ],
