@@ -8,7 +8,7 @@ class PreviewTests(unittest.TestCase):
             "recommendation": {"run_id": "run1", "turn": 7, "action_id": "train_speed", "verified": True},
             "state": {"run_id": "run1", "turn": 7, "ready": True, "phase": "training"},
             "candidates": [{"target_id": "train_speed_button", "bbox": [100, 200, 160, 240],
-                            "verified": True, "reason": "target_candidate", "executable": False}],
+                            "verified": True, "reason": "target_candidate", "confidence": 0.99, "executable": False}],
             "mapping": [{"phase": "training", "action_id": "train_speed",
                          "target_id": "train_speed_button"}]
         }
