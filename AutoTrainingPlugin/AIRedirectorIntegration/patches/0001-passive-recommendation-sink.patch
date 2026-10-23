@@ -34,7 +34,7 @@ diff --git a/Class1.cs b/Class1.cs
                      _ = bridge.ApplyTargetDisplay(cancellationToken);
                  }
              }
-@@ -184,8 +188,17 @@
+@@ -184,7 +188,14 @@
              {
                  Volatile.Read(ref legendOutput)?.SetTarget(
                      chara.single_mode_chara_id,
@@ -49,7 +49,7 @@ diff --git a/Class1.cs b/Class1.cs
              }
              return ValueTask.CompletedTask;
          }
-@@ -455,4 +468,5 @@
+@@ -455,4 +466,5 @@
                  if (legendBridge is not null)
                      Capture(legendBridge.Dispose);
 +                Capture(recommendationSink.Dispose);
