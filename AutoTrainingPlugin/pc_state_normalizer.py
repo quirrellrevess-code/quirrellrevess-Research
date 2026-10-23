@@ -34,6 +34,11 @@ def normalize_observation(
         result["reason"] = "unverified_pc_phase"
         return result
     result["phase"] = phase
+    ura_phase = ura_state.get("phase")
+    if ura_phase is not None:
+        if not isinstance(ura_phase, str) or ura_phase != phase:
+            result["reason"] = "phase_source_conflict"
+            return result
 
     # A verified phase and valid turn are not enough to establish that the
     # sources refer to the same instant or that input is safe.
