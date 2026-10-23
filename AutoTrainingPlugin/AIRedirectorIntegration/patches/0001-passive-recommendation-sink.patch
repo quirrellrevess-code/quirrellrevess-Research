@@ -9,7 +9,7 @@ diff --git a/Class1.cs b/Class1.cs
  
  namespace AIRedirector
  {
-@@ -26,6 +27,7 @@
+@@ -27,6 +28,7 @@
          ChildProcessManager? _childProcessManager;
          AIRedirectorConfig config = new();
          ILegendAiOutputBridge? legendOutput;
@@ -17,7 +17,7 @@ diff --git a/Class1.cs b/Class1.cs
          readonly UmaAiRawOutputWorkspace rawOutput = new();
          readonly CancellationTokenSource outputCancellation = new();
          Task? outputTask;
-@@ -129,6 +131,7 @@
+@@ -130,6 +132,7 @@
                          continue;
  
                      cancellationToken.ThrowIfCancellationRequested();
@@ -25,7 +25,7 @@ diff --git a/Class1.cs b/Class1.cs
                      _ = bridge.ApplyTargetDisplay(cancellationToken);
                  }
              }
-@@ -181,7 +184,14 @@
+@@ -184,7 +187,14 @@
              {
                  Volatile.Read(ref legendOutput)?.SetTarget(
                      chara.single_mode_chara_id,
@@ -40,7 +40,7 @@ diff --git a/Class1.cs b/Class1.cs
              }
              return ValueTask.CompletedTask;
          }
-@@ -452,4 +462,5 @@
+@@ -455,4 +465,5 @@
                  if (legendBridge is not null)
                      Capture(legendBridge.Dispose);
 +                Capture(recommendationSink.Dispose);
