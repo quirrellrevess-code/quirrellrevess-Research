@@ -35,16 +35,22 @@ class FakeCv2:
 
 
 class ScreenObserverTests(unittest.TestCase):
+    @staticmethod
+    def frame(*, spread=20.0):
+        image = Mock(shape=(200, 200, 3))
+        image.std.return_value = spread
+        return image
+
     def test_empty_templates_fail_closed(self):
         with tempfile.TemporaryDirectory() as temp:
-            result = detect_phase(Mock(shape=(200, 200)), Path(temp), allowed_phases={"training"}, cv2=FakeCv2({}))
+            result = detect_phase(self.frame(), Path(temp), allowed_phases={"training"}, cv2=FakeCv2({}))
             self.assertEqual(result.phase, "unknown")
             self.assertFalse(result.verified)
 
     def test_known_template_can_be_classified(self):
         with tempfile.TemporaryDirectory() as temp:
             (Path(temp) / "training.png").write_bytes(b"fake-image")
-            result = detect_phase(Mock(shape=(200, 200)), Path(temp), allowed_phases={"training"}, cv2=FakeCv2({}))
+            result = detect_phase(self.frame(), Path(temp), allowed_phases={"training"}, cv2=FakeCv2({}))
             self.assertEqual(result.phase, "training")
             self.assertTrue(result.verified)
 
@@ -52,7 +58,7 @@ class ScreenObserverTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temp:
             (Path(temp) / "untrusted.png").write_bytes(b"fake-image")
             fake = FakeCv2({})
-            result = detect_phase(Mock(shape=(200, 200)), Path(temp), allowed_phases={"training"}, cv2=fake)
+            result = detect_phase(self.frame(), Path(temp), allowed_phases={"training"}, cv2=fake)
             self.assertEqual(result.phase, "unknown")
             self.assertEqual(fake.imread_calls, [])
 
@@ -60,7 +66,7 @@ class ScreenObserverTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temp:
             (Path(temp) / "training.png").write_bytes(b"fake-image")
             result = detect_phase(
-                Mock(shape=(200, 200)), Path(temp),
+                self.frame(), Path(temp),
                 allowed_phases={"training"}, cv2=FakeCv2({}, template_std=0.2))
             self.assertEqual(result.phase, "unknown")
             self.assertEqual(result.reason, "no_known_phase")
@@ -69,7 +75,7 @@ class ScreenObserverTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temp:
             (Path(temp) / "training.png").write_bytes(b"fake-image")
             result = detect_phase(
-                Mock(shape=(200, 200)), Path(temp),
+                self.frame(), Path(temp),
                 allowed_phases={"training"}, cv2=FakeCv2({"score": float("nan")}))
             self.assertEqual(result.phase, "unknown")
             self.assertEqual(result.reason, "no_known_phase")
@@ -80,11 +86,29 @@ class ScreenObserverTests(unittest.TestCase):
             fake = FakeCv2({})
             fake.imread = lambda path, mode: Mock(shape=(20, 20), size=400)
             result = detect_phase(
-                Mock(shape=(200, 200)), Path(temp),
+                self.frame(), Path(temp),
                 allowed_phases={"training"}, cv2=fake)
             self.assertEqual(result.phase, "unknown")
             self.assertEqual(result.reason, "no_known_phase")
 
+
+    def test_near_uniform_frame_is_not_phase_evidence(self):
+        with tempfile.TemporaryDirectory() as temp:
+            (Path(temp) / "training.png").write_bytes(b"fake-image")
+            result = detect_phase(
+                self.frame(spread=0.0), Path(temp),
+                allowed_phases={"training"}, cv2=FakeCv2({}))
+            self.assertEqual(result.phase, "unknown")
+            self.assertEqual(result.reason, "no_known_phase")
+
+    def test_unmeasurable_frame_is_not_phase_evidence(self):
+        with tempfile.TemporaryDirectory() as temp:
+            (Path(temp) / "training.png").write_bytes(b"fake-image")
+            result = detect_phase(
+                Mock(shape=(200, 200, 3)), Path(temp),
+                allowed_phases={"training"}, cv2=FakeCv2({}))
+            self.assertEqual(result.phase, "unknown")
+            self.assertEqual(result.reason, "no_known_phase")
 
     def test_expected_pid_requires_hwnd(self):
         with patch.object(sys, "argv", [
