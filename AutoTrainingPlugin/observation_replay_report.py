@@ -73,6 +73,10 @@ def analyze_stream(name: str, records: list[dict[str, Any]], parse_errors: list[
     valid_turns: set[int] = set()
     unverified = 0
     executable_marked = 0
+    association_status_values: Counter[str] = Counter()
+    association_status_missing = 0
+    association_status_null = 0
+    association_status_invalid = 0
 
     for record in records:
         for field in schema["required"]:
@@ -96,8 +100,17 @@ def analyze_stream(name: str, records: list[dict[str, Any]], parse_errors: list[
             unverified += 1
         if record.get("executable") is True:
             executable_marked += 1
+        if name == "recommendations":
+            if "turn_association_status" not in record:
+                association_status_missing += 1
+            elif record["turn_association_status"] is None:
+                association_status_null += 1
+            elif not isinstance(record["turn_association_status"], str) or not record["turn_association_status"].strip():
+                association_status_invalid += 1
+            else:
+                association_status_values[record["turn_association_status"]] += 1
 
-    return {
+    result = {
         "record_count": len(records),
         "parse_error_count": len(parse_errors),
         "parse_errors": parse_errors[:20],
@@ -114,6 +127,14 @@ def analyze_stream(name: str, records: list[dict[str, Any]], parse_errors: list[
         "explicitly_unverified_count": unverified,
         "marked_executable_count": executable_marked,
     }
+    if name == "recommendations":
+        result["turn_association_status"] = {
+            "missing_field_count": association_status_missing,
+            "null_count": association_status_null,
+            "invalid_type_or_empty_count": association_status_invalid,
+            "values": dict(sorted(association_status_values.items())),
+        }
+    return result
 
 
 def parse_timestamp(record: dict[str, Any]) -> datetime | None:
