@@ -1,0 +1,41 @@
+diff --git a/Class1.cs b/Class1.cs
+index 0000000..0000000 100644
+--- a/Class1.cs
++++ b/Class1.cs
+@@
+ using Terminal.Gui.Views;
+ using UmamusumeResponseAnalyzer.Plugin;
++using UmaAutoTraining.AIRedirectorIntegration;
+@@
+         ILegendAiOutputBridge? legendOutput;
+         readonly UmaAiRawOutputWorkspace rawOutput = new();
++        readonly LegendAiRecommendationSink recommendationSink = new();
+         readonly CancellationTokenSource outputCancellation = new();
+@@
+                     cancellationToken.ThrowIfCancellationRequested();
++                    _ = recommendationSink.TryRecord(output.Line);
+                     _ = bridge.ApplyTargetDisplay(cancellationToken);
+@@
+         ValueTask SetLegendDisplayId(SingleModeChara? chara)
+         {
+             if (chara is not null)
+             {
+                 Volatile.Read(ref legendOutput)?.SetTarget(
+                     chara.single_mode_chara_id,
+                     chara.turn);
++                recommendationSink.SetTarget(
++                    chara.single_mode_chara_id,
++                    chara.turn);
+             }
++            else
++            {
++                recommendationSink.SetTarget(null, null);
++            }
+             return ValueTask.CompletedTask;
+         }
+@@
+                 if (legendBridge is not null)
+                     Capture(legendBridge.Dispose);
++                Capture(recommendationSink.Dispose);
+                 Capture(rawOutput.Dispose);
+             }
