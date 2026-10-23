@@ -389,6 +389,8 @@ def collect_record_anomaly_samples(
     samples: list[dict[str, Any]] = []
     for name, records in loaded.items():
         schema = STREAMS[name]
+        previous_valid_timestamp: datetime | None = None
+        seen_timestamp_instants: set[datetime] = set()
         for index, raw in enumerate(records):
             record = normalize_record(name, raw)
             location = {
@@ -410,17 +412,14 @@ def collect_record_anomaly_samples(
                 })
             else:
                 parsed_timestamp = parse_timestamp(record)
-                # Reproduce analyze_stream's per-stream ordering and duplicate semantics.
-                prior_valid = [
-                    parse_timestamp(normalize_record(name, previous))
-                    for previous in records[:index]
-                ]
-                prior_valid = [value.astimezone(timezone.utc) for value in prior_valid if value is not None]
                 current_utc = parsed_timestamp.astimezone(timezone.utc)
-                if prior_valid and current_utc < prior_valid[-1]:
+                # Match analyze_stream's per-stream ordering and duplicate semantics in O(n).
+                if previous_valid_timestamp is not None and current_utc < previous_valid_timestamp:
                     samples.append({**location, "issue": "timestamp_out_of_order"})
-                if current_utc in prior_valid:
+                if current_utc in seen_timestamp_instants:
                     samples.append({**location, "issue": "duplicate_timestamp_instant"})
+                seen_timestamp_instants.add(current_utc)
+                previous_valid_timestamp = current_utc
             if record.get("executable") is True:
                 samples.append({**location, "issue": "record_marked_executable"})
             if name == "recommendations":
