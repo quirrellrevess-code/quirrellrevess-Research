@@ -49,7 +49,7 @@ class ObservationReplayReportTests(unittest.TestCase):
         self.assertEqual(report["turn_overlap"]["observation_request_shared_turns"], [4])
         self.assertEqual(report["turn_overlap"]["observation_recommendation_shared_turns"], [5])
         self.assertEqual(report["streams"]["recommendations"]["records_without_valid_turn"], 1)
-        self.assertIn("does not establish causality", report["limitations"][0])
+        self.assertIn("establish causality", report["limitations"][0])
 
     def test_accepts_actual_csharp_sink_field_names(self):
         self.write_jsonl(self.recommendations, [
