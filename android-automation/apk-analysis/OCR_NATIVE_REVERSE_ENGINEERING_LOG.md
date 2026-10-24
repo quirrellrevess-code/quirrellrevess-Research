@@ -345,3 +345,19 @@ The event-42 branch is a concrete candidate path for extracting APK assets, but 
 
 ### Next targeted JADX action
 In the global **Search text** window, search for `m355L1l` with **Class name**, **Method name**, and **Code** checked; leave **Field name**, **Resources**, and **Comments** unchecked for the first pass. Open the result that declares `lIlii.m355L1l` and inspect its body. Then repeat for `m340lIII`. This should establish whether the event-42 route copies or extracts APK assets and reveal the expected input parameters. Keep `smn*Dict.txt` separate until the helper or its callers expose a concrete link.
+
+
+## 2026-10-24 local preflight: assumed APK path mismatch
+
+### User-provided PowerShell results
+- Expected root directory exists: `E:\Users\QuirrellRevess\Downloads\qianye`.
+- Assumed APK path `E:\Users\QuirrellRevess\Downloads\qianye\qianye7.9.9.apk` does not exist.
+- Filename-filter scan returned 12 matching OCR/DEX/tool-related files.
+- Recursive `*Dict.txt` search returned 0 files.
+- Script reported read-only mode, no network, and no source modifications.
+
+### Interpretation
+This result does not establish that dictionary resources are absent. The APK may be in a different directory, dictionary filenames may differ, or files may remain inside an archive. The next step is to discover the actual APK/DEX/decompiler-output paths before further analysis.
+
+### Next step
+Run a bounded, read-only filename discovery in likely user directories, first checking the qianye folder and Downloads without scanning the entire drive. Collect paths and file sizes for APK, DEX, JADX output, and names containing `smn` or `Dict`. Do not extract, modify, or upload anything in this discovery pass.
