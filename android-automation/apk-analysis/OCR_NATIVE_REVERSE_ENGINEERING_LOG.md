@@ -228,3 +228,24 @@ The Base64 Contents route successfully returned `assets/paddle/keys.txt` (26,249
 ### Current conclusion
 
 No Java call-site evidence was recovered in this pass. The relationship between `ScriptActivity`, `PaddleOcr.nativeLoadMode`, and `PaddleOcr.nativeDetect` remains **unresolved**. No real `smn*Dict.txt` file contents have been located in the uploaded repository tree. The next viable direct route needs to produce a smaller, derived artifact (for example, a DEX class/method/string report or disassembly excerpt) from the existing binary; no such artifact is currently present in the repository tree. Avoid repeating the same large-file API attempts without a changed retrieval mechanism.
+
+
+## 2026-10-24 follow-up: JADX decompilation of `com.nx.assist.lua.PaddleOcr`
+
+### Evidence source
+A decompiled Java class body for `com.nx.assist.lua.PaddleOcr` was provided in the project conversation. The observations below are based on that pasted class, not on an independent re-fetch of DEX bytecode.
+
+### Directly confirmed from the class
+- `loadModel(boolean)` chooses between an ONNX path (`loadOnnxModel`) and an NNCC path (`loadNnccModel`) based on the boolean argument.
+- `loadOnnxModel(String, String, String, String)` calls `loadModeImp(true, str, str2, str3, BuildConfig.FLAVOR, str4)`; therefore the fourth native string parameter is an empty string in this branch, and the fifth is the supplied `str4`.
+- `loadNnccModel(String, String, String, String, String)` calls `loadModeImp(false, str, str2, str3, str4, str5)`.
+- `loadModeImp` performs Java-side file-existence checks before calling native code. It checks `str`, `str3`, and `str5` (with a duplicated check of `str`); for the non-ONNX branch it additionally checks `str4`. It does not explicitly check `str2` in the visible Java body.
+- After native-library setup and instance initialization, `loadModeImp` calls `nativeLoadMode(Obj.class, str, str2, str3, str4, str5, z)`.
+- `detect(Bitmap, ...)` calls `nativeDetect` only when `sInstance` is non-null, then serializes returned objects to JSON. The visible fields include bounding-box-derived values, `label`, and `prob`; this class does not implement the OCR recognition algorithm itself.
+- `Obj` contains string `label`, float `prob`, and integer coordinate fields `x0`, `x1`, `x2`, `y0`, `y1`.
+
+### Interpretation and limits
+This confirms a Java-to-JNI model-loading and inference wrapper, plus a JSON result adapter. The visible Java body does **not** show a reference to `smn*Dict.txt`, does not decode the obfuscated path/name constants passed to `new File(...)`, and does not reveal how native code interprets the five string parameters. It therefore does not establish that the `smn*Dict.txt` custom dictionaries belong to PaddleOCR. The keys-file hypothesis remains separate: native strings such as `keys size(%d)` and `txt file not found` suggest a native text-file/key-loading path, but its exact input path and mapping remain unconfirmed.
+
+### Next targeted trace
+In JADX, inspect **Find Usage** / callers of `loadNnccModel`, `loadOnnxModel`, and `PaddleOcr.loadModel`; then text-search for `smnJcDict`, `smnDict`, and `Dict.txt` in the decompiled project. Prioritize the caller that supplies the arguments, because the path constants are obfuscated in this class. If no caller is found, inspect `IL1Iii.IL1Iii(byte[], String)` only as needed to decode the constants, and keep that decoding separate from claims about dictionary format.
