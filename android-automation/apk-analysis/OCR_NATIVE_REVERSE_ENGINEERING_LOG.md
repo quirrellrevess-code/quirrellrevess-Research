@@ -279,3 +279,10 @@ This establishes that the visible `PaddleOcr` wrapper expects a Paddle OCR model
 
 ### Next step
 Inspect `L11I.I11L().I11li1()` and the caller(s) of `PaddleOcr.loadModel(boolean)` to establish the runtime model directory and whether the model assets are copied/extracted there. Continue treating `smn*Dict.txt` as a separate unresolved dictionary family unless a concrete reference connects it to this wrapper.
+
+
+## 2026-10-24: L11I model base path trace
+
+User-provided JADX code confirms `L11I.I11li1()` simply returns `this.f57lIiI`. The field is initialized by `m1131()`: when context exists, the base is `getFilesDir()`; otherwise it falls back to the parent directory of `f60lLi1LL`. The method then creates a child directory using an obfuscated string constant and stores it in `f57lIiI`. `PaddleOcr.loadModel(boolean)` appends `paddle` and the decoded model filenames to this returned directory.
+
+This establishes an app-private runtime directory path, not direct loading from APK assets in the visible getter. Still unknown: the decoded child-directory name, how model files (including `keys.txt`) reach that directory, and the callers of `PaddleOcr.loadModel(boolean)`. No link to the separate `smn*Dict.txt` family is established. Next: use JADX Find Usage on `PaddleOcr.loadModel(boolean)` and inspect its callers; decode the obfuscated child-directory constant separately.
