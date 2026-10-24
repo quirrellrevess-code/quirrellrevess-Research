@@ -205,3 +205,26 @@ The standard GitHub Contents fetch returned empty Base64 content for the 6.3 MB 
 
 Do not ask for local execution until these direct routes have been exhausted. Any new conclusion must be added to this log and committed before reporting it.
 
+
+
+## 2026-10-24 follow-up: alternate DEX / native payload retrieval attempts
+
+### Retrieval routes tested
+
+Using the repository's current branch and the known DEX blob SHA, attempted:
+- GitHub raw URL for `classes.dex`: rejected by the connected fetch interface as too large or unsupported.
+- GitHub Git Blob API for the DEX SHA: rejected because the response is binary/non-UTF-8.
+- GitHub Contents API with `encoding=base64` for `classes.dex`: returned an empty content field while still returning the expected blob SHA.
+- The same Base64 Contents route for ARM64 `libocrapi.so`, ARMv7 `libocrapi.so`, and ARM64 `libengine.so`: all returned empty content fields.
+- The same raw URL strategy for `script.lrj`: rejected as too large or unsupported.
+- Repository code searches for `jadx`, `dex decompile`, `smnDict`, `nativeLoadMode`, and `ScriptActivity`: no indexed source matches returned.
+
+These results reproduce the retrieval blocker across more than one API route. They do not mean the content is absent from the repository: the Git tree still lists each blob and its size/SHA.
+
+### Small-file control check
+
+The Base64 Contents route successfully returned `assets/paddle/keys.txt` (26,249 bytes; Base64 response length 35,584; blob SHA `84b885d8352226e49b1d5d791b8f43a663e246aa`). This control check confirms the route works for small files, but not for the large binary payloads above.
+
+### Current conclusion
+
+No Java call-site evidence was recovered in this pass. The relationship between `ScriptActivity`, `PaddleOcr.nativeLoadMode`, and `PaddleOcr.nativeDetect` remains **unresolved**. No real `smn*Dict.txt` file contents have been located in the uploaded repository tree. The next viable direct route needs to produce a smaller, derived artifact (for example, a DEX class/method/string report or disassembly excerpt) from the existing binary; no such artifact is currently present in the repository tree. Avoid repeating the same large-file API attempts without a changed retrieval mechanism.
