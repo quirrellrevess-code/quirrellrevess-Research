@@ -301,3 +301,26 @@ Possible explanations include: the method is not called in the decompiled Java p
 
 ### Next most useful trace
 Rather than repeat the same Find Usage query, inspect `PaddleOcr.loadNnccModel(...)` and `loadOnnxModel(...)` usage results, then inspect the constructor/static initialization and the Lua/native bridge around `ScriptActivity` / `MainService`. In parallel, trace `L11I.m1131()` to decode the app-private child directory and find any asset-copy/extraction routine that writes the expected `paddle/*.onnx`, `*.param`, `*.bin`, and `keys.txt` files. Keep the `smn*Dict.txt` family separate unless a concrete reference connects it to this PaddleOCR wrapper.
+
+
+## 2026-10-24 follow-up: JADX Engine.java reveals screenshot, image-byte, and asset-extraction bridges
+
+### Evidence source
+The user supplied the JADX-decompiled body of `com.main.engine.Engine`. Findings below are based on that pasted code; they have not been independently regenerated from the DEX.
+
+### Directly observed methods and dispatch
+- `Engine.obtainImageBytes(int, int, int, int, int, int)` calls `LuaEngine.snapShot(i, i2, i3, i4)`; if a bitmap is returned, it passes that bitmap and the final two integer arguments to `lIlii.m374Lii(bitmap, i5, i6)`, otherwise it returns null. This establishes a screenshot-to-byte-array path, but the exact byte format and parameter semantics remain unknown.
+- `Engine.obtainImage(int[], int[], int[])` delegates to `L11I.I11L().m106l1IIi1(...)`; its exact semantics are not established by this method alone.
+- `Engine.paddleOcr(Object)` is declared `static native`. This proves a native OCR-named entry point exists on the Engine bridge, but does not prove it invokes `com.nx.assist.lua.PaddleOcr.loadModel` or uses the `smn*Dict.txt` resources.
+- `Engine.extractApkAssets(String, String)` delegates to `lIlii.m355L1l(lIlii.m340lIII(), decodedPrefix + str, str2, str)` and catches exceptions. The obfuscated prefix and helper semantics still need decoding.
+- In `Engine.sendEventWithString(...)`, branch `i == 6 && i2 == 42` calls `extractApkAssets(str, str2)` and converts its boolean result to an obfuscated success/failure string. This is a concrete dispatch path to inspect for APK asset extraction. The caller of this event branch and the assets extracted by it have not yet been identified.
+- The class also exposes native engine methods such as `init`, `start`, `reset`, `resume`, and `setWorkPath`; their existence alone does not establish call order or OCR initialization behavior.
+
+### Updated interpretation
+The current Java evidence shows at least two candidate routes worth separating: (1) the `Engine.paddleOcr(Object)` native bridge, and (2) the `com.nx.assist.lua.PaddleOcr` wrapper that loads Paddle model files and exposes native detection. Their relationship remains unresolved. The image-byte path and event-42 asset extraction path may help establish how screenshots/resources are handled, but neither has yet been linked to the custom `smn*Dict.txt` dictionary family.
+
+### Next targeted investigation
+1. Use JADX Find Usage on `Engine.sendEventWithString` or search for the event dispatch values/callers, then trace who sends event type `i=6, i2=42` and what values are passed as `str` / `str2`.
+2. Inspect `lIlii.m355L1l`, `lIlii.m340lIII`, and `lIlii.m374Lii` to decode extraction destination/source and screenshot byte conversion.
+3. Find usages of `Engine.paddleOcr(Object)` and inspect the native bridge/registration path, without assuming it is the same implementation as `PaddleOcr.nativeDetect`.
+4. Keep the dictionary relation marked unknown until a concrete file path, call, or parser is found.
