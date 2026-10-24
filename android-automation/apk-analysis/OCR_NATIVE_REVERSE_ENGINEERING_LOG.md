@@ -104,3 +104,43 @@ The companion file `android-automation/apk-analysis/ocr-native-resources/UPLOAD_
 | `smn*Dict.txt` record format is known | Not established |
 | OCR dictionary matching algorithm is known | Not established |
 | `libocrapi.so` and `libengine.so` fully analyzed | Not established |
+
+
+## Follow-up: direct Base64 retrieval of smaller native resources
+
+A second pass used the GitHub Contents API's Base64 representation for smaller native libraries and lua.zip, then decoded the returned bytes in-session before scanning printable strings / ZIP central-directory names. This succeeded for the following files (returned byte counts match Git tree sizes):
+
+- lib/arm64-v8a/libyolo.so: 59,592 bytes.
+- lib/arm64-v8a/libpaddleocr.so: 952,688 bytes.
+- lua.zip: 23,821 bytes.
+
+### New directly observed libpaddleocr.so strings
+
+In addition to the JNI symbols above, printable strings include:
+
+- PADDLEOCR
+- keys size(%d)
+- CrnnNet and DbNet
+- nBitmapToMat and bitmapToMat
+- jni/paddlenew/src/ch/BitmapUtils.cpp
+- AndroidBitmap_getInfo(env, bitmap, &info) >= 0
+- AndroidBitmap_lockPixels(env, bitmap, &pixels) >= 0
+- info.format == ANDROID_BITMAP_FORMAT_RGBA_8888 || info.format == ANDROID_BITMAP_FORMAT_RGB_565
+- nBitmapToMat: RGBA_8888 -> CV_8UC4 and nBitmapToMat: RGB_565 -> CV_8UC4
+- <load_dbNet_param failed, load_crnnNet_param failed, load_dbNet_model failed, and load_crnnNet_model failed
+
+**Updated interpretation (evidence-backed):** the PaddleOCR native library includes an Android Bitmap-to-OpenCV-matrix conversion path and contains a string explicitly reporting a keys collection size. This strengthens the hypothesis that the bundled keys.txt character table is consumed by this OCR stack, but the string alone does not prove the exact file path, character ordering semantics, or the mapping between keys.txt and any smn*Dict.txt files. DBNet/CRNN names and model-loading error strings are also present.
+
+### ZIP inventory for lua.zip
+
+The ZIP central directory lists only LuaSocket-related modules/directories:
+
+- ltn12.lua, mime.lua, mysql.lua
+- socket.lua, socket/ftp.lua, socket/headers.lua, socket/http.lua, socket/mbox.lua, socket/smtp.lua, socket/tp.lua, socket/url.lua
+- ssl.lua, ssl/https.lua
+
+No OCR or smn*Dict script appears in this ZIP filename inventory. This does not rule out Lua code embedded elsewhere (for example, in script.lrj) or references in DEX/native code.
+
+### Retrieval limitation update
+
+The smaller and mid-sized native libraries can be retrieved as Base64 through the Contents API and scanned in-session. This corrects the earlier broad limitation: retrieval is not universally blocked, but large blobs may still be truncated/empty or impractical through this API. The large libocrapi.so, libengine.so, libopencv_java4.so, and classes.dex remain unanalyzed at bytecode/disassembly level.
