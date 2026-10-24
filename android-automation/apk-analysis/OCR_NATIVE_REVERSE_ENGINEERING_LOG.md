@@ -324,3 +324,24 @@ The current Java evidence shows at least two candidate routes worth separating: 
 2. Inspect `lIlii.m355L1l`, `lIlii.m340lIII`, and `lIlii.m374Lii` to decode extraction destination/source and screenshot byte conversion.
 3. Find usages of `Engine.paddleOcr(Object)` and inspect the native bridge/registration path, without assuming it is the same implementation as `PaddleOcr.nativeDetect`.
 4. Keep the dictionary relation marked unknown until a concrete file path, call, or parser is found.
+
+
+## 2026-10-24 follow-up: prioritizing the Engine asset-extraction helper
+
+### Evidence source
+The user supplied the JADX-decompiled `com.main.engine.Engine` class body. This entry records observations from that pasted code.
+
+### Direct observations
+- `Engine.extractApkAssets(String, String)` delegates to `lIlii.m355L1l(lIlii.m340lIII(), decodedPrefix + str, str2, str)`, returning the helper's boolean result and catching exceptions.
+- `Engine.sendEventWithString(...)` has a branch for `i == 6 && i2 == 42` that invokes `extractApkAssets(str, str2)` and converts the result into an obfuscated success/failure string.
+- `Engine.obtainImageBytes(...)` obtains a bitmap via `LuaEngine.snapShot(i, i2, i3, i4)`, then delegates conversion to `lIlii.m374Lii(bitmap, i5, i6)`.
+- `Engine.paddleOcr(Object)` is a separate native declaration. No evidence in this Java body connects it to `com.nx.assist.lua.PaddleOcr.loadModel` or to the `smn*Dict.txt` files.
+
+### Repository-side check
+Searched the current repository's indexed text for `m355L1l`, `m374Lii`, and `lIlii`; no matching decompiled source/report was returned. The uploaded DEX is not currently available as readable decompiled text through the repository interface, so these helper implementations cannot be inspected directly from GitHub in this pass.
+
+### Current interpretation
+The event-42 branch is a concrete candidate path for extracting APK assets, but its actual source path, destination path, and file selection remain unknown until `lIlii.m355L1l` and `lIlii.m340lIII` are inspected. The screenshot-byte helper is a separate lead and should not be assumed to generate UI templates without evidence.
+
+### Next targeted JADX action
+In the global **Search text** window, search for `m355L1l` with **Class name**, **Method name**, and **Code** checked; leave **Field name**, **Resources**, and **Comments** unchecked for the first pass. Open the result that declares `lIlii.m355L1l` and inspect its body. Then repeat for `m340lIII`. This should establish whether the event-42 route copies or extracts APK assets and reveal the expected input parameters. Keep `smn*Dict.txt` separate until the helper or its callers expose a concrete link.
