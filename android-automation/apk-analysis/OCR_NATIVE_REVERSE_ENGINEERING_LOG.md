@@ -153,3 +153,17 @@ A byte-offset/context scan around the native string table shows these strings ad
 `CrnnNet` → `PADDLEOCR` → `keys size(%d)` → ` txt file not found` → `DbNet`
 
 The library also contains C++ input-file stream type names (`basic_ifstream`, `basic_filebuf`, and `basic_istream`). This supports that some text-file reading path exists near the OCR/key-related code, but printable-string adjacency is not proof of control-flow adjacency and does not reveal the requested filename or parser. No `smn*Dict` filename was found in the scanned printable strings.
+
+
+## Follow-up: binary AndroidManifest.xml string-pool scan
+
+The uploaded AndroidManifest.xml is Android binary XML rather than UTF-8 text. Requesting it as Base64 succeeded (19,168 decoded bytes); a UTF-16LE printable-string scan recovered these manifest strings:
+
+- Package: `com.qyzs.smn2`
+- Application class: `com.main.app.App`
+- Activities include `com.main.app.SplashActivity`, `com.main.app.MainActivity`, `com.main.app.ScriptActivity`, `com.main.app.SettingsActivity`, `com.main.app.LogListActivity`, and `com.main.app.LogActivity`.
+- Services include `com.main.app.MainService`, `com.main.app.NativeService`, `com.main.app.X5ProcessInitService`, and `com.nx.uiauto.accessibility.AccessibilityService`.
+- Providers include `com.qyzs.smn2.CoreProvider` and `com.main.engine.CoreProvider`.
+- `android.permission.INTERNET` and a broad set of device, overlay, storage, SMS, phone, and accessibility-related permission strings are present in the manifest string pool. Presence in the string pool alone does not always establish the final merged permission state, so exact permission declarations should be parsed from the binary XML structure before making policy conclusions.
+
+This gives concrete Java component names for later DEX call-site tracing. However, the GitHub Contents API returned an empty Base64 body for the 6,339,288-byte classes.dex and the 3,278,648-byte x86 libocrapi.so, so those files remain unavailable through this route for direct in-session bytecode/disassembly analysis. The 19,168-byte manifest was readable after Base64 decoding.
