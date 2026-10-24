@@ -262,3 +262,20 @@ This is a user-reported GUI result, not an independently reproduced scan of all 
 
 ### Next action
 Use JADX **Find Usage** on the declaration of `PaddleOcr.loadNnccModel(String, String, String, String, String)` (rather than global text search) and inspect any callers/argument expressions. If there are no callers, trace `loadOnnxModel` and then inspect the implementation of `IL1Iii.IL1Iii(byte[], String)` to understand the obfuscated constants in `loadModel(boolean)`. Keep the custom `smn*Dict.txt` files unlinked from PaddleOCR until a concrete call/path reference is found.
+
+
+## 2026-10-24 follow-up: decoded PaddleOcr model filenames
+
+### Evidence
+The user supplied the JADX implementation of `I1I.IL1Iii.IL1Iii(byte[], String)`. It XORs each byte with the repeating character sequence from the second argument, then constructs a string. Applying this decoder recursively to the obfuscated constants in the supplied `PaddleOcr.loadModel(boolean)` gives these filenames:
+
+- NNCC branch under the `paddle` subdirectory: `det.param`, `rec.param`, `det.bin`, `rec.bin`, `keys.txt`.
+- ONNX branch under the `paddle` subdirectory: `det.onnx`, `cls.onnx`, `rec.onnx`, `keys.txt`.
+
+The common directory component in both branches decodes to `paddle`.
+
+### Interpretation and limits
+This establishes that the visible `PaddleOcr` wrapper expects a Paddle OCR model directory and a `keys.txt` file. The APK contains `assets/paddle/keys.txt`, but this alone does not prove the runtime model path points to that packaged asset; the base directory comes from `L11I.I11L().I11li1()`. No direct link to the separate `smn*Dict.txt` resources has been established. The decoder's XOR behavior and the recovered filenames are based on the user-provided Java decompilation and recursive decoding of its constants.
+
+### Next step
+Inspect `L11I.I11L().I11li1()` and the caller(s) of `PaddleOcr.loadModel(boolean)` to establish the runtime model directory and whether the model assets are copied/extracted there. Continue treating `smn*Dict.txt` as a separate unresolved dictionary family unless a concrete reference connects it to this wrapper.
