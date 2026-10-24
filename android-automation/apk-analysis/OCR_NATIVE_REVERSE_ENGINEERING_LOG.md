@@ -144,3 +144,12 @@ No OCR or smn*Dict script appears in this ZIP filename inventory. This does not 
 ### Retrieval limitation update
 
 The smaller and mid-sized native libraries can be retrieved as Base64 through the Contents API and scanned in-session. This corrects the earlier broad limitation: retrieval is not universally blocked, but large blobs may still be truncated/empty or impractical through this API. The large libocrapi.so, libengine.so, libopencv_java4.so, and classes.dex remain unanalyzed at bytecode/disassembly level.
+
+
+### Follow-up string-context observation
+
+A byte-offset/context scan around the native string table shows these strings adjacent in the binary:
+
+`CrnnNet` → `PADDLEOCR` → `keys size(%d)` → ` txt file not found` → `DbNet`
+
+The library also contains C++ input-file stream type names (`basic_ifstream`, `basic_filebuf`, and `basic_istream`). This supports that some text-file reading path exists near the OCR/key-related code, but printable-string adjacency is not proof of control-flow adjacency and does not reveal the requested filename or parser. No `smn*Dict` filename was found in the scanned printable strings.
