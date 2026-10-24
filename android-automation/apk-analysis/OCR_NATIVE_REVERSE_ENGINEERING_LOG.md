@@ -286,3 +286,18 @@ Inspect `L11I.I11L().I11li1()` and the caller(s) of `PaddleOcr.loadModel(boolean
 User-provided JADX code confirms `L11I.I11li1()` simply returns `this.f57lIiI`. The field is initialized by `m1131()`: when context exists, the base is `getFilesDir()`; otherwise it falls back to the parent directory of `f60lLi1LL`. The method then creates a child directory using an obfuscated string constant and stores it in `f57lIiI`. `PaddleOcr.loadModel(boolean)` appends `paddle` and the decoded model filenames to this returned directory.
 
 This establishes an app-private runtime directory path, not direct loading from APK assets in the visible getter. Still unknown: the decoded child-directory name, how model files (including `keys.txt`) reach that directory, and the callers of `PaddleOcr.loadModel(boolean)`. No link to the separate `smn*Dict.txt` family is established. Next: use JADX Find Usage on `PaddleOcr.loadModel(boolean)` and inspect its callers; decode the obfuscated child-directory constant separately.
+
+
+## 2026-10-24 follow-up: JADX Find Usage returned no callers for `PaddleOcr.loadModel(boolean)`
+
+### User-reported result
+JADX Find Usage on `com.nx.assist.lua.PaddleOcr.loadModel(boolean):boolean` returned an empty result. This is a useful negative result for the current decompiler view, but it does not prove the method is never invoked at runtime.
+
+### Independent repository check
+The uploaded branch contains the APK `classes.dex`, but the GitHub Contents API returns an empty Base64 payload for this 6.3 MB binary. Repository code search also returned no indexed source matches for `PaddleOcr loadModel`, `L11I I11li1`, or `smnJcDict`. Therefore I cannot independently enumerate DEX references from the uploaded binary through the currently available repository interface. I have not found an existing JADX/smali report in the repository that supplies those references.
+
+### Interpretation
+Possible explanations include: the method is not called in the decompiled Java path; invocation occurs through reflection/dynamic dispatch or another payload; or JADX's usage index failed to resolve the reference. These are alternatives, not established facts. The actual caller and the runtime loading sequence remain unresolved. Do not infer that PaddleOCR is unused from an empty Find Usage result alone.
+
+### Next most useful trace
+Rather than repeat the same Find Usage query, inspect `PaddleOcr.loadNnccModel(...)` and `loadOnnxModel(...)` usage results, then inspect the constructor/static initialization and the Lua/native bridge around `ScriptActivity` / `MainService`. In parallel, trace `L11I.m1131()` to decode the app-private child directory and find any asset-copy/extraction routine that writes the expected `paddle/*.onnx`, `*.param`, `*.bin`, and `keys.txt` files. Keep the `smn*Dict.txt` family separate unless a concrete reference connects it to this PaddleOCR wrapper.
