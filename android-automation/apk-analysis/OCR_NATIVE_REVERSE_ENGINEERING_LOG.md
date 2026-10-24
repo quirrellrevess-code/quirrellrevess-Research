@@ -249,3 +249,16 @@ This confirms a Java-to-JNI model-loading and inference wrapper, plus a JSON res
 
 ### Next targeted trace
 In JADX, inspect **Find Usage** / callers of `loadNnccModel`, `loadOnnxModel`, and `PaddleOcr.loadModel`; then text-search for `smnJcDict`, `smnDict`, and `Dict.txt` in the decompiled project. Prioritize the caller that supplies the arguments, because the path constants are obfuscated in this class. If no caller is found, inspect `IL1Iii.IL1Iii(byte[], String)` only as needed to decode the constants, and keep that decoding separate from claims about dictionary format.
+
+
+## 2026-10-24 follow-up: JADX global text search yielded no dictionary-name hits
+
+### User-reported search result
+In JADX, global text searches for `smnJcDict`, `smnDict`, and `Dict.txt` returned no matches. Searching for `loadNnccModel` showed only these method entries:
+- `com.nx.assist.lua.PaddleOcr.loadModel(boolean):boolean`
+- `com.nx.assist.lua.PaddleOcr.loadNnccModel(String, String, String, String, String):boolean`
+
+This is a user-reported GUI result, not an independently reproduced scan of all DEX/smali content. It does not prove that dictionary names are absent from the APK: names may be assembled dynamically, stored in resources/configuration, referenced from Lua/script payloads, or belong to another OCR subsystem.
+
+### Next action
+Use JADX **Find Usage** on the declaration of `PaddleOcr.loadNnccModel(String, String, String, String, String)` (rather than global text search) and inspect any callers/argument expressions. If there are no callers, trace `loadOnnxModel` and then inspect the implementation of `IL1Iii.IL1Iii(byte[], String)` to understand the obfuscated constants in `loadModel(boolean)`. Keep the custom `smn*Dict.txt` files unlinked from PaddleOCR until a concrete call/path reference is found.
