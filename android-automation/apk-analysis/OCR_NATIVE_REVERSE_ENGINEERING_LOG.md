@@ -167,3 +167,41 @@ The uploaded AndroidManifest.xml is Android binary XML rather than UTF-8 text. R
 - `android.permission.INTERNET` and a broad set of device, overlay, storage, SMS, phone, and accessibility-related permission strings are present in the manifest string pool. Presence in the string pool alone does not always establish the final merged permission state, so exact permission declarations should be parsed from the binary XML structure before making policy conclusions.
 
 This gives concrete Java component names for later DEX call-site tracing. However, the GitHub Contents API returned an empty Base64 body for the 6,339,288-byte classes.dex and the 3,278,648-byte x86 libocrapi.so, so those files remain unavailable through this route for direct in-session bytecode/disassembly analysis. The 19,168-byte manifest was readable after Base64 decoding.
+
+
+## 2026-10-24 follow-up: call-chain traceability and source-of-truth check
+
+### Repository inspection performed
+
+- Inspected the branch tree and the current reverse-engineering log.
+- Confirmed the repository contains `classes.dex` (6,339,288 bytes; blob SHA `e41759e70ba4e0469f5d4d3131291db52ee1d009`), `script.lrj` (80,925,066 bytes), and the OCR/native resource set.
+- Searched repository code for `PaddleOcr nativeLoadMode` and `smnJcDict`; GitHub code search returned no matches. This is not evidence that the strings are absent from DEX or binary payloads, because those artifacts are not indexed as ordinary source text.
+- The uploaded resource tree does **not** currently contain files whose paths match `smn*Dict.txt`. Their names remain leads from the earlier local scan; their actual bytes and repository provenance have not been established.
+
+### What can and cannot be concluded about PaddleOCR loading
+
+**Confirmed from previously retrieved native strings:**
+- JNI entry points named `Java_com_nx_assist_lua_PaddleOcr_nativeLoadMode` and `Java_com_nx_assist_lua_PaddleOcr_nativeDetect` exist in `libpaddleocr.so`.
+- Native strings include `keys size(%d)`, `txt file not found`, `CrnnNet`, `DbNet`, and DBNet/CRNN parameter/model load failure messages.
+- The library includes Android Bitmap-to-OpenCV-matrix conversion strings and C++ input-file stream type names.
+
+**Supported but not proven:**
+- The OCR library likely loads a character-key collection and text/model resources through a file-reading path.
+- `assets/paddle/keys.txt` is structurally consistent with a character table (6,623 nonempty unique one-character lines), and is a plausible candidate for the collection whose size is logged.
+
+**Unknown / not established:**
+- The runtime path/name used to open `keys.txt`, whether it is copied from APK assets or loaded from another location, and how keys map to model output indices.
+- The Java/Lua call sites, parameter order, and invocation order for `nativeLoadMode` and `nativeDetect`.
+- Whether `ScriptActivity` invokes PaddleOCR directly or delegates through Lua/native service code.
+- Whether `smn*Dict.txt` is consumed by PaddleOCR, another native library, Lua script payload, or a separate image-matching subsystem. No `smn*Dict` filename was found in the scanned printable strings of `libpaddleocr.so`.
+- The custom dictionary record layout, encoding, dimensions, or matching algorithm.
+
+### Retrieval constraint and next falsifiable step
+
+The standard GitHub Contents fetch returned empty Base64 content for the 6.3 MB DEX and the 80.9 MB script payload is too large for this current retrieval path. Do not claim DEX call-chain tracing is complete. Next, try alternate *repository-backed* routes that can return actual bytes or a targeted decompilation/extraction artifact, prioritizing:
+1. a small, locally generated DEX string/method/class report or JADX/smali output if any such artifact already exists in the repository;
+2. DEX-related names and OCR method references inside any accessible script/config payload;
+3. retrieving the original `smn*Dict.txt` files or a bounded sample with hashes from already uploaded materials.
+
+Do not ask for local execution until these direct routes have been exhausted. Any new conclusion must be added to this log and committed before reporting it.
+
