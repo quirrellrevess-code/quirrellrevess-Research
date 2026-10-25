@@ -5,7 +5,7 @@
 - 本文档：`docs/PROJECT_UMAAI_Progress.md`
 - 本轮归档日期：2026-10-25（+08:00）
 - 当前研究分支：`analysis/qianye-reverse-engineering-20261025`
-- 本地工作目录：`D:\\Games\\ai\\UmaAI-Research`
+- 本地工作目录：`D:\Games\ai\UmaAI-Research`
 - 归档原则：聊天不是长期项目档案；每轮有持久价值的结论都应及时提交到 GitHub，并远端回读验证。
 
 ## 1. 项目专属目标与边界
@@ -140,5 +140,5 @@
 - 执行模式：`WRITE`
 - 目标：创建本项目的统一进度归档文档，并将通用归档流程适配为 UmaAI-Research 专属约束。
 - 已执行：读取目标分支远端 Git tree；读取现有 Hachimi/LegendAI 集成、核心架构、执行器契约和 Qianye 静态分析专题文档；据此整理项目目标、现有证据、边界和后续步骤。
-- 待核验：本文件创建后的远端回读、Blob SHA 与 Commit SHA 的一致性检查。
+- 远端核验：PASS；创建后已回读本文件，归档标记和关键规则存在，Commit SHA 已通过 GitHub commit 元数据确认，commit 中该文件的 Blob SHA 与回读 Blob SHA 一致。
 - 安全边界：本轮仅处理 GitHub 文档；不运行 APK/原生库、不运行游戏、不触发 Actions、不提交任何游戏操作。
