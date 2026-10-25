@@ -436,3 +436,8 @@ Status: PASS for the Java plugin-loading path; NOT_VERIFIED for actual callers a
 - This confirms the plugin-context resource/class-loader delegation and reflective argument flow. It does not establish a caller of `LuaEngine.loadApk`, `ApkLoader.loadPlugin`, or `LuaEngine.registerPluginApp`.
 - PASS: bounded Java plugin context mechanism. NOT_VERIFIED: runtime invocation, concrete APK path, plugin activation, or relationship to `installLR` and the native script archive.
 - Next: obtain branch-aware caller evidence if possible; otherwise prioritize other high-value static branches rather than repeat unsupported whole-tree absence claims. GitHub-only read and report update; no APK/game execution, local PowerShell, or Actions.
+
+
+### Archive startup evidence boundary (2026-10-25)
+
+The existing archive inventory identifies a declared Lua entry in entry.json. Separately, L11I.java shows a file-exists branch calling Native.unZip and then Engine.start after successful extraction. The Java evidence does not establish that Engine.start consumes entry.json, nor that the inventoried file is the runtime-selected file. Both remain unverified. Static GitHub inspection only; no runtime execution or Actions.
