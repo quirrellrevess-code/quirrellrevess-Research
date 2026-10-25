@@ -372,3 +372,10 @@
 - NOT_VERIFIED：`LuaEngine.loadApk` 是否用于当前目标归档；Lua API 的实际调用点与归档入口之间的关联；`script.lrj` 样本是否就是被事件 99 替换的目标文件。
 - 下一步：如果继续保持“仅 GitHub 分析、无本地工具操作”的边界，应优先检查已有 Java 调用点与 `lLi1LL`/ `ApkLoader` 的关联；若仍不能闭合，就保留 native 反编译为明确阻塞，不根据库名或 API 名称推断成功执行。
 - 执行边界：仅 GitHub tree/Java 源码/报告路径只读检查并更新进度文档；未下载或运行二进制、未运行 APK/游戏、未使用本地 PowerShell、未触发 GitHub Actions。
+
+
+### LuaEngine.loadApk path classification (2026-10-25)
+
+Static source review confirms that LuaEngine.loadApk delegates to the class identified by JADX as PluginManager. That manager resolves an input file, prepares a private cache directory keyed by file MD5, creates a class loader, and returns an ApkLoader. ApkLoader mounts APK resources and reads plugin metadata to support plugin entry loading. This is an APK/DEX plugin path, distinct from the separately observed L11I Native.unZip -> Engine.start archive path. No current evidence links this method's input to Engine.installLR, script.lrj, or lua.zip.
+
+Status: PASS for the Java plugin-loading path; NOT_VERIFIED for actual callers and input paths or any relationship to the installLR target. Keep these paths separate unless a concrete caller/input link is found. Native implementations of Native.unZip and Engine.start remain unverified. GitHub source inspection only; no APK/game execution, local PowerShell, or GitHub Actions.
