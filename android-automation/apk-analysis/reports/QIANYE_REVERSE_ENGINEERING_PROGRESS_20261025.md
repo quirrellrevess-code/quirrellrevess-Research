@@ -396,3 +396,24 @@ Status: PASS for the Java plugin-loading path; NOT_VERIFIED for actual callers a
 - `ScriptActivity` has a separate file-exists check and invokes `iIilII1.m991li11(activity, path)` for its own path, then prepares UI from configuration files. The current review does not establish that this path reaches `LuaEngine.loadApk`.
 - This is a bounded review of selected entrypoint candidates, not proof that no caller exists anywhere in the 2,159-file decompiled Java tree. GitHub code search did not return usable results for the active analysis branch, so the concrete caller/input path remains unresolved.
 - Continue with targeted static call-chain tracing from the plugin manager's public methods and relevant obfuscated wrappers. Keep APK/DEX plugin loading separate from the native archive path unless a source-level link is found. No APK/game execution; no Actions run.
+
+
+### ApkLoader plugin-entry behavior and caller-tracing refinement (2026-10-25)
+
+新增证据：
+- `qianye-export/sources/com/p000nx/assist/lua/ApkLoader.java`
+- `qianye-export/sources/com/p000nx/assist/lua/LuaEngine.java`
+- `qianye-export/sources/I1I/p062Ilil/p063IL1Iii/I1I/lLi1LL.java`
+
+静态确认：
+- `ApkLoader` 构造函数保存 APK 路径和 `ClassLoader`，尝试通过反射创建 `AssetManager` 并挂载 APK 资源，再创建插件上下文。
+- `loadAutoJSPluginSdk(path)` 尝试从 APK manifest metadata 读取插件入口类名并初始化；如果元数据与反射方法可用，会缓存插件注册类的默认加载方法和命名加载方法。
+- `ApkLoader.loadPlugin(String)` 只有在反射方法初始化成功时才调用插件注册类；空参数走默认加载方法，非空参数走命名加载方法。异常会被吞掉并返回 null，因此单看返回值或方法存在不能证明插件成功加载。
+- `getApkPath()`、`getPluginLoader()`、`loadClass(String)` 等是可见的公开访问点；但目前没有在已检查的入口候选中找到创建后 `ApkLoader` 的调用者，也没有证据表明 `loadPlugin` 被实际调用。
+- `LuaEngine.loadApk(String)` 仍只是将参数交给 PluginManager 并返回 `ApkLoader`；当前证据不足以将此插件路线连接到 `Engine.installLR`、事件 99 目标文件、`script.lrj` 或 `lua.zip`。
+
+结论与下一步：
+- PASS（静态）：补齐 APK 插件加载器从 APK manifest metadata 到反射插件注册入口的可见机制。
+- NOT_VERIFIED：`loadApk` 的实际调用者、输入路径、`ApkLoader.loadPlugin` 的实际调用点及插件加载结果。
+- 下一步优先检查与 `ApkLoader` 返回值类型有关的局部包装/调用点，以及 `LuaEngine.getPluginApp()` / `registerPluginApp(Object)` 是否构成插件初始化的可见生命周期。若活动分支无法进行可靠代码搜索，继续采用有限、明确记录范围的静态检查，不宣称全仓库无调用者。
+- 边界：仅 GitHub 静态源码读取与报告归档；未运行 APK/游戏，未使用本地 PowerShell，未触发 GitHub Actions。
