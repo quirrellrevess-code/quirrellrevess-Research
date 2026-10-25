@@ -379,3 +379,12 @@
 Static source review confirms that LuaEngine.loadApk delegates to the class identified by JADX as PluginManager. That manager resolves an input file, prepares a private cache directory keyed by file MD5, creates a class loader, and returns an ApkLoader. ApkLoader mounts APK resources and reads plugin metadata to support plugin entry loading. This is an APK/DEX plugin path, distinct from the separately observed L11I Native.unZip -> Engine.start archive path. No current evidence links this method's input to Engine.installLR, script.lrj, or lua.zip.
 
 Status: PASS for the Java plugin-loading path; NOT_VERIFIED for actual callers and input paths or any relationship to the installLR target. Keep these paths separate unless a concrete caller/input link is found. Native implementations of Native.unZip and Engine.start remain unverified. GitHub source inspection only; no APK/game execution, local PowerShell, or GitHub Actions.
+
+
+### PluginManager input handling confirmed (2026-10-25)
+
+- `LuaEngine.loadApk(String)` delegates to the obfuscated `PluginManager.ILil(String)`; `PluginManager` initializes a private app-files cache directory and keys its in-memory loader cache by the input file's MD5.
+- The helper `ILil.ILil(source, destination)` resolves to a file-copy utility: it copies bytes through file channels, checks the copied length, and preserves the source modification time. It does not decompress the source archive.
+- After copying, `PluginManager` applies mode-dependent file preparation and constructs a `DexClassLoader`; `ApkLoader` mounts APK assets and optionally discovers a plugin entry through manifest metadata/reflection.
+- This strengthens the classification of `LuaEngine.loadApk` as an APK/DEX plugin-loading route, separate from `L11I -> Native.unZip -> Engine.start`. The actual caller and concrete input path of `loadApk` remain unverified; no link to the `installLR` target is established.
+- Static source review only; no APK/game execution and no GitHub Actions run.
