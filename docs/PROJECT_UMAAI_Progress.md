@@ -210,3 +210,10 @@
 - 静态 PASS：`L11I.m942LlLLL` 将输入文件复制到核心服务路径后调用 `ILL.I11L(8,0,0,path)`；Binder `sendCmd` 转到 `iIilII1.sendCmd`。当 `i == 8` 时，Java 侧派发 `IIi(99, path, "")` 并返回解码后的 `"0"`，与上游成功码比较一致。
 - 重要限制：事件 99 的订阅者/处理器尚未定位；这只能证明路径被派发给事件总线，不能证明 Lua 已读取、解析或执行文件。成功码分支还会同步等待约 600000 ms（10 分钟），这是代码的阻塞等待，不是执行时间测量。
 - 下一步：追踪 `p051lLi1LL.ILil.IL1Iii.I1I.I1I().ILL(...)` 的事件 99 消费者和监听注册。仍然只读 GitHub，不运行 APK/游戏，不触发 Actions。
+
+
+### 2026-10-25：MessageEvent / event 99 进一步静态确认
+
+- 事件类型定位到 `android-automation/apk-analysis/qianye-export/sources/I1I/I1I/ILil/IIi.java`；反编译注释显示原始类名 `MessageEvent`。对象携带三个字段：整数事件码、字符串参数 1、字符串参数 2。
+- Core native Binder 的 `sendCmd` 在 code=8 时发布 `MessageEvent(99, targetPath, BuildConfig.FLAVOR)`，随后返回字符串 `0`。因此此前 `installLR` 对返回值 `0` 的判断仅证明命令处理器接受/分发了事件，不能证明脚本文件已被消费或执行。
+- 自定义 EventBus 的 `ILL(Object)` 是通用事件发布入口；事件 99 的具体订阅者和脚本执行语义仍未确认。后续继续仅通过 GitHub 源码静态追踪订阅者与注册过程；不消耗 Actions 额度、不执行 APK。
