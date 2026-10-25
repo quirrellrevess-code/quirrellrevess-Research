@@ -252,3 +252,27 @@
 - **Still NOT_VERIFIED:** whether the destination file is a Lua/script payload, whether a watcher or native runtime subsequently reads/parses/executes it, and what status 9 means beyond the visible call path. The `renameTo` and status call alone do not prove script execution.
 - Sources read: `com/main/app/MainService.java` (registration, annotated handler, `m3464lIiI`, destination initialization), `p051lLi1LL/ILil/IL1Iii/I1I.java` (EventBus registration/dispatch), and `I1I/I1I/ILil/IIi.java` (`MessageEvent` fields).
 - GitHub-only static analysis; no local PowerShell, APK/game execution, game interaction, or GitHub Actions run.
+
+
+### Event 99 destination and timestamp helper clarified (2026-10-25)
+
+新增静态证据：
+- `qianye-export/sources/I1I/I1I/p008IL/lIlii.java`（`m1132LIl(Context,String,boolean)`）
+- `qianye-export/sources/I1I/I1I/ILil/llL1ii.java`（文件头注释：`FileChangeMgr`）
+- `qianye-export/sources/com/main/app/NativeService.java`
+- `qianye-export/sources/com/main/engine/ScriptMain.java`
+- `qianye-export/sources/com/p000nx/assist/lua/LuaEngine.java`
+
+观察与修正：
+- `lIlii.m1132LIl(context, name, false)` 的可见实现仅构造 `new File(context.getFilesDir(), name)` 并返回其绝对路径；参数为 `false` 时不要求文件已存在。由此确认 `MainService.f2875iILLL1` 指向应用私有 filesDir 下的一个文件，但混淆字符串所代表的文件名尚未解码确认。
+- 需要区分两个包名不同、简单类名相同的 `llL1ii`：
+  - `p051lLi1LL.ILil.IL1Iii.llL1ii` 是 EventBus 的订阅方法发现器（JADX 注释为 `SubscriberMethodFinder`），不是文件监听器。
+  - `I1I.I1I.ILil.llL1ii` 是 `FileChangeMgr`。其 `Ilil(long, Context)` 忽略传入的 long 值，调用 `m1033IL(context, System.currentTimeMillis())`，把当前时间写入 `context.getFilesDir()` 下的序列化记录文件。当前源码没有显示它监听目标文件、调用 Lua 或触发脚本执行。
+- 已确认 `NativeService.onCreate()` 调用 `LuaEngine.Init(this)`；其线程入口创建 `ScriptMain` 并调用 `ScriptMain.main(...) `。当参数首项为 1 时，`ScriptMain.main` 初始化 `LuaEngine`、创建 `L11I` 核心脚本对象并进入 Looper。这证明应用存在独立的 Lua/核心脚本运行时启动路径，但尚未把事件 99 替换的目标文件与该运行时的实际读取/解析函数连接起来。
+- 因此，事件 99 的已证实语义应表述为“Java 服务收到路径并尝试重命名替换私有目录目标文件，随后更新时间戳记录并发出状态通知”；不能表述为“文件变更监听器启动脚本”或“Lua 执行成功”。
+
+状态：
+- PASS（静态）：目标文件位于 `Context.getFilesDir()` 下；文件变更管理类仅被确认写入时间戳记录；确认 `NativeService → ScriptMain → LuaEngine.Init → L11I` 的运行时初始化链。
+- NOT_VERIFIED：目标文件的真实文件名/格式、替换后文件的消费者、`L11I` 读取或解释该文件的具体函数、状态 9 的业务含义、Lua/native 实际执行链。
+- 下一步：从 `I1I.I1I.ILil.L11I` 的构造函数和 `m940LlIl()` 开始追踪，结合 `m942LlLLL` 使用的目标路径及 `INXCoreNative` 文件接口，寻找读取/解码/执行入口；同时检查 `NativeService` 的调用参数如何传入 `L11I`。若证据进入仅有二进制的 native 库，应明确标注边界，不推测补齐。
+- 执行边界：仅 GitHub 源码只读检查；未运行 APK/游戏、未使用本地 PowerShell、未触发 GitHub Actions。
