@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<selector xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto" xmlns:aapt="http://schemas.android.com/aapt">
+    <item
+        android:state_enabled="true"
+        android:state_selected="true"
+        android:drawable="@mipmap/check_sel"/>
+    <item
+        android:state_enabled="true"
+        android:state_checked="true"
+        android:drawable="@mipmap/check_sel"/>
+    <item
+        android:state_enabled="true"
+        android:state_pressed="true"
+        android:drawable="@mipmap/check_sel"/>
+    <item
+        android:state_enabled="true"
+        android:drawable="@mipmap/check_unsel"/>
+    <item
+        android:state_enabled="false"
+        android:state_selected="true"
+        android:drawable="@mipmap/check_sel_dis"/>
+    <item
+        android:state_enabled="false"
+        android:state_checked="true"
+        android:drawable="@mipmap/check_sel_dis"/>
+    <item
+        android:state_enabled="false"
+        android:state_pressed="true"
+        android:drawable="@mipmap/check_sel_dis"/>
+    <item
+        android:state_enabled="false"
+        android:drawable="@mipmap/check_unsel_dis"/>
+</selector>
