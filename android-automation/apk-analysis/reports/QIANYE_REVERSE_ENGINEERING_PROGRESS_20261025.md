@@ -441,3 +441,8 @@ Status: PASS for the Java plugin-loading path; NOT_VERIFIED for actual callers a
 ### Archive startup evidence boundary (2026-10-25)
 
 The existing archive inventory identifies a declared Lua entry in entry.json. Separately, L11I.java shows a file-exists branch calling Native.unZip and then Engine.start after successful extraction. The Java evidence does not establish that Engine.start consumes entry.json, nor that the inventoried file is the runtime-selected file. Both remain unverified. Static GitHub inspection only; no runtime execution or Actions.
+
+
+### Identical Git archive blobs (2026-10-25)
+
+The recursive Git tree contains two script.lrj files: android-automation/apk-analysis/script.lrj and android-automation/apk-analysis/qianye-export/resources/assets/script.lrj. Both have size 80925066 bytes and the identical Git blob SHA 4cabb132e9aeeff56778103c7a6805f5aed8ff42. Their repository content is therefore identical. This size matches the existing local inventory, but the inventory's SHA256 has not been independently recalculated against the Git blob. Neither fact proves the native runtime chooses this archive. Next: inspect startup asset-copy logic and prioritize emulator integration. No Actions or game execution.
