@@ -426,3 +426,13 @@ Status: PASS for the Java plugin-loading path; NOT_VERIFIED for actual callers a
 - `LuaEngine.registerPluginApp(Object)` stores its argument in a static field and `getPluginApp()` returns that field; no concrete registration caller or connection to the core archive was established in this bounded review.
 - PASS (static): PluginContext holds the ApkLoader and exposes its ClassLoader. NOT_VERIFIED: who calls `loadApk`, who calls `loadPlugin`, and whether any plugin is instantiated during the observed startup flow.
 - Next: identify Java callers of `registerPluginApp` or `ApkLoader.loadPlugin` only when branch-aware evidence is available; do not infer absence from selected-file checks. No APK/game execution, local PowerShell, or GitHub Actions.
+
+
+### PluginContext resource delegation and reflective call arguments (2026-10-25)
+
+- Re-read `qianye-export/sources/com/p000nx/assist/lua/ApkLoader.java`, `com/p000nx/assist/lua/LuaEngine.java`, and `I1I/p062Ilil/p063IL1Iii/I1I/IL.java` (PluginContext).
+- `ApkLoader` constructs `new IL(hostContext, this)` after setting up its asset manager and resources. `PluginContext` stores the corresponding `ApkLoader` and delegates assets, resources, and class-loader access to that loader.
+- `ApkLoader.loadPlugin(String)` supplies the host context and this plugin context to a reflected plugin registry method. Empty names select the default method; nonempty names select the named method. The method may return null if reflective methods are absent or invocation fails.
+- This confirms the plugin-context resource/class-loader delegation and reflective argument flow. It does not establish a caller of `LuaEngine.loadApk`, `ApkLoader.loadPlugin`, or `LuaEngine.registerPluginApp`.
+- PASS: bounded Java plugin context mechanism. NOT_VERIFIED: runtime invocation, concrete APK path, plugin activation, or relationship to `installLR` and the native script archive.
+- Next: obtain branch-aware caller evidence if possible; otherwise prioritize other high-value static branches rather than repeat unsupported whole-tree absence claims. GitHub-only read and report update; no APK/game execution, local PowerShell, or Actions.
