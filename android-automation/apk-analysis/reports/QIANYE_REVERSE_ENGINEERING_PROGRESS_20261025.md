@@ -348,3 +348,27 @@
 - BLOCKED / NOT_VERIFIED：`Native.unZip`、`Engine.start` 的 native 实现；加载的库名和 JNI 绑定细节；`script.lrj` 样本与目标路径是否同一归档；归档入口是否被 native Lua runtime 实际加载/执行。
 - 下一步：在现有仓库静态材料中检查 `libengine.so` / `libnative.so` 是否有已生成的符号表、字符串提取或反汇编报告；若没有，则不再把 Java 声明当成执行证据，并把 native 反编译作为明确阻塞。若能定位现有 `LuaEngine`/ `LuaNative` 的 Java 调用点，再尝试将归档入口与运行时 API 建立静态调用关联。
 - 执行边界：仅 GitHub 源码与已提交报告只读检查，更新本进度文档；未运行 APK/游戏、未使用本地 PowerShell、未触发 GitHub Actions。
+
+
+### Native 分析材料清点与 Lua Java 桥接边界 (2026-10-25)
+
+本轮检查范围：
+- 当前分支完整 Git tree（4099 个条目，API 未标记为 truncated）。
+- `qianye-export/sources/com/p000nx/assist/lua/LuaEngine.java`。
+- `qianye-export/sources/com/p000nx/assist/lua/LuaNative.java`。
+- `qianye-export/sources/com/main/app/Native.java`。
+- `reports/` 及仓库中与 native 符号、字符串、JNI、反汇编相关的文件路径。
+
+新确认：
+- `LuaEngine.Init(Context)` 的可见实现仅保存 Context、创建主线程 Handler，并初始化 `lLi1LL` 相关组件；它本身没有展示加载 `L11I.f975iILLL1` 指向归档或调用 `LuaNative.pcall` 的代码。
+- `LuaEngine.loadApk(String)` 只是把参数交给 `lLi1LL.ILil(str)` 并返回 `ApkLoader`。目前不能把这个方法当作 `script.lrj` 的加载证据，因为尚未建立其调用者、输入路径与目标归档之间的关系。
+- `LuaNative.java` 中存在多项 native Lua API 声明（包括 `pcall`、`newthread`、`getGlobal`、`setGlobal` 等），并有 Java 辅助方法围绕 Lua 栈与 Java 对象互操作。这能证明项目包含 Java/Lua 桥接接口，但不能单独证明当前归档入口被调用。
+- `Native.java` 中的 `chmod` 等方法为 native 声明；此前确认的 `Native.unZip` 同样缺少仓库内可读的 Java 实现体，需结合 native 库才能判定其内部行为。
+- 当前树中确实存在多个 ABI 的 `libengine.so`、`libnative.so`，但本轮按文件路径盘点 `reports/` 及常见 native 分析目录后，没有找到明显的符号表、`readelf`/`nm` 输出、Ghidra/IDA/radare2 反汇编产物或专门的 JNI 映射报告。此结论仅针对仓库中可见的文件/路径，不等于证明这些二进制没有导出符号。
+
+本轮证据结论：
+- PASS（静态）：确认 Java Lua 桥接 API 存在；确认 `LuaEngine.Init` 与 `loadApk` 的可见行为边界；确认仓库包含目标 native 库文件。
+- BLOCKED：当前提交材料中没有可直接读取的 native 符号/反汇编证据，无法从 Java 源码进一步证明 `Native.unZip`、`Engine.start` 的内部加载与执行语义。
+- NOT_VERIFIED：`LuaEngine.loadApk` 是否用于当前目标归档；Lua API 的实际调用点与归档入口之间的关联；`script.lrj` 样本是否就是被事件 99 替换的目标文件。
+- 下一步：如果继续保持“仅 GitHub 分析、无本地工具操作”的边界，应优先检查已有 Java 调用点与 `lLi1LL`/ `ApkLoader` 的关联；若仍不能闭合，就保留 native 反编译为明确阻塞，不根据库名或 API 名称推断成功执行。
+- 执行边界：仅 GitHub tree/Java 源码/报告路径只读检查并更新进度文档；未下载或运行二进制、未运行 APK/游戏、未使用本地 PowerShell、未触发 GitHub Actions。
