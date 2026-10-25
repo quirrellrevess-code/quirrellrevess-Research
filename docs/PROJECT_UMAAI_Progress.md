@@ -172,4 +172,14 @@
 - 证据：qianye-export/sources/com/main/app/App.java、qianye-export/sources/I1I/I1I/p008IL/lIlii.java、qianye-export/sources/com/p000nx/assist/lua/LuaEngine.java、qianye-export/sources/com/p000nx/assist/lua/PaddleOcr.java。
 - 静态 PASS：`App.onCreate()` 调用 `lIlii.IL1Iii(this)`；`lIlii.IL1Iii(Application)` 在初始化门控 `m1188iIIi1(application)` 通过后调用 `L1ii1(application)`；`L1ii1(Context)` 再执行 AssetManager 到应用私有目录的资源复制。故复制方法有可见的启动调用点，不是完全孤立代码。
 - 限制：门控是否在实际运行中通过、AssetManager 中各 OCR 模型文件是否存在、各复制是否成功、OCR 是否最终加载均未验证；复制返回值没有被统一汇总为明确失败判定。导出 Git tree 中 `resources/assets/paddle/` 仍只看到 `keys.txt`，不能直接推断原 APK 资源必然缺失或存在。
-- Java 源码直接搜索尚未找到 `PaddleOcr.loadModel(...)` 调用点；需继续研究 Lua 绑定/反射路径与 `LuaEngine` 脚本加载入口，不能排除 Lua 动态调用。未执行 APK/游戏，未触发 Actions。
+- Java 源码直接搜索尚未找到 `PaddleOcr.loadModel(...)` 调用点；已确认 `LuaNative.checkMethod(...)` / `callMethod(...)` 具备通用 Java 反射调用机制，因此不能排除 Lua 动态调用，但仍未找到实际脚本调用证据。下一步研究 Lua VM 类绑定规则、`L11I.m942LlLLL(...)` 以及 `script.lrj`/`lua.zip` 的读取入口。未执行 APK/游戏，未触发 Actions。
+
+
+### 2026-10-25 — Qianye Lua → Java 动态反射能力
+
+- 执行模式：READ_ONLY；分支：analysis/qianye-reverse-engineering-20261025。
+- 证据：qianye-export/sources/com/p000nx/assist/lua/LuaNative.java、LuaEngine.java、com/main/engine/Engine.java、I1I/I1I/ILil/L11I.java。
+- 静态 PASS：`LuaNative.checkMethod(...)` 枚举目标类的 declared/public methods 并缓存；`callMethod(...)` 将 Lua 参数转换为 Java 参数后使用 `Method.invoke(...)`。这证明桥接层具备通用反射调用能力。
+- 相关线索：`Engine` 有 `paddleOcr(Object)` native 声明、截图字节获取包装和 `installLR(String)`；后者调用 `L11I.I11L().m942LlLLL(str)`。但尚未确认该安装入口对应 `script.lrj`，也没有证据证明实际 Lua 脚本调用 `PaddleOcr.loadModel(...)`。
+- 限制：反射能力存在不等于某个类已暴露给 Lua，更不等于脚本实际调用；Lua VM 类绑定表、脚本加载链和 OCR 模型成功加载仍未验证。未执行 APK/游戏，未触发 Actions。
+- 下一步：追踪 `L11I.m942LlLLL` 的代理/核心实现、`script.lrj` 与 `lua.zip` 的读取点，并检查 native/JNI 的 Lua 类绑定机制。
