@@ -500,3 +500,21 @@ The recursive Git tree contains two script.lrj files: android-automation/apk-ana
 - `PASS`（静态）：复核 LuaEngine 可见包装接口；复核现有 LegendAI 记录、校验和控制器代码的边界。
 - `NOT_VERIFIED`：Lua 是否实际调用 OCR、模型运行时加载、AIRedirector 上下文与 URA 快照的同回合一致性、任何真实输入 backend 的安全性及实机动作后置条件。
 - 决策：下一轮优先处理 LegendAI 推荐与回合状态的关联证据，不再无目标扩展 Qianye 混淆代码分析。
+
+
+### 10. URA 快照与请求日志的身份字段缺口（2026-10-25）
+
+复核证据：`AutoTrainingPlugin/UmaAutoTrainingPlugin.cs`、`AIRedirectorIntegration/LegendAiRecommendationSink.cs`、`observation_replay_report.py`。
+
+- URA 响应快照记录 `turn`、`scenario_id`、属性值和训练命令列表，但当前快照结构没有写入 `single_mode_chara_id` 或统一的 `run_id`。
+- 请求日志记录 `current_turn`、`command_type`、`command_id`、`command_group_id`、`select_id` 等字段，但没有写入 `scenario_id`、角色 ID 或统一的 `run_id`。
+- AIRedirector 推荐 sink 有 `single_mode_chara_id` 和 `turn` 上下文，但不记录同一套 URA 快照身份字段；其关联状态仍明确为未验证。
+- 因此现有回放审计可比较 turn、时间戳、场景和请求命令成员关系等部分线索，但当前记录结构不足以在所有流之间建立完整、统一的 run/character identity。相同 turn 和时间接近仍不构成同状态或因果证明。
+- 这是从静态数据结构得到的集成缺口，不代表现有日志一定不一致，也不证明 URA 上游没有可用身份字段；尚需确认响应 JSON 的可用字段及 AIRedirector 上下文的生命周期。
+
+建议的下一步（只读优先）：
+1. 用已有本地日志样本核对响应 JSON 中是否稳定存在角色 ID、育成 run 标识及场景字段；在没有样本前，不臆测字段路径。
+2. 若来源数据确实提供这些字段，再设计统一身份字段并补充回放测试；若没有，就保留 `identity_unavailable`，不要按最近时间或 turn 强行补全。
+3. 在身份/同回合状态关联通过审计前，继续保持 `verified=false`、`executable=false`，不接通真实输入 backend。
+
+状态：静态字段缺口 `PASS`；上游是否提供可补充身份字段 `NOT_VERIFIED`；未运行测试或游戏、未触发 Actions。
