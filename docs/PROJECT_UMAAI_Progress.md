@@ -193,3 +193,12 @@
 - 静态 PASS：`ILL.m868lIlii` 使用 `FileInputStream` 读取源文件，并经 `INXCoreNative.openFile/writeFile/closeFile` 写入服务端文件句柄，确认这是核心服务文件传输机制；该函数本身不解析脚本格式。
 - 限制：操作码 8 的服务端语义、混淆目标文件名、`script.lrj` 与 installLR 的对应关系仍未验证。LuaEngine 的可见接口包含插件对象、资源路径与截图包装，但尚未找到 `script.lrj` / `lua.zip` 的直接消费者。LuaNative 反射能力不能单独证明 OCR 类对 Lua 可见或被实际调用。
 - 下一步：定位 INXCoreNative 服务端实现/native 注册表与脚本文件消费者；若当前导出缺少相关二进制/服务端证据，记录边界而不猜测。未运行 APK/游戏，未触发 GitHub Actions。
+
+
+### 2026-10-25 — Lua 运行时初始化与 JNI 证据边界
+
+- 执行模式：READ_ONLY；分支：analysis/qianye-reverse-engineering-20261025。
+- 证据：qianye-export/sources/com/main/app/NativeService.java、com/main/engine/ScriptMain.java、com/main/engine/Engine.java、com/p000nx/assist/lua/LuaEngine.java、LuaNative.java；resources/lib 下多个 ABI 的 libengine.so、libnative.so、libpaddleocr.so。
+- 静态 PASS：NativeService 调用 ScriptMain.main；ScriptMain 在特定启动参数分支初始化 LuaEngine 与相关上下文，然后创建 L11I 核心脚本对象并进入 Looper。导出树包含多个 ABI 的 engine/native/paddleocr 原生库。
+- 限制：当前可检索代码中未发现 script.lrj / lua.zip 的直接读取调用点；native 侧只有共享库文件，当前未获得可检索的 JNI C/C++ 实现或注册表。因此不能确认 JNI 注册映射、脚本读取/执行点、Lua 实际暴露的 Java 类清单，也不能确认 OCR 模型被成功加载。
+- 下一步：继续沿 L11I/核心服务的文件 API 找消费者；若证据最终落在共享库内部，需专门静态分析该库后再下结论。未运行 APK/游戏，未触发 GitHub Actions。
