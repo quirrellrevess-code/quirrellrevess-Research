@@ -202,3 +202,11 @@
 - 静态 PASS：NativeService 调用 ScriptMain.main；ScriptMain 在特定启动参数分支初始化 LuaEngine 与相关上下文，然后创建 L11I 核心脚本对象并进入 Looper。导出树包含多个 ABI 的 engine/native/paddleocr 原生库。
 - 限制：当前可检索代码中未发现 script.lrj / lua.zip 的直接读取调用点；native 侧只有共享库文件，当前未获得可检索的 JNI C/C++ 实现或注册表。因此不能确认 JNI 注册映射、脚本读取/执行点、Lua 实际暴露的 Java 类清单，也不能确认 OCR 模型被成功加载。
 - 下一步：继续沿 L11I/核心服务的文件 API 找消费者；若证据最终落在共享库内部，需专门静态分析该库后再下结论。未运行 APK/游戏，未触发 GitHub Actions。
+
+
+### 2026-10-25 — installLR 的 sendCmd(8) 追到事件 99
+
+- 新证据：`qianye-export/sources/I1I/I1I/ILil/iIilII1.java`、`LLL.java`、`CoreProvider.java`、`android/app/INXCoreNative.java`。
+- 静态 PASS：`L11I.m942LlLLL` 将输入文件复制到核心服务路径后调用 `ILL.I11L(8,0,0,path)`；Binder `sendCmd` 转到 `iIilII1.sendCmd`。当 `i == 8` 时，Java 侧派发 `IIi(99, path, "")` 并返回解码后的 `"0"`，与上游成功码比较一致。
+- 重要限制：事件 99 的订阅者/处理器尚未定位；这只能证明路径被派发给事件总线，不能证明 Lua 已读取、解析或执行文件。成功码分支还会同步等待约 600000 ms（10 分钟），这是代码的阻塞等待，不是执行时间测量。
+- 下一步：追踪 `p051lLi1LL.ILil.IL1Iii.I1I.I1I().ILL(...)` 的事件 99 消费者和监听注册。仍然只读 GitHub，不运行 APK/游戏，不触发 Actions。
