@@ -466,3 +466,37 @@ The recursive Git tree contains two script.lrj files: android-automation/apk-ana
 - `PaddleOcr.java` source copies remain identical (blob `2091a89c9662c7a214de0f0a8465dd59cf1e28c1`). Static inspection identifies ONNX and NNCC model modes, but does not establish that the files are staged to the exact runtime directory or that native loading succeeds.
 - Status: PASS for identifying the decoder and asset/native-library helper roles; NOT_VERIFIED for every obfuscated name mapping, actual device filesystem state, native OCR initialization, and Taiwan-server OCR accuracy.
 - Next: map the remaining directory and asset names to their call sites, then stop if this does not produce a concrete dependency for the Python + ADB + LegendAI integration. No Actions, local PowerShell, APK execution, or game actions were used.
+
+
+### 9. Lua facade 与主目标集成边界复核（2026-10-25）
+
+新增/复核证据：
+- `qianye-export/sources/com/p000nx/assist/lua/LuaEngine.java`
+- `qianye-export/sources/com/p000nx/assist/lua/LuaNative.java`
+- `AutoTrainingPlugin/README.md`
+- `AutoTrainingPlugin/AIRedirectorIntegration/LegendAiRecommendationSink.cs`
+- `AutoTrainingPlugin/legendai_stdout_bridge.py`
+- `AutoTrainingPlugin/legendai_action_guard.py`
+- `AutoTrainingPlugin/pc_action_target_mapping.py`
+- `AutoTrainingPlugin/pc_turn_controller.py`
+
+观察：
+- `LuaEngine` 明确暴露 `snapShot(...)`、`loadApk(...)`、资源路径及插件上下文等静态包装方法；该文件中没有直接的 `PaddleOcr.loadModel/detect` 调用。结合 `LuaNative` 的通用反射方法，只能证明具备动态调用机制，不能证明 Lua 脚本实际调用 OCR 或 OCR 类对脚本可见。
+- 当前可见的 OCR 证据仍止于 Java/JNI 包装和模型路径/资源复制逻辑；尚未取得模型二进制从原始 APK 到运行时目录并成功加载的完整证据，也没有台服截图的准确率测试结果。
+- `LegendAiRecommendationSink` 在 AIRedirector 已知上下文可用时记录角色/回合字段，但明确把关联状态标为 `target_context_available_unverified`，记录仍是 `verified=false`、`executable=false`。
+- `legendai_stdout_bridge.py` 的 stdout-only 记录把 `turn`、`single_mode_chara_id` 和 `action_id` 设为 null，并标记 `unavailable_in_stdout_only`。因此它适合作为只读观察备份，不足以独立驱动育成。
+- `legendai_action_guard.py`、`pc_action_target_mapping.py` 和 `pc_turn_controller.py` 已提供 fail-closed 校验边界；但控制器默认没有已验证的真实输入 backend，屏幕目标识别也始终不可执行。不能将这些防护模块当作游戏动作已接通。
+- 以上项目文件是静态读取结果；本轮没有运行测试、游戏、APK 或原生库，也没有触发 GitHub Actions。
+
+## 收敛后的工作优先级
+
+1. **优先主线集成**：围绕 AIRedirector 的角色/回合上下文，核对推荐文本、同回合 URA 状态快照及状态身份字段能否建立一致且可审计的关联；stdout-only 数据仅作旁路诊断。
+2. **保持执行关闭**：在回合关联、明确 action ID、实机状态后置条件和真实输入 backend 未分别验证前，不启用自动点击或把推荐标为可执行。
+3. **限制 Qianye 继续逆向范围**：只有在找到具体 Lua 调用点、OCR 模型资源证据或明确可复用接口时，才继续深入相关混淆代码。单纯继续解混淆、但无法改变 Python + ADB + LegendAI 集成决策的内容，暂缓。
+4. **需要本地证据时再升级**：若 GitHub 静态文件无法确认 Lua 动态调用或 native OCR 行为，记录为 `NOT_VERIFIED`，后续只安排有明确问题的本地只读检查；不推断 native 行为。
+
+## 本节状态
+
+- `PASS`（静态）：复核 LuaEngine 可见包装接口；复核现有 LegendAI 记录、校验和控制器代码的边界。
+- `NOT_VERIFIED`：Lua 是否实际调用 OCR、模型运行时加载、AIRedirector 上下文与 URA 快照的同回合一致性、任何真实输入 backend 的安全性及实机动作后置条件。
+- 决策：下一轮优先处理 LegendAI 推荐与回合状态的关联证据，不再无目标扩展 Qianye 混淆代码分析。
