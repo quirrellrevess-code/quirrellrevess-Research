@@ -217,3 +217,17 @@
 - 事件类型定位到 `android-automation/apk-analysis/qianye-export/sources/I1I/I1I/ILil/IIi.java`；反编译注释显示原始类名 `MessageEvent`。对象携带三个字段：整数事件码、字符串参数 1、字符串参数 2。
 - Core native Binder 的 `sendCmd` 在 code=8 时发布 `MessageEvent(99, targetPath, BuildConfig.FLAVOR)`，随后返回字符串 `0`。因此此前 `installLR` 对返回值 `0` 的判断仅证明命令处理器接受/分发了事件，不能证明脚本文件已被消费或执行。
 - 自定义 EventBus 的 `ILL(Object)` 是通用事件发布入口；事件 99 的具体订阅者和脚本执行语义仍未确认。后续继续仅通过 GitHub 源码静态追踪订阅者与注册过程；不消耗 Actions 额度、不执行 APK。
+
+### 2026-10-25 — LegendAI 当前故障日志排查（等待用户次日实测）
+
+- 执行模式：`READ_ONLY`（本轮仅归档结论；没有修改用户本机文件、配置或进程）。
+- 目标：根据用户提供的 Windows 应用事件日志与目录清单，定位 LegendAI 当前使用时的错误线索；暂停自动化开发，等待用户次日完成实测后再继续。
+- 已核实的主要错误：2026-10-25 21:52:40，`.NET Runtime` Event ID 1026 记录 `UmamusumeResponseAnalyzer.exe` v1.14.3.2 未处理异常：`KeyNotFoundException: The given key '插件' was not present in the dictionary.` 调用链包含 `UmamusumeResponseAnalyzer.Plugin.IPlugin.ConfigPrompt()`、`PluginConfig.Prompt()`、`Config.Prompt()`、`ShowMenu()`。这强烈指向小黑板显示插件配置提示时访问了缺失的“插件”字典键；具体触发插件、元数据或兼容性原因尚未确定。
+- 另一个独立错误：2026-10-25 22:04:07，应用发生 `Environment.FailFast`，消息为 `A callback was made on a garbage collected delegate ... ConsoleHelper+HandlerRoutine::Invoke`，关联 WER exception code `0x80131623`。目前没有证据证明它与前述 `ConfigPrompt()` 异常存在因果关系。
+- 游戏状态通道的现有证据：用户目录清单显示 `D:\Games\ai\.portable\PluginData\SendGameStatusPlugin\GameStatusSend_Legend\thisTurn.json` 在 2026-10-25 22:02:21 更新，大小约 4.7 KB；同时存在 turn0–turn71 等历史 JSON。此前检查已看到结构化育成状态且内容变化。这支持状态写入通道曾工作，但不能证明 LegendAI 已成功计算或输出训练建议。
+- 插件目录已定位：`D:\Games\ai\.portable\Plugins`，其中包含 `AIRedirector`、`SendGameStatusPlugin`、`LegendScenarioAnalyzer` 等；本轮此前对 `PluginData` 下 JSON/TOML/YAML/INI/CONFIG 文件的关键词搜索没有找到 `ConfigPrompt`、`插件配置` 等匹配。该搜索范围不包含小黑板 EXE 内部实现，也不能据此认定不存在相关配置。
+- 配置文件观察：`D:\Games\ai\LegendAI\aiConfig_cpu.json`（620 bytes，修改于 2026-06-28）含 `//` 注释并重复拼接两个顶层对象，因此 PowerShell `ConvertFrom-Json` 无法解析；备份文件也采用类似格式。此现象不证明 LegendAI 自身解析失败，文件长期存在，当前没有证据将其与 2026-10-25 的崩溃关联。**未修改配置，不建议直接覆盖或恢复备份。**
+- `D:\Games\ai\LegendAI\lastError.json` 曾与 `thisTurn.json` 内容一致，因此不能仅凭文件名认定它记录的是异常。
+- 当前判断：首要可追踪线索是小黑板 `Plugin.IPlugin.ConfigPrompt()` 的缺失键异常；尚未证明它就是用户所说 AI 建议错误的唯一原因。现有 `update.log` 内容未提供明确运行时决策异常，不继续重复检索该日志。
+- 安全边界：没有发送 HTTP 请求、执行游戏操作、重启/启动进程、修改文件或配置、安装软件或触发 GitHub Actions。没有把状态 JSON 写入视为 AI 推荐输出验证通过。
+- 下一步：等待用户次日实测反馈；优先根据复现时刻的应用事件日志与小黑板插件配置提示异常，进行最小范围只读定位。实测前不继续自动化开发、不擅自修复配置，也不扩大到 APK 逆向任务。
