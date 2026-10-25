@@ -183,3 +183,23 @@
 - `PASS`（静态）：确认 NativeService → ScriptMain → LuaEngine.Init 的初始化链；确认仓库导出包含 engine/native/paddleocr 原生库。
 - `NOT_VERIFIED`：脚本文件读取/解码/执行点、JNI 注册映射、Lua 脚本可见的 Java 类清单、OCR 模型实际加载与识别效果。
 - 下一步：从可读 Java 侧继续追踪 `L11I`/核心服务的脚本文件读取 API；如读取/解释发生在共享库内部，需有针对共享库的静态分析结果才能继续，不能把 Java native 声明当作实现证据。只读 GitHub；不运行 APK/游戏，不触发 Actions。
+
+
+### 10. sendCmd(8) 的 Java 侧分发已追到事件 99
+
+新增证据：
+- `qianye-export/sources/I1I/I1I/ILil/iIilII1.java`（`sendCmd` 实现，约 1621 行起）
+- `qianye-export/sources/I1I/I1I/ILil/LLL.java`
+- `qianye-export/sources/com/main/engine/CoreProvider.java`
+- `qianye-export/sources/android/app/INXCoreNative.java`
+
+更新后的结论：
+- `L11I.m942LlLLL(source)` 先把输入文件写到核心服务文件路径，再调用 `ILL.I11L(8, 0, 0, destinationPath)`。
+- `ILL.I11L(...)` 通过 Binder 接口转到 `INXCoreNative.sendCmd(...)`；Java 侧可见实现位于 `iIilII1.sendCmd`。当第一个参数 `i == 8` 时，它调用 `p051lLi1LL.ILil.IL1Iii.I1I.I1I().ILL(new IIi(99, str, ""))`，随后返回解码后字符串 `"0"`。因此可确认：该调用在 Java 侧把目标文件路径作为参数转发给事件编号 99，并立即返回成功码；这也解释了 `m942LlLLL` 为什么比较返回值是否为 `"0"`。
+- 这比“未知操作码”更具体，但事件 99 的最终消费者/处理器仍未确认。当前证据只支持“事件分发并返回成功码”，不支持声称文件已经被 Lua 解析或执行。
+- `L11I.m942LlLLL` 在返回码为 `"0"` 时还会同步 `Thread.sleep(600000L)`，即等待约 10 分钟后才返回 true；这是可见的阻塞行为，不能把它误读为脚本执行耗时的测量。
+
+状态：
+- `PASS`（静态）：确认 installLR 文件传输 → Binder sendCmd(8) → Java 侧事件 99（参数为目标文件路径）→ 返回 `"0"`。
+- `NOT_VERIFIED`：事件 99 的订阅者与业务语义、该路径对应文件格式、是否触发 Lua 加载/执行、JNI/native 层是否另有处理。
+- 下一步：追踪事件总线 `p051lLi1LL.ILil.IL1Iii.I1I.I1I().ILL(...)` 的事件 99 消费端及相关监听注册。仍仅做 GitHub 只读分析，不运行 APK/游戏，不触发 Actions。
