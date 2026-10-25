@@ -139,3 +139,25 @@
 - `PASS`（静态）：确认 LuaNative 的通用 Java 反射调用能力；确认 `Engine.installLR` 的调用链入口。
 - `NOT_VERIFIED`：Lua 脚本是否实际调用 `PaddleOcr.loadModel`、Lua VM 的类绑定规则、`script.lrj` 格式与加载关系。
 - 下一步：追踪 `L11I.m942LlLLL` 的核心代理调用与 `script.lrj`/`lua.zip` 的文件读取点；同时检查 native/JNI 注册或脚本绑定表，确认 Java 类是否对 Lua 可见。仍不运行 APK/游戏，不触发 Actions。
+
+
+### 8. installLR 文件传递链与核心服务边界（静态）
+
+新增/复核证据：
+- `qianye-export/sources/com/main/engine/Engine.java`
+- `qianye-export/sources/I1I/I1I/ILil/L11I.java`
+- `qianye-export/sources/I1I/I1I/ILil/ILL.java`
+- `qianye-export/sources/android/app/INXCoreNative.java`
+- `qianye-export/sources/com/p000nx/assist/lua/LuaEngine.java`
+
+观察：
+- `Engine.installLR(String)` 仅捕获异常并转调 `L11I.I11L().m942LlLLL(str)`，异常时返回 false。
+- `L11I.m942LlLLL(String)` 以输入字符串作为源路径，调用 `this.f971IL.m868lIlii(str, destinationPath)`；复制成功后调用 `this.f971IL.I11L(8, 0, 0, destinationPath)`，并根据返回字符串是否等于解码后的字符 `"0"` 决定 true/false。成功分支还会 sleep 600000 ms，属于该方法可见行为的一部分。
+- `ILL.m868lIlii(String,String)` 通过 `FileInputStream` 读取源文件，并经 `INXCoreNative.openFile/writeFile/closeFile` 将内容写到核心服务提供的文件句柄。反向方向的 `ILL` 方法也可从核心服务文件句柄读回内容。由此可确认这里存在跨进程/核心服务文件传输层，而非直接在该方法中解析 Lua。
+- `LuaEngine` 暴露 `getPluginApp()`、`getResPath()`、`registerPluginApp(Object)`、`snapShot(...)` 等包装接口；当前可见文件中未找到 `script.lrj` 或 `lua.zip` 的直接加载调用点。
+- `LuaNative` 的通用反射能力仍只是“机制存在”。没有证据证明 Lua 脚本已拿到 `PaddleOcr` 类，也没有证明 `installLR` 的输入就是 `script.lrj`。
+
+状态：
+- `PASS`（静态）：确认 `installLR → m942LlLLL → m868lIlii → INXCoreNative 文件接口` 的传递链。
+- `NOT_VERIFIED`：目标路径的实际解码值、核心服务对操作码 8 的语义、`script.lrj` 与该接口的对应关系、Lua VM 的类绑定/JNI 注册规则、OCR 模型是否实际加载。
+- 下一步：优先定位 `INXCoreNative` 的服务端实现或 native 注册表，以及 `script.lrj` / `lua.zip` 的消费者；若仓库导出缺少服务端/native 二进制证据，应明确记录静态分析边界，不用猜测补齐。仅 GitHub 只读分析，不触发 Actions，不运行 APK/游戏。
