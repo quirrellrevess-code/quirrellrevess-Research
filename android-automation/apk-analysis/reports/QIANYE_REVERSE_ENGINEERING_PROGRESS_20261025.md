@@ -589,3 +589,28 @@ The recursive Git tree contains two script.lrj files: android-automation/apk-ana
 5. 仅在截图识别稳定、状态关联可靠后，才讨论动作执行；当前仍只读，未启用输入后端。
 
 状态：代码已提交并从 GitHub 读取回核对；测试用例已入库，但本轮未执行测试、未启动 GitHub Actions、未运行 APK/原生库/游戏。
+
+### 15. OCR/YOLO 调用链与资源包复核（2026-10-25）
+
+本轮只读复核对象：`UMA_OCR_NATIVE_TRACE.txt`、`UMA_SCRIPT_LRJ_INVENTORY.txt`、`UMA_NESTED_SMN_RC_INVENTORY.txt`。
+
+#### 新确认事实
+
+- `smn.rc` 的库存报告统计为 3,571 个内部 ZIP 条目；按清单后缀统计，主体为 PNG 与 TXT 字典，未看到 ONNX、NCNN `.param/.bin`、TFLite、PyTorch 等模型权重条目。该结论仅适用于已生成并提交的库存清单，不等同于对 APK 运行时文件系统的全盘检查。
+- `script.lrj` 库存列出 38 个 ZIP 条目，含多个以 Lua 5.4 字节码签名开头的脚本（包括 `脚本/smn.lua`）。因此当前静态清单无法直接把字节码中的函数引用还原为可信调用链。
+- OCR trace 能定位 `PaddleOcr.loadModel(boolean)`、`nativeDetect(...)` 和 `Engine.paddleOcr(Object)` 等声明/包装引用；但现有 trace 是受输出上限约束的引用摘录，未提供从 Lua 入口到模型初始化、检测结果消费的连续调用路径。
+- 在当前分支执行的 GitHub 代码搜索对 `PaddleOcr`、`paddleOcr`、`YoloV5`、`det.onnx` 均未返回可用命中。该结果不能证明调用不存在，只说明代码搜索索引未提供补充证据。
+- 因此，当前依然没有权重来源、模型成功加载、Lua 实际调用及结果用于游戏控件定位的闭环证据。不能据此宣称 Qianye OCR/YOLO 可直接复用。
+
+#### 投入决策与止损门槛
+
+- **不继续扩展 PNG 模板/手工坐标路线**；它不符合用户目标。
+- **暂停无目标的静态混淆分析**。只有下列任一证据出现，才继续针对性投入：①找到可合法复用的模型权重或明确运行时模型路径；②找到 Lua/Java/native 的具体调用点并确认参数与返回值如何被消费；③在一次被动只读运行观测中确认模型文件实际加载且 OCR 对游戏画面产生可解释的文本和边界框。
+- 若下一步本地观测需要用户操作，只能是单次、明确目的的只读诊断；不得要求逐屏截图、人工裁模板或逐个标按钮坐标。若没有模型文件/调用点证据，且不能读取结构化游戏状态，则将 Qianye OCR 复用路线判为 **NO-GO**，转向已存在的结构化数据接口调查或停止该子路线。
+- 当前 Python OCR 语义定位器只是 detections JSON 的后处理组件，不能算端到端能力；未有台服真实画面准确率数据，也未接入点击执行。
+
+#### 本轮状态
+
+- `PASS`：复核现有库存报告、Lua 字节码签名及 OCR trace 的证据边界。
+- `NOT_VERIFIED`：模型权重是否藏于未展开的字节码/运行时目录、OCR/YOLO 的真实调用链、模型加载成功、对台服画面的识别质量。
+- 未运行本地测试、未启动游戏或 APK、未执行 native 库、未触发 GitHub Actions；没有进行游戏输入。
