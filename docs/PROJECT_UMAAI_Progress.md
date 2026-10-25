@@ -118,7 +118,7 @@
 
 1. 继续追踪 `LuaEngine.java` 及调用者，确认 Lua 初始化、脚本加载、截图与 OCR 生命周期。
 2. 只读检查 `lua.zip` 的目录清单，并追踪 `script.lrj` 的读取入口和格式；在证据不足时不假定其为普通 Lua 源码。
-3. 已确认 Java 层通过 `lIlii.m1192lL(Context, String, File)` 从 APK AssetManager 复制 `assets/paddle/det.bin`、`det.param`、`rec.bin`、`rec.param`、`keys.txt` 及 ONNX 变体到 `filesDir/assets/paddle/`。下一步追踪 `lIlii.L1ii1(Context)` 的调用者/启动时机，并核对当前导出是否遗漏模型二进制；继续区分 native library 加载辅助方法与 OCR 模型资源处理。
+3. 已确认 Java 层通过 `lIlii.m1192lL(Context, String, File)` 从 APK AssetManager 复制 `assets/paddle/det.bin`、`det.param`、`rec.bin`、`rec.param`、`keys.txt` 及 ONNX 变体到 `filesDir/assets/paddle/`。已追到 `App.onCreate()` → `lIlii.IL1Iii(Application)` → `L1ii1(application)` 的静态调用路径；该路径受初始化门控 `m1188iIIi1(application)` 影响，且各资源复制返回值未统一检查。下一步核对实际资源存在性/复制结果，并追踪 Lua 绑定与 OCR 模型加载调用链。
 4. 关联 Java JNI 声明与原生库实现；静态证据不足时标记需要本地只读二进制分析。
 5. 分开推进 LegendAI 建议输出桥接与游戏操作提交协议研究；Hachimi 的 `/notify/request`、`/notify/response` 不得视为动作提交 API。
 6. 在协议边界有证据后，才设计独立的影子模式/动作守卫验证；最终用台服实际截图或手动操作样本做单独的运行时验证。
@@ -164,3 +164,12 @@
 - 限制：当前导出 Git tree 的 resources/assets/paddle/ 仅列出 keys.txt；不能由此证明原 APK 的 AssetManager 也缺少模型，因为导出资源可能不完整。尚未确认 L1ii1(Context) 的实际调用点/启动时机、模型资源在 APK 中的存在性或模型成功加载。Engine.extractApkAssets(...) 是另一种归档条目复制路径，尚无证据认定它是 OCR 模型主入口；m1194llI11I(...) 与 native library 加载相关，不应混同。
 - 安全/额度：仅只读 GitHub 文件与 tree；未运行 APK、原生库或游戏，未触发 GitHub Actions（额度仍按已知状态视为耗尽）。
 - 下一步：追踪 L1ii1(Context) 调用者和初始化时序；确认导出资源缺项情况；继续追踪 Lua 初始化与 PaddleOcr.loadModel 的调用链。
+
+
+### 2026-10-25 — Qianye OCR 资源复制启动调用点
+
+- 执行模式：READ_ONLY；分支：analysis/qianye-reverse-engineering-20261025。
+- 证据：qianye-export/sources/com/main/app/App.java、qianye-export/sources/I1I/I1I/p008IL/lIlii.java、qianye-export/sources/com/p000nx/assist/lua/LuaEngine.java、qianye-export/sources/com/p000nx/assist/lua/PaddleOcr.java。
+- 静态 PASS：`App.onCreate()` 调用 `lIlii.IL1Iii(this)`；`lIlii.IL1Iii(Application)` 在初始化门控 `m1188iIIi1(application)` 通过后调用 `L1ii1(application)`；`L1ii1(Context)` 再执行 AssetManager 到应用私有目录的资源复制。故复制方法有可见的启动调用点，不是完全孤立代码。
+- 限制：门控是否在实际运行中通过、AssetManager 中各 OCR 模型文件是否存在、各复制是否成功、OCR 是否最终加载均未验证；复制返回值没有被统一汇总为明确失败判定。导出 Git tree 中 `resources/assets/paddle/` 仍只看到 `keys.txt`，不能直接推断原 APK 资源必然缺失或存在。
+- Java 源码直接搜索尚未找到 `PaddleOcr.loadModel(...)` 调用点；需继续研究 Lua 绑定/反射路径与 `LuaEngine` 脚本加载入口，不能排除 Lua 动态调用。未执行 APK/游戏，未触发 Actions。
