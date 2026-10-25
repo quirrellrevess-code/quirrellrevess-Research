@@ -161,3 +161,25 @@
 - `PASS`（静态）：确认 `installLR → m942LlLLL → m868lIlii → INXCoreNative 文件接口` 的传递链。
 - `NOT_VERIFIED`：目标路径的实际解码值、核心服务对操作码 8 的语义、`script.lrj` 与该接口的对应关系、Lua VM 的类绑定/JNI 注册规则、OCR 模型是否实际加载。
 - 下一步：优先定位 `INXCoreNative` 的服务端实现或 native 注册表，以及 `script.lrj` / `lua.zip` 的消费者；若仓库导出缺少服务端/native 二进制证据，应明确记录静态分析边界，不用猜测补齐。仅 GitHub 只读分析，不触发 Actions，不运行 APK/游戏。
+
+
+### 9. Lua 运行时启动链与 JNI 证据边界
+
+新增证据文件：
+- `qianye-export/sources/com/main/app/NativeService.java`
+- `qianye-export/sources/com/main/engine/ScriptMain.java`
+- `qianye-export/sources/com/main/engine/Engine.java`
+- `qianye-export/sources/com/p000nx/assist/lua/LuaEngine.java`
+- `qianye-export/sources/com/p000nx/assist/lua/LuaNative.java`
+- `qianye-export/resources/lib/{arm64-v8a,armeabi-v7a,x86}/libengine.so`
+- 同目录各 ABI 的 `libnative.so`、`libpaddleocr.so`
+
+观察：
+- `NativeService` 启动流程会调用 `ScriptMain.main(...)`。在 `ScriptMain.main` 中，当第一个参数解析为 1 时，代码调用 `lIlii.ILil()`、`LuaEngine.Init(...)` 及相关上下文初始化；随后创建 `L11I` 核心脚本对象并进入 Looper。由此能确认存在 Lua 运行时/核心脚本服务的初始化路径，但还未追到实际脚本字节的读取与执行函数。
+- 导出资源目录确实包含多个 ABI 的 `libengine.so`、`libnative.so`、`libpaddleocr.so`。Java 层的 `Engine` 与 `LuaNative` 有多个 native 方法声明；然而当前 GitHub 文件树中的相关实现是二进制共享库，未见可直接检索的 JNI C/C++ 源码或注册表，因此不能静态确认 native 层如何注册 Lua API、加载 `script.lrj`，或调用 `PaddleOcr.loadModel`。
+- 当前可见的 `ScriptMain`、`LuaEngine` 与 `LuaNative` 代码中未找到 `script.lrj` / `lua.zip` 的直接读取调用。文件存在于导出资源树，不等于已证明运行时会读取它们。
+
+状态：
+- `PASS`（静态）：确认 NativeService → ScriptMain → LuaEngine.Init 的初始化链；确认仓库导出包含 engine/native/paddleocr 原生库。
+- `NOT_VERIFIED`：脚本文件读取/解码/执行点、JNI 注册映射、Lua 脚本可见的 Java 类清单、OCR 模型实际加载与识别效果。
+- 下一步：从可读 Java 侧继续追踪 `L11I`/核心服务的脚本文件读取 API；如读取/解释发生在共享库内部，需有针对共享库的静态分析结果才能继续，不能把 Java native 声明当作实现证据。只读 GitHub；不运行 APK/游戏，不触发 Actions。
