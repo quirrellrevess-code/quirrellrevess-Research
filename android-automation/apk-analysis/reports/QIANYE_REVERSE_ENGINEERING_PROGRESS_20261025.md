@@ -239,3 +239,16 @@
 - This pass still has not identified a concrete registered consumer or proved file parsing/execution. Event 99 remains a generic event dispatch, and the earlier `"0"` return is not evidence that the file ran.
 - Evidence was read from `qianye-export/sources/p051lLi1LL/ILil/IL1Iii/I1I.java` and `qianye-export/sources/p051lLi1LL/ILil/IL1Iii/llL1ii.java` on the target branch.
 - GitHub source inspection only; no local PowerShell, APK/game execution, game interaction, or GitHub Actions run.
+
+
+
+### Event 99 subscriber located: MainService (2026-10-25)
+- **Confirmed consumer:** `android-automation/apk-analysis/qianye-export/sources/com/main/app/MainService.java`.
+- In `MainService.onCreate()` (around line 502), the service registers itself with `p051lLi1LL.ILil.IL1Iii.I1I.I1I().Lil(this)`. It unregisters itself in `onDestroy()` via `m3670llL1ii(this)`.
+- `MainService.onMessageEvent(IIi)` is annotated with the custom `@Subscribe` annotation and runs on `ThreadMode.MAIN`. Its event-code-99 branch calls `m3464lIiI(iIi.IL1Iii())`, passing the path field from `MessageEvent`.
+- `m3464lIiI(path)` checks for a non-empty path and whether the file exists. If it exists, it attempts `renameTo(new File(this.f2875iILLL1))`. On rename failure it logs and calls `mo1027il(7)`; on success it updates a timestamp/observer through `llL1ii.IL1Iii().Ilil(new File(this.f2875iILLL1).lastModified(), this)`. After the file-handling branch it sets `this.f2872IiL = true` and calls `mo1027il(9)`. If the source path is missing, it calls `mo1027il(8)` and returns.
+- The destination field `f2875iILLL1` is initialized in `MainService.onCreate()` using `lIlii.m1132LIl(this, ... , false)`; the exact decoded path is not asserted in this note because the obfuscated string expression has not been independently decoded.
+- **Meaning of this evidence:** event 99 is not an unhandled generic event. A registered Java consumer receives the transferred path and attempts to move/replace the file at the service's configured destination, then signals state/status 9 after the file-handling path. This establishes a concrete file-install/activation handoff.
+- **Still NOT_VERIFIED:** whether the destination file is a Lua/script payload, whether a watcher or native runtime subsequently reads/parses/executes it, and what status 9 means beyond the visible call path. The `renameTo` and status call alone do not prove script execution.
+- Sources read: `com/main/app/MainService.java` (registration, annotated handler, `m3464lIiI`, destination initialization), `p051lLi1LL/ILil/IL1Iii/I1I.java` (EventBus registration/dispatch), and `I1I/I1I/ILil/IIi.java` (`MessageEvent` fields).
+- GitHub-only static analysis; no local PowerShell, APK/game execution, game interaction, or GitHub Actions run.
