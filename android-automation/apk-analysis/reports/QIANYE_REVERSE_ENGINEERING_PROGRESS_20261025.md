@@ -118,3 +118,24 @@
 - `PASS`（静态）：已追到 `App.onCreate()` → `lIlii.IL1Iii(Application)` → `L1ii1(application)` 的初始化调用路径。
 - `NOT_VERIFIED`：初始化门控在实际运行中是否通过、各 AssetManager 资源是否存在及复制成功、OCR 模型是否被调用加载。
 - 下一步：检查 `PaddleOcr` 是否由 Lua 绑定/反射调用、`LuaEngine` 如何加载脚本，以及 `script.lrj` / `lua.zip` 的实际加载入口；静态 Java 搜索未发现直接的 `PaddleOcr.loadModel(...)` 调用点，不能排除 Lua 侧动态调用。
+
+
+### 7. Lua 到 Java 的动态反射能力边界
+
+新增证据文件：
+- `android-automation/apk-analysis/qianye-export/sources/com/p000nx/assist/lua/LuaNative.java`
+- `android-automation/apk-analysis/qianye-export/sources/com/p000nx/assist/lua/LuaEngine.java`
+- `android-automation/apk-analysis/qianye-export/sources/com/main/engine/Engine.java`
+- `android-automation/apk-analysis/qianye-export/sources/I1I/I1I/ILil/L11I.java`
+
+观察：
+- `LuaNative.checkMethod(...)` 会通过反射枚举目标对象/类的 declared methods 与 public methods，并缓存匹配的方法；`LuaNative.callMethod(...)` 将 Lua 栈参数转换为 Java 参数，再通过 `Method.invoke(...)` 执行。这证明该 Lua bridge 具备动态调用 Java 方法的通用机制。
+- `LuaEngine` 提供截图、插件加载等 Java 包装接口；`Engine` 也暴露 `paddleOcr(Object)` native 声明，并通过 `LuaEngine.snapShot(...)` 提供截图字节获取路径。
+- 因此，直接 Java 源码搜索没有找到 `PaddleOcr.loadModel(...)` 调用点，并不能排除 Lua 侧通过动态反射/绑定调用 OCR 类的可能性。但当前尚未找到实际 Lua 脚本中调用该类或方法的证据，也未确认原生 Lua VM 如何向脚本暴露类名与对象。
+- `Engine.installLR(String)` 调用 `L11I.I11L().m942LlLLL(str)`，表明存在一个脚本/规则安装入口；当前未完成对该方法所处理文件格式与 `script.lrj` 的对应关系验证，不能把它直接认定为 OCR 脚本加载入口。
+
+## 状态与下一步
+
+- `PASS`（静态）：确认 LuaNative 的通用 Java 反射调用能力；确认 `Engine.installLR` 的调用链入口。
+- `NOT_VERIFIED`：Lua 脚本是否实际调用 `PaddleOcr.loadModel`、Lua VM 的类绑定规则、`script.lrj` 格式与加载关系。
+- 下一步：追踪 `L11I.m942LlLLL` 的核心代理调用与 `script.lrj`/`lua.zip` 的文件读取点；同时检查 native/JNI 注册或脚本绑定表，确认 Java 类是否对 Lua 可见。仍不运行 APK/游戏，不触发 Actions。
