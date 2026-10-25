@@ -446,3 +446,14 @@ The existing archive inventory identifies a declared Lua entry in entry.json. Se
 ### Identical Git archive blobs (2026-10-25)
 
 The recursive Git tree contains two script.lrj files: android-automation/apk-analysis/script.lrj and android-automation/apk-analysis/qianye-export/resources/assets/script.lrj. Both have size 80925066 bytes and the identical Git blob SHA 4cabb132e9aeeff56778103c7a6805f5aed8ff42. Their repository content is therefore identical. This size matches the existing local inventory, but the inventory's SHA256 has not been independently recalculated against the Git blob. Neither fact proves the native runtime chooses this archive. Next: inspect startup asset-copy logic and prioritize emulator integration. No Actions or game execution.
+
+
+
+### PaddleOCR resource-reference check (2026-10-25)
+
+- Read the active-branch tree and fetched both `qianye-export/sources/com/p000nx/assist/lua/PaddleOcr.java` and `apk-analysis/java/com/p000nx/assist/lua/PaddleOcr.java`. They have the same Git blob SHA `2091a89c9662c7a214de0f0a8465dd59cf1e28c1`; the exported and separately indexed Java copies are identical.
+- The active tree contains `qianye-export/resources/assets/paddle/keys.txt` (26,249 bytes; blob `84b885d8352226e49b1d5d791b8f43a663e246aa`). This confirms the character-key resource is present in the export, but not that the runtime copies it into the exact model directory expected by `PaddleOcr.loadModel`.
+- The Java wrapper exposes two model modes: ONNX and NNCC. `loadModeImp` checks the first path twice rather than checking the second path explicitly; this is a visible Java-side guard quirk only, not proof that native model loading fails. Native methods `nativeLoadMode` and `nativeDetect` remain opaque from this Java source.
+- GitHub code-search calls returned no results for `PaddleOcr`, `paddle keys.txt`, or `ocr.det ocr.rec`. The search tool indexes the default branch rather than this analysis branch, so empty results are not evidence that callers/references are absent from the active branch.
+- Status: PASS for matching source-copy identity and presence of `keys.txt`; NOT_VERIFIED for model-file staging/copy path, actual model selection, native loading, and runtime OCR accuracy.
+- Next read-only step: resolve the obfuscated directory and model filenames passed by `PaddleOcr.loadModel` using the relevant string-decoding implementation, then inspect only the corresponding asset-copy/staging call sites. Keep this separate from the LegendAI/Hachimi integration path unless a concrete connection is found. No local PowerShell, APK/game execution, or GitHub Actions.
