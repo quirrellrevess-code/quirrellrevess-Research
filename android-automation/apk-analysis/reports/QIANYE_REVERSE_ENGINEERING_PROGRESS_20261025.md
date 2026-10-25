@@ -457,3 +457,12 @@ The recursive Git tree contains two script.lrj files: android-automation/apk-ana
 - GitHub code-search calls returned no results for `PaddleOcr`, `paddle keys.txt`, or `ocr.det ocr.rec`. The search tool indexes the default branch rather than this analysis branch, so empty results are not evidence that callers/references are absent from the active branch.
 - Status: PASS for matching source-copy identity and presence of `keys.txt`; NOT_VERIFIED for model-file staging/copy path, actual model selection, native loading, and runtime OCR accuracy.
 - Next read-only step: resolve the obfuscated directory and model filenames passed by `PaddleOcr.loadModel` using the relevant string-decoding implementation, then inspect only the corresponding asset-copy/staging call sites. Keep this separate from the LegendAI/Hachimi integration path unless a concrete connection is found. No local PowerShell, APK/game execution, or GitHub Actions.
+
+
+## Follow-up: OCR resource staging and string decoding (2026-10-25)
+
+- Confirmed the decoder in `qianye-export/sources/I1I/IL1Iii.java` performs repeating-key XOR over a byte array and returns the decoded string.
+- Inspected `qianye-export/sources/I1I/I1I/p008IL/lIlii.java`: helper `m1192lL(Context, String, File)` reads a named Android asset and writes its bytes to a destination file. Helper `m1194llI11I(...)` handles native-library staging/loading, including existence checks, load attempts, and a copy/symlink path.
+- `PaddleOcr.java` source copies remain identical (blob `2091a89c9662c7a214de0f0a8465dd59cf1e28c1`). Static inspection identifies ONNX and NNCC model modes, but does not establish that the files are staged to the exact runtime directory or that native loading succeeds.
+- Status: PASS for identifying the decoder and asset/native-library helper roles; NOT_VERIFIED for every obfuscated name mapping, actual device filesystem state, native OCR initialization, and Taiwan-server OCR accuracy.
+- Next: map the remaining directory and asset names to their call sites, then stop if this does not produce a concrete dependency for the Python + ADB + LegendAI integration. No Actions, local PowerShell, APK execution, or game actions were used.
