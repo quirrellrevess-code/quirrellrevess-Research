@@ -109,7 +109,7 @@
 ### 近期静态分析的核心结论
 
 - APK Java 层存在截图区域、OCR 调用和带文本/置信度/矩形坐标的 JSON 结果接口线索；尚未证明外部 Python 可直接调用，也未验证台服截图识别精度。
-- `resources/assets/paddle/keys.txt` 存在；模型实际位置及与字典的绑定关系未确认。
+- `resources/assets/paddle/keys.txt` 存在；静态解码确认 OCR 代码期望的运行时模型目录为应用 `filesDir/assets/paddle/`，但打包资源如何进入该目录、模型是否实际部署仍未确认。
 - `script.lrj` 格式/用途未明，`lua.zip` 内容待查。
 - `libpaddleocr.so`、`libonnxruntime.so`、`libncnn.so`、`libopencv_java4.so`、`libengine.so` 等原生库存在于导出清单；具体调用链仍待核实。
 - 当前结论属于仓库静态证据，不代表已执行 APK、已调用原生库、已完成模拟器测试或已连接 LegendAI。
@@ -118,7 +118,7 @@
 
 1. 继续追踪 `LuaEngine.java` 及调用者，确认 Lua 初始化、脚本加载、截图与 OCR 生命周期。
 2. 只读检查 `lua.zip` 的目录清单，并追踪 `script.lrj` 的读取入口和格式；在证据不足时不假定其为普通 Lua 源码。
-3. 追踪 OCR 模型路径、字符串解码、文件创建/下载/解压调用，确认模型实际位置与 `keys.txt` 的传入方式。
+3. 已通过静态字符串解码确认 OCR 模型文件名与运行时目录构造；下一步追踪 `resources/assets/paddle/keys.txt` 及模型文件到 `filesDir/assets/paddle/` 的复制/解压/下载来源链，区分 native library 加载辅助方法与 OCR 模型资源处理。
 4. 关联 Java JNI 声明与原生库实现；静态证据不足时标记需要本地只读二进制分析。
 5. 分开推进 LegendAI 建议输出桥接与游戏操作提交协议研究；Hachimi 的 `/notify/request`、`/notify/response` 不得视为动作提交 API。
 6. 在协议边界有证据后，才设计独立的影子模式/动作守卫验证；最终用台服实际截图或手动操作样本做单独的运行时验证。
@@ -142,3 +142,14 @@
 - 已执行：读取目标分支远端 Git tree；读取现有 Hachimi/LegendAI 集成、核心架构、执行器契约和 Qianye 静态分析专题文档；据此整理项目目标、现有证据、边界和后续步骤。
 - 远端核验：PASS；创建后已回读本文件，归档标记和关键规则存在，Commit SHA 已通过 GitHub commit 元数据确认，commit 中该文件的 Blob SHA 与回读 Blob SHA 一致。
 - 安全边界：本轮仅处理 GitHub 文档；不运行 APK/原生库、不运行游戏、不触发 Actions、不提交任何游戏操作。
+
+
+### 2026-10-25 — Qianye OCR 模型路径与初始化检查静态追踪
+
+- 执行模式：`READ_ONLY`
+- 研究分支：`analysis/qianye-reverse-engineering-20261025`
+- 证据文件：`qianye-export/sources/com/p000nx/assist/lua/PaddleOcr.java`、`qianye-export/sources/I1I/I1I/ILil/L11I.java`、`qianye-export/sources/I1I/I1I/ILil/l1IIi1.java`、`qianye-export/sources/I1I/I1I/p008IL/lIlii.java`。
+- 已核实：`L11I.m9501()` 将 `I11li1()` 指向应用 `filesDir/assets`；`PaddleOcr.loadModel(...)` 继续拼接 `paddle`。运行时模型路径为 `filesDir/assets/paddle/`。ONNX 文件名为 `det.onnx`、`cls.onnx`、`rec.onnx`、`keys.txt`；NNCC 文件名为 `det.param`、`rec.param`、`det.bin`、`rec.bin`、`keys.txt`。
+- 静态代码疑点：ONNX 存在性检查重复检查第一个模型路径，未检查 `cls.onnx`；NNCC 检查未覆盖 `rec.param`。影响尚未通过运行时验证。
+- 重要限制：`lIlii.m1194llI11I(...)` 的实现围绕 native library 文件与 `System.load(...)`，不能据此视为 OCR 模型下载/解压入口。仓库中存在 `resources/assets/paddle/keys.txt`，但尚未追踪它及模型到 `filesDir/assets/paddle/` 的完整部署链。
+- 归档状态：专题报告更新后待远端回读；本文件更新后也须分别核验。未运行 APK/游戏、未运行 GitHub Actions。
