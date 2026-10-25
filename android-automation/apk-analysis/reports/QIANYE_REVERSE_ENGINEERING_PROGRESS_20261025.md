@@ -225,3 +225,17 @@
 - This is a bounded static search, not proof that no subscriber exists: obfuscation, reflection, omitted export files, or handlers in native/script assets may hide the consumer. File parsing/execution remains NOT_VERIFIED.
 - Next evidence target: enumerate EventBus registration call sites and inspect candidates that register runtime/core objects, then follow the registered subscriber methods. Do not claim the file is executed until a concrete consumer path is identified.
 - No local execution, PowerShell, game actions, or GitHub Actions were used.
+
+
+
+### Event 99 subscriber search pass 3 (2026-10-25)
+- Read the EventBus dispatch and subscriber-discovery implementation directly:
+  - `I1I.ILL(Object)` queues/posts an event.
+  - Dispatch checks the event object's runtime class (and, when enabled, its superclass/interface hierarchy) against the registered subscriber map; it does not itself interpret the numeric `MessageEvent` code.
+  - `I1I.Lil(Object)` is the registration path: it asks the subscriber-method finder to inspect the object's class and registers discovered handlers.
+  - The finder `llL1ii` identifies public, non-static, non-abstract methods with exactly one parameter and the custom `@Subscribe` annotation; it can also use generated subscriber metadata when available.
+  - The dispatch invokes the annotated method for the event class `IIi`; therefore a consumer may branch on `event.I1I() == 99` inside a generic `MessageEvent` handler rather than declare a method specifically for code 99.
+- This narrows the next search: find call sites of `I1I.I1I().Lil(object)` / equivalent registration calls and inspect registered objects for `@Subscribe` methods accepting `IIi`; then look for a code-99 branch and path handling.
+- This pass still has not identified a concrete registered consumer or proved file parsing/execution. Event 99 remains a generic event dispatch, and the earlier `"0"` return is not evidence that the file ran.
+- Evidence was read from `qianye-export/sources/p051lLi1LL/ILil/IL1Iii/I1I.java` and `qianye-export/sources/p051lLi1LL/ILil/IL1Iii/llL1ii.java` on the target branch.
+- GitHub source inspection only; no local PowerShell, APK/game execution, game interaction, or GitHub Actions run.
