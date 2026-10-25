@@ -417,3 +417,12 @@ Status: PASS for the Java plugin-loading path; NOT_VERIFIED for actual callers a
 - NOT_VERIFIED：`loadApk` 的实际调用者、输入路径、`ApkLoader.loadPlugin` 的实际调用点及插件加载结果。
 - 下一步优先检查与 `ApkLoader` 返回值类型有关的局部包装/调用点，以及 `LuaEngine.getPluginApp()` / `registerPluginApp(Object)` 是否构成插件初始化的可见生命周期。若活动分支无法进行可靠代码搜索，继续采用有限、明确记录范围的静态检查，不宣称全仓库无调用者。
 - 边界：仅 GitHub 静态源码读取与报告归档；未运行 APK/游戏，未使用本地 PowerShell，未触发 GitHub Actions。
+
+
+### PluginContext ownership and startup cross-check (2026-10-25)
+
+- Checked `qianye-export/sources/I1I/p062Ilil/p063IL1Iii/I1I/IL.java` (JADX: `PluginContext`): it stores an `ApkLoader` reference and delegates class-loader access to `ApkLoader.getPluginLoader()`. This establishes the Java plugin-context/class-loader relationship, not an actual invocation of a plugin entrypoint.
+- Rechecked selected startup files `com/main/engine/ScriptMain.java` and `com/main/app/ScriptActivity.java`. The former visibly calls `LuaEngine.Init(...)`; the latter visibly calls `iIilII1.m991li11(...)`. Neither inspected file exposes a direct `LuaEngine.loadApk(...)` call.
+- `LuaEngine.registerPluginApp(Object)` stores its argument in a static field and `getPluginApp()` returns that field; no concrete registration caller or connection to the core archive was established in this bounded review.
+- PASS (static): PluginContext holds the ApkLoader and exposes its ClassLoader. NOT_VERIFIED: who calls `loadApk`, who calls `loadPlugin`, and whether any plugin is instantiated during the observed startup flow.
+- Next: identify Java callers of `registerPluginApp` or `ApkLoader.loadPlugin` only when branch-aware evidence is available; do not infer absence from selected-file checks. No APK/game execution, local PowerShell, or GitHub Actions.
