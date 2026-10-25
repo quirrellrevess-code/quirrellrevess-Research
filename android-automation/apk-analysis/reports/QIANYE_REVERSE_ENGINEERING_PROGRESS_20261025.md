@@ -78,3 +78,24 @@
 - 已完成：Java OCR 接口、模型文件名解码、运行时目录构造的静态核查。
 - 未完成：模型文件从打包资源到运行时目录的来源链、Lua 调用链、JNI 原生实现映射、台服截图准确率验证。
 - 限制：GitHub Actions 额度耗尽；后续优先使用 GitHub 文件读取和静态分析，不触发 Actions。
+
+
+### 5. APK assets 到运行时 OCR 目录的复制链（静态确认）
+
+新增证据文件：
+- `android-automation/apk-analysis/qianye-export/sources/I1I/I1I/p008IL/lIlii.java`
+- `android-automation/apk-analysis/qianye-export/sources/com/main/engine/Engine.java`
+- `android-automation/apk-analysis/qianye-export/sources/I1I/IL1Iii.java`
+
+观察：
+- 解混淆后确认 `lIlii.L1ii1(Context)` 会以 `Context.getFilesDir()` 为根创建 `assets`、`assets/tessdata` 和 `assets/paddle` 目录。
+- 该方法调用 `lIlii.m1192lL(Context, String, File)`：通过 `context.getAssets().open(sourcePath)` 读取 APK AssetManager 中的指定资源，再写入目标文件。这是明确的 APK assets → app 私有文件目录复制实现，而不是 native library 加载。
+- 静态解码得到它计划复制的 OCR 资源路径包括 `assets/paddle/det.bin`、`assets/paddle/det.param`、`assets/paddle/rec.bin`、`assets/paddle/rec.param`、`assets/paddle/keys.txt`，以及 `assets/paddle/det.onnx`、`assets/paddle/cls.onnx`、`assets/paddle/rec.onnx`。同一方法还处理 `assets/models.zip`、`assets/lua.zip` 和 Tesseract 字典文件。
+- 这解释了 OCR 代码所需运行时目录的预期来源：由 APK AssetManager 复制到 `filesDir/assets/paddle/`。但当前导出 Git tree 的 `resources/assets/paddle/` 仍只显示 `keys.txt`，没有这些模型二进制文件；因此只能确认 Java 复制逻辑和所引用的资源路径，不能确认导出包中实际含有所有资源，也不能确认该方法在正常启动流程中一定被调用。
+- `Engine.extractApkAssets(...)` 走另一条 ZIP/归档读取路径，调用 `lIlii.m1184L1l(...)`；其实现遍历归档条目并按前缀匹配写入目录。当前没有证据证明它是 OCR 模型的主复制入口。此前检查的 `m1194llI11I(...)` 仍属于 native library 加载辅助路径，不应混为模型资源复制。
+
+## 更新后的状态与下一步
+
+- `PASS`（静态）：发现 AssetManager 复制函数、解码出 OCR 资源源路径及其目标目录关系。
+- `NOT_VERIFIED`：模型二进制是否确实存在于原 APK 的 AssetManager、`L1ii1(Context)` 的启动调用点及调用时机、模型复制后能否成功加载。
+- 下一步优先追踪 `L1ii1(Context)` 的调用者/初始化生命周期，并核对 `resources/assets` 导出是否遗漏大文件；随后继续 Lua 初始化与 `PaddleOcr.loadModel` 调用链。仍只读 GitHub，不触发 Actions，不运行 APK 或游戏。
