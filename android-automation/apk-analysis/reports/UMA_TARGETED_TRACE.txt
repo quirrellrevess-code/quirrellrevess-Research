@@ -1,0 +1,595 @@
+﻿TASK: UMA_TARGETED_OCR_TRACE
+MODE: READ_ONLY
+
+===== FILE: E:\Users\QuirrellRevess\Downloads\qianye\qianye_export\sources\com\main\engine\Engine.java =====
+LINE_COUNT: 374
+   1: package com.main.engine;
+   2: 
+   3: import I1I.I1I.ILil.C0002iI;
+   4: import I1I.I1I.ILil.L11I;
+   5: import I1I.I1I.ILil.iILLl;
+   6: import I1I.I1I.p008IL.IiL;
+   7: import I1I.I1I.p008IL.lIlii;
+   8: import I1I.IL1Iii;
+   9: import android.graphics.Bitmap;
+  10: import android.os.Bundle;
+  11: import android.text.TextUtils;
+  12: import android.util.Log;
+  13: import com.google.android.flexbox.BuildConfig;
+  14: import com.p000nx.assist.lua.IOnExitCallBack;
+  15: import com.p000nx.assist.lua.LuaEngine;
+  16: import java.io.File;
+  17: import java.util.HashMap;
+  18: import java.util.Map;
+  19: import org.json.JSONObject;
+  20: 
+  21: /* JADX INFO: loaded from: classes.dex */
+  22: public class Engine {
+  23:     private static Map<Integer, String> mCacheStr = new HashMap();
+  24:     private static Map<Integer, Long> mCacheLong = new HashMap();
+  25:     private static IOnExitCallBack mOnExitCallBack = null;
+  26: 
+  27:     private static boolean extractApkAssets(String str, String str2) {
+  28:         try {
+  29:             return lIlii.m1184L1l(lIlii.m1172lIII(), IL1Iii.IL1Iii(new byte[]{4, 74, 71, 87, 70, 22, 74, 75, 81, 65, 29}, IL1Iii.IL1Iii(new byte[]{80, 10, 81, 11, 5, 4}, IL1Iii.IL1Iii(new byte[]{81, 5, 81, 14, 83, 84}, "d647d5"))) + str, str2, str);
+  30:         } catch (Exception e) {
+  31:             IiL.I1I(IL1Iii.IL1Iii(new byte[]{124, 105}, IL1Iii.IL1Iii(new byte[]{83, 82, 81, 6, 5, 11}, IL1Iii.IL1Iii(new byte[]{0, 82, 83, 1, 2, 85}, "a11b2f"))), IL1Iii.IL1Iii(new byte[]{82, 65, 65, 74, 86, 1, 67, 120, 69, 83, 118, 17, 68, 92, 65, 75, 23, 7, 69, 75, 8, 6}, IL1Iii.IL1Iii(new byte[]{85, 91, 87, 11, 85, 1}, IL1Iii.IL1Iii(new byte[]{83, 86, 85, 7, 82, 82}, "147401"))) + e.toString());
+  32:             return false;
+  33:         }
+  34:     }
+  35: 
+  36:     public static native int init(Object obj, Object obj2, Object obj3);
+  37: 
+  38:     public static boolean installLR(String str) {
+  39:         try {
+  40:             return L11I.I11L().m942LlLLL(str);
+  41:         } catch (Exception unused) {
+  42:             return false;
+  43:         }
+  44:     }
+  45: 
+  46:     public static boolean isMatch(String str, String str2) {
+  47:         if (str == null) {
+  48:             str = BuildConfig.FLAVOR;
+  49:         }
+  50:         if (str2 == null) {
+  51:             str2 = BuildConfig.FLAVOR;
+  52:         }
+  53:         return str != null && str.matches(str2);
+  54:     }
+  55: 
+  56:     public static int obtainImage(int[] iArr, int[] iArr2, int[] iArr3) {
+  57:         try {
+  58:             return L11I.I11L().m944l1IIi1(iArr, iArr2, iArr3);
+  59:         } catch (Exception unused) {
+  60:             return -1;
+  61:         }
+  62:     }
+  63: 
+  64:     public static byte[] obtainImageBytes(int i, int i2, int i3, int i4, int i5, int i6) {
+  65:         Bitmap bitmapSnapShot = LuaEngine.snapShot(i, i2, i3, i4);
+  66:         if (bitmapSnapShot != null) {
+  67:             return lIlii.m1201Lii(bitmapSnapShot, i5, i6);
+  68:         }
+  69:         return null;
+  70:     }
+  71: 
+  72:     public static String obtainXml(long j) {
+  73:         Bundle bundleM948l = L11I.I11L().m948l();
+  74:         return bundleM948l != null ? lIlii.m1167iLl(bundleM948l) : BuildConfig.FLAVOR;
+  75:     }
+  76: 
+  77:     public static void onExitCallBack(boolean z, int i) {
+  78:         Log.i(IL1Iii.IL1Iii(new byte[]{119, 58}, IL1Iii.IL1Iii(new byte[]{88, 84, 4, 0, 85, 2}, IL1Iii.IL1Iii(new byte[]{86, 85, 15, 4, 82, 4}, "7c91b5"))), IL1Iii.IL1Iii(new byte[]{14, 94, 116, 74, 13, 76, 34, 81, 93, 94, 38, 89, 2, 91, 25}, IL1Iii.IL1Iii(new byte[]{0, 85, 7, 80, 7, 1}, IL1Iii.IL1Iii(new byte[]{7, 87, 80, 84, 81, 12}, "f2f625"))) + mOnExitCallBack + IL1Iii.IL1Iii(new byte[]{3}, IL1Iii.IL1Iii(new byte[]{14, 7, 87, 83, 6, 81}, IL1Iii.IL1Iii(new byte[]{2, 2, 7, 85, 82, 3}, "4a24e3"))) + z + IL1Iii.IL1Iii(new byte[]{25}, IL1Iii.IL1Iii(new byte[]{7, 0, 7, 4, 15, 84}, IL1Iii.IL1Iii(new byte[]{4, 82, 85, 87, 93, 82}, "614feb"))) + i + IL1Iii.IL1Iii(new byte[]{75}, IL1Iii.IL1Iii(new byte[]{86, 0, 81, 83, 6, 81}, IL1Iii.IL1Iii(new byte[]{3, 14, 85, 82, 7, 91}, "77ecb9"))));
+  79:         IOnExitCallBack iOnExitCallBack = mOnExitCallBack;
+  80:         if (iOnExitCallBack != null) {
+  81:             iOnExitCallBack.onExitCallback(z, i);
+  82:         }
+  83:     }
+  84: 
+  85:     public static native void onTouchEvent(int i, int i2, int i3, int i4, int i5);
+  86: 
+  87:     public static native String paddleOcr(Object obj);
+  88: 
+  89:     public static native int pause();
+  90: 
+  91:     public static void printLog(int i, String str, String str2) {
+  92:         try {
+  93:             L11I.I11L().m951(i, str, str2);
+  94:         } catch (Exception unused) {
+  95:         }
+  96:     }
+  97: 
+  98:     public static void registerExitCallback(IOnExitCallBack iOnExitCallBack) {
+  99:         mOnExitCallBack = iOnExitCallBack;
+ 100:     }
+ 101: 
+ 102:     public static native void reset();
+ 103: 
+ 104:     public static boolean restart() {
+ 105:         try {
+ 106:             return L11I.I11L().m936IIi();
+ 107:         } catch (Exception unused) {
+ 108:             return false;
+ 109:         }
+ 110:     }
+ 111: 
+ 112:     public static native int resume();
+ 113: 
+ 114:     public static native String sendEvent(int i, int i2, String str);
+ 115: 
+ 116:     public static long sendEventWithLong(int i, int i2, int i3, String str, String str2) throws Throwable {
+ 117:         int iM1126IiILI;
+ 118:         if (i == 1) {
+ 119:             return System.currentTimeMillis();
+ 120:         }
+ 121:         if (i == 2) {
+ 122:             if (i2 != 6) {
+ 123:                 if (i2 == 7) {
+ 124:                     iM1126IiILI = lIlii.LLii1I(i3 == 1);
+ 125:                 } else if (i2 == 5) {
+ 126:                     if (lIlii.m1183IlL1ll1()) {
+ 127:                         iM1126IiILI = lIlii.m1126IiILI(i3 == 1);
+ 128:                     }
+ 129:                 } else if (i2 == 9 && L11I.I11L().LL1IL() && lIlii.m1183IlL1ll1()) {
+ 130:                     String strM1115IL11L = lIlii.m1115IL11L(str);
+ 131:                     return (strM1115IL11L == null || !strM1115IL11L.equals(IL1Iii.IL1Iii(new byte[]{8}, IL1Iii.IL1Iii(new byte[]{90, 93, 92, 90, 80, 5}, IL1Iii.IL1Iii(new byte[]{81, 92, 0, 92, 13, 85}, "298d84"))))) ? 0L : 1L;
+ 132:                 }
+ 133:                 return iM1126IiILI;
+ 134:             }
+ 135:             if (lIlii.m1183IlL1ll1()) {
+ 136:                 lIlii.L11LlL(i3 == 1);
+ 137:             }
+ 138:             if (i2 >= 9) {
+ 139:                 String strIlil = L11I.I11L().Ilil(10, i2, i3, str);
+ 140:                 if (strIlil != null) {
+ 141:                     try {
+ 142:                         return Long.valueOf(Long.parseLong(strIlil)).longValue();
+ 143:                     } catch (Exception unused) {
+ 144:                     }
+ 145:                 }
+ 146:                 return 0L;
+ 147:             }
+ 148:             synchronized (mCacheLong) {
+ 149:                 if (i2 == 1) {
+ 150:                     Long l = mCacheLong.get(Integer.valueOf(i2));
+ 151:                     if (l != null) {
+ 152:                         return l.longValue();
+ 153:                     }
+ 154:                 }
+ 155:                 String strIlil2 = L11I.I11L().Ilil(10, i2, i3, str);
+ 156:                 if (strIlil2 != null) {
+ 157:                     try {
+ 158:                         Long lValueOf = Long.valueOf(Long.parseLong(strIlil2));
+ 159:                         if (i2 == 1) {
+ 160:                             mCacheLong.put(Integer.valueOf(i2), lValueOf);
+ 161:                         }
+ 162:                         return lValueOf.longValue();
+ 163:                     } catch (Exception unused2) {
+ 164:                     }
+ 165:                 }
+ 166:             }
+ 167:         }
+ 168:         return 0L;
+ 169:     }
+ 170: 
+ 171:     /* JADX WARN: Code duplicated, block: B:175:0x05a5 A[Catch: all -> 0x05cd, DONT_GENERATE, TryCatch #1 {, blocks: (B:173:0x0597, B:175:0x05a5, B:178:0x05a9, B:184:0x05c2, B:185:0x05cb, B:181:0x05b1, B:182:0x05b6), top: B:196:0x0597 }] */
+ 172:     /* JADX WARN: Code duplicated, block: B:177:0x05a7 A[DONT_INVERT] */
+ 173:     /* JADX WARN: Code duplicated, block: B:178:0x05a9 A[Catch: all -> 0x05cd, TryCatch #1 {, blocks: (B:173:0x0597, B:175:0x05a5, B:178:0x05a9, B:184:0x05c2, B:185:0x05cb, B:181:0x05b1, B:182:0x05b6), top: B:196:0x0597 }] */
+ 174:     /* JADX WARN: Code duplicated, block: B:179:0x05ae  */
+ 175:     /* JADX WARN: Code duplicated, block: B:181:0x05b1 A[Catch: all -> 0x05cd, TryCatch #1 {, blocks: (B:173:0x0597, B:175:0x05a5, B:178:0x05a9, B:184:0x05c2, B:185:0x05cb, B:181:0x05b1, B:182:0x05b6), top: B:196:0x0597 }] */
+ 176:     /* JADX WARN: Code duplicated, block: B:182:0x05b6 A[Catch: all -> 0x05cd, TryCatch #1 {, blocks: (B:173:0x0597, B:175:0x05a5, B:178:0x05a9, B:184:0x05c2, B:185:0x05cb, B:181:0x05b1, B:182:0x05b6), top: B:196:0x0597 }] */
+ 177:     /* JADX WARN: Code duplicated, block: B:184:0x05c2 A[Catch: all -> 0x05cd, TryCatch #1 {, blocks: (B:173:0x0597, B:175:0x05a5, B:178:0x05a9, B:184:0x05c2, B:185:0x05cb, B:181:0x05b1, B:182:0x05b6), top: B:196:0x0597 }] */
+ 178:     /* JADX WARN: Code duplicated, block: B:196:0x0597 A[EXC_TOP_SPLITTER, SYNTHETIC] */
+ 179:     public static String sendEventWithString(int i, int i2, int i3, String str, String str2) {
+ 180:         String string;
+ 181:         String strLlI;
+ 182:         String name;
+ 183:         String str3;
+ 184:         String strIlil;
+ 185:         if (i == 2) {
+ 186:             return lIlii.LlLI1(str, str2);
+ 187:         }
+ 188:         if (i == 3) {
+ 189:             return lIlii.ILL(str, str2);
+ 190:         }
+ 191:         if (i == 5) {
+ 192:             String strM231 = lIlii.m231(str);
+ 193:             return strM231 == null ? str2 : strM231;
+ 194:         }
+ 195:         if (i != 6) {
+ 196:             return BuildConfig.FLAVOR;
+ 197:         }
+ 198:         if (i2 == 6) {
+ 199:             return lIlii.m1186i11LL(IL1Iii.IL1Iii(new byte[]{93, 23, 68, 69, 92, 75, 26, 20, 71, 66, 72, 6, 84, 10, 84, 64, 72, 7, 90, 14}, IL1Iii.IL1Iii(new byte[]{81, 85, 3, 81, 86, 1}, IL1Iii.IL1Iii(new byte[]{87, 4, 2, 93, 85, 7}, "3219eb"))));
+ 200:         }
+ 201:         if (i2 == 7) {
+ 202:             if (!L11I.I11L().LL1IL()) {
+ 203:                 return lIlii.iIi1(str, 0L, i3 == 1);
+ 204:             }
+ 205:             if (lIlii.m1183IlL1ll1()) {
+ 206:                 return lIlii.iIi1(str, 0L, i3 == 1);
+ 207:             }
+ 208:             return L11I.I11L().Ilil(11, i2, i3, str);
+ 209:         }
+ 210:         if (i2 == 9) {
+ 211:             if (!lIlii.m1183IlL1ll1()) {
+ 212:                 if (i3 == 1) {
+ 213:                     iILLl.IL1Iii(str);
+ 214:                     return BuildConfig.FLAVOR;
+ 215:                 }
+ 216:                 iILLl.ILil();
+ 217:                 return BuildConfig.FLAVOR;
+ 218:             }
+ 219:             try {
+ 220:                 File file = new File(L11I.I11L().m947lL(), IL1Iii.IL1Iii(new byte[]{-40, -44, -67, -47, -39, -14, 31, 19, 92, 68}, IL1Iii.IL1Iii(new byte[]{1, 5, 1, 2, 6, 91}, IL1Iii.IL1Iii(new byte[]{83, 86, 12, 83, 7, 88}, "b24fba"))));
+
+===== FILE: E:\Users\QuirrellRevess\Downloads\qianye\qianye_export\sources\com\main\engine\NativeContext.java =====
+LINE_COUNT: 528
+   1: package com.main.engine;
+   2: 
+   3: import I1I.I1I.p008IL.lIlii;
+   4: import I1I.IL1Iii;
+   5: import android.content.BroadcastReceiver;
+   6: import android.content.ComponentName;
+   7: import android.content.ContentResolver;
+   8: import android.content.Context;
+   9: import android.content.Intent;
+  10: import android.content.IntentFilter;
+  11: import android.content.IntentSender;
+  12: import android.content.ServiceConnection;
+  13: import android.content.SharedPreferences;
+  14: import android.content.pm.ApplicationInfo;
+  15: import android.content.pm.PackageManager;
+  16: import android.content.res.AssetManager;
+  17: import android.content.res.Configuration;
+  18: import android.content.res.Resources;
+  19: import android.database.DatabaseErrorHandler;
+  20: import android.database.sqlite.SQLiteDatabase;
+  21: import android.graphics.Bitmap;
+  22: import android.graphics.drawable.Drawable;
+  23: import android.net.Uri;
+  24: import android.os.Bundle;
+  25: import android.os.Handler;
+  26: import android.os.Looper;
+  27: import android.os.UserHandle;
+  28: import android.view.Display;
+  29: import java.io.File;
+  30: import java.io.FileInputStream;
+  31: import java.io.FileNotFoundException;
+  32: import java.io.FileOutputStream;
+  33: import java.io.IOException;
+  34: import java.io.InputStream;
+  35: 
+  36: /* JADX INFO: loaded from: classes.dex */
+  37: public class NativeContext extends Context {
+  38:     private Context mContext;
+  39: 
+  40:     public NativeContext(Context context) {
+  41:         this.mContext = null;
+  42:         this.mContext = context;
+  43:     }
+  44: 
+  45:     @Override // android.content.Context
+  46:     public boolean bindService(Intent intent, ServiceConnection serviceConnection, int i) {
+  47:         return false;
+  48:     }
+  49: 
+  50:     @Override // android.content.Context
+  51:     public int checkCallingOrSelfPermission(String str) {
+  52:         return 0;
+  53:     }
+  54: 
+  55:     @Override // android.content.Context
+  56:     public int checkCallingOrSelfUriPermission(Uri uri, int i) {
+  57:         return 0;
+  58:     }
+  59: 
+  60:     @Override // android.content.Context
+  61:     public int checkCallingPermission(String str) {
+  62:         return 0;
+  63:     }
+  64: 
+  65:     @Override // android.content.Context
+  66:     public int checkCallingUriPermission(Uri uri, int i) {
+  67:         return 0;
+  68:     }
+  69: 
+  70:     @Override // android.content.Context
+  71:     public int checkPermission(String str, int i, int i2) {
+  72:         return 0;
+  73:     }
+  74: 
+  75:     @Override // android.content.Context
+  76:     public int checkSelfPermission(String str) {
+  77:         return 0;
+  78:     }
+  79: 
+  80:     @Override // android.content.Context
+  81:     public int checkUriPermission(Uri uri, int i, int i2, int i3) {
+  82:         return 0;
+  83:     }
+  84: 
+  85:     @Override // android.content.Context
+  86:     public int checkUriPermission(Uri uri, String str, String str2, int i, int i2, int i3) {
+  87:         return 0;
+  88:     }
+  89: 
+  90:     @Override // android.content.Context
+  91:     public void clearWallpaper() throws IOException {
+  92:     }
+  93: 
+  94:     @Override // android.content.Context
+  95:     public Context createConfigurationContext(Configuration configuration) {
+  96:         return null;
+  97:     }
+  98: 
+  99:     @Override // android.content.Context
+ 100:     public Context createContextForSplit(String str) throws PackageManager.NameNotFoundException {
+ 101:         return null;
+ 102:     }
+ 103: 
+ 104:     @Override // android.content.Context
+ 105:     public Context createDeviceProtectedStorageContext() {
+ 106:         return null;
+ 107:     }
+ 108: 
+ 109:     @Override // android.content.Context
+ 110:     public Context createDisplayContext(Display display) {
+ 111:         return null;
+ 112:     }
+ 113: 
+ 114:     @Override // android.content.Context
+ 115:     public Context createPackageContext(String str, int i) throws PackageManager.NameNotFoundException {
+ 116:         return null;
+ 117:     }
+ 118: 
+ 119:     @Override // android.content.Context
+ 120:     public String[] databaseList() {
+ 121:         return new String[0];
+ 122:     }
+ 123: 
+ 124:     @Override // android.content.Context
+ 125:     public boolean deleteDatabase(String str) {
+ 126:         return false;
+ 127:     }
+ 128: 
+ 129:     @Override // android.content.Context
+ 130:     public boolean deleteFile(String str) {
+ 131:         return false;
+ 132:     }
+ 133: 
+ 134:     @Override // android.content.Context
+ 135:     public boolean deleteSharedPreferences(String str) {
+ 136:         return false;
+ 137:     }
+ 138: 
+ 139:     @Override // android.content.Context
+ 140:     public void enforceCallingOrSelfPermission(String str, String str2) {
+ 141:     }
+ 142: 
+ 143:     @Override // android.content.Context
+ 144:     public void enforceCallingOrSelfUriPermission(Uri uri, int i, String str) {
+ 145:     }
+ 146: 
+ 147:     @Override // android.content.Context
+ 148:     public void enforceCallingPermission(String str, String str2) {
+ 149:     }
+ 150: 
+ 151:     @Override // android.content.Context
+ 152:     public void enforceCallingUriPermission(Uri uri, int i, String str) {
+ 153:     }
+ 154: 
+ 155:     @Override // android.content.Context
+ 156:     public void enforcePermission(String str, int i, int i2, String str2) {
+ 157:     }
+ 158: 
+ 159:     @Override // android.content.Context
+ 160:     public void enforceUriPermission(Uri uri, int i, int i2, int i3, String str) {
+ 161:     }
+ 162: 
+ 163:     @Override // android.content.Context
+ 164:     public void enforceUriPermission(Uri uri, String str, String str2, int i, int i2, int i3, String str3) {
+ 165:     }
+ 166: 
+ 167:     @Override // android.content.Context
+ 168:     public String[] fileList() {
+ 169:         return new String[0];
+ 170:     }
+ 171: 
+ 172:     @Override // android.content.Context
+ 173:     public Context getApplicationContext() {
+ 174:         return this.mContext.getApplicationContext();
+ 175:     }
+ 176: 
+ 177:     @Override // android.content.Context
+ 178:     public ApplicationInfo getApplicationInfo() {
+ 179:         return null;
+ 180:     }
+ 181: 
+ 182:     @Override // android.content.Context
+ 183:     public AssetManager getAssets() {
+ 184:         return this.mContext.getAssets();
+ 185:     }
+ 186: 
+ 187:     @Override // android.content.Context
+ 188:     public File getCacheDir() {
+ 189:         return null;
+ 190:     }
+ 191: 
+ 192:     @Override // android.content.Context
+ 193:     public ClassLoader getClassLoader() {
+ 194:         return this.mContext.getClassLoader();
+ 195:     }
+ 196: 
+ 197:     @Override // android.content.Context
+ 198:     public File getCodeCacheDir() {
+ 199:         return null;
+ 200:     }
+ 201: 
+ 202:     @Override // android.content.Context
+ 203:     public ContentResolver getContentResolver() {
+ 204:         return this.mContext.getContentResolver();
+ 205:     }
+ 206: 
+ 207:     @Override // android.content.Context
+ 208:     public File getDataDir() {
+ 209:         return null;
+ 210:     }
+ 211: 
+ 212:     @Override // android.content.Context
+ 213:     public File getDatabasePath(String str) {
+ 214:         return null;
+ 215:     }
+ 216: 
+ 217:     @Override // android.content.Context
+ 218:     public File getDir(String str, int i) {
+ 219:         return null;
+ 220:     }
+
+===== FILE: E:\Users\QuirrellRevess\Downloads\qianye\qianye_export\sources\com\p000nx\assist\lua\PaddleOcr.java =====
+LINE_COUNT: 143
+  55:     }
+  56: 
+  57:     private static boolean loadModeImp(boolean z, String str, String str2, String str3, String str4, String str5) {
+  58:         if (!bLoaded) {
+  59:             if (!new File(str).exists() || !new File(str).exists() || !new File(str3).exists() || !new File(str5).exists()) {
+  60:                 return false;
+  61:             }
+  62:             if (!z && !new File(str4).exists()) {
+  63:                 return false;
+  64:             }
+  65:             if (lIlii.m1143L1l() == null) {
+  66:                 String strLlliI = L11I.I11L().llliI();
+  67:                 File file = new File(lIlii.m1172lIII());
+  68:                 lIlii.m1194llI11I(strLlliI, file, IL1Iii.IL1Iii(new byte[]{9, 89, 84, 86, 2, 8, 11, 30, 69, 87}, IL1Iii.IL1Iii(new byte[]{4, 5, 6, 93, 7, 86}, IL1Iii.IL1Iii(new byte[]{80, 5, 2, 3, 2, 6}, "102fd6"))), lIlii.m1189iILLl(), false, true, true);
+  69:                 lIlii.m1194llI11I(strLlliI, file, IL1Iii.IL1Iii(new byte[]{15, 80, 7, 21, 88, 0, 7, 85, 0, 10, 90, 22, 77, 74, 10}, IL1Iii.IL1Iii(new byte[]{80, 1, 85, 4, 91, 85}, IL1Iii.IL1Iii(new byte[]{7, 13, 6, 5, 4, 80}, "456dfa"))), lIlii.m1189iILLl(), false, true, true);
+  70:             } else {
+  71:                 System.loadLibrary(IL1Iii.IL1Iii(new byte[]{10, 87, 90, 86}, IL1Iii.IL1Iii(new byte[]{84, 4, 12, 11, 10, 87}, IL1Iii.IL1Iii(new byte[]{82, 84, 10, 86, 2, 0}, "bd2e02"))));
+  72:                 System.loadLibrary(IL1Iii.IL1Iii(new byte[]{68, 2, 1, 92, 95, 87, 91, 0, 23}, IL1Iii.IL1Iii(new byte[]{80, 91, 86, 1, 11, 6}, IL1Iii.IL1Iii(new byte[]{5, 0, 85, 88, 92, 85}, "a8fada"))));
+  73:             }
+  74:             bLoaded = true;
+  75:         }
+  76:         if (sInstance == null) {
+  77:             sInstance = new PaddleOcr();
+  78:         }
+  79:         try {
+  80:             return sInstance.nativeLoadMode(Obj.class, str, str2, str3, str4, str5, z);
+  81:         } catch (Exception unused) {
+  82:             return false;
+  83:         }
+  84:     }
+  85: 
+  86:     public static boolean loadModel(boolean z) {
+  87:         File fileI11li1 = L11I.I11L().I11li1();
+  88:         if (z) {
+  89:             File file = new File(fileI11li1, IL1Iii.IL1Iii(new byte[]{68, 85, 82, 87, 85, 4}, IL1Iii.IL1Iii(new byte[]{81, 6, 3, 3, 91, 83}, IL1Iii.IL1Iii(new byte[]{7, 84, 12, 1, 84, 2}, "bf9160"))));
+  90:             return loadOnnxModel(new File(file, IL1Iii.IL1Iii(new byte[]{80, 92, 77, 22, 11, 10, 90, 65}, IL1Iii.IL1Iii(new byte[]{4, 93, 88, 91, 83, 92}, IL1Iii.IL1Iii(new byte[]{7, 2, 88, 87, 3, 94}, "7f944f")))).getAbsolutePath(), new File(file, IL1Iii.IL1Iii(new byte[]{1, 88, 22, 23, 14, 90, 12, 76}, IL1Iii.IL1Iii(new byte[]{0, 81, 85, 13, 80, 86}, IL1Iii.IL1Iii(new byte[]{90, 87, 0, 13, 1, 90}, "820908")))).getAbsolutePath(), new File(file, IL1Iii.IL1Iii(new byte[]{19, 85, 83, 24, 88, 13, 15, 72}, IL1Iii.IL1Iii(new byte[]{82, 3, 86, 5, 2, 7}, IL1Iii.IL1Iii(new byte[]{11, 11, 4, 6, 86, 0}, "88b5cd")))).getAbsolutePath(), new File(file, IL1Iii.IL1Iii(new byte[]{95, 6, 72, 21, 28, 76, 76, 23}, IL1Iii.IL1Iii(new byte[]{0, 5, 80, 87, 84, 90}, IL1Iii.IL1Iii(new byte[]{86, 94, 7, 5, 7, 83}, "b8f4a1")))).getAbsolutePath());
+  91:         }
+  92:         File file2 = new File(fileI11li1, IL1Iii.IL1Iii(new byte[]{17, 0, 0, 86, 13, 84}, IL1Iii.IL1Iii(new byte[]{83, 81, 82, 83, 84, 83}, IL1Iii.IL1Iii(new byte[]{6, 82, 84, 86, 13, 0}, "4bb78b"))));
+  93:         return loadNnccModel(new File(file2, IL1Iii.IL1Iii(new byte[]{82, 80, 77, 22, 67, 82, 68, 84, 84}, IL1Iii.IL1Iii(new byte[]{80, 2, 9, 11, 81, 7}, IL1Iii.IL1Iii(new byte[]{94, 82, 84, 1, 81, 87}, "8ed23c")))).getAbsolutePath(), new File(file2, IL1Iii.IL1Iii(new byte[]{71, 81, 84, 79, 22, 82, 71, 85, 90}, IL1Iii.IL1Iii(new byte[]{80, 80, 3, 85, 5, 11}, IL1Iii.IL1Iii(new byte[]{80, 92, 6, 81, 91, 9}, "582e81")))).getAbsolutePath(), new File(file2, IL1Iii.IL1Iii(new byte[]{93, 87, 21, 74, 81, 8, 87}, IL1Iii.IL1Iii(new byte[]{8, 2, 7, 6, 87, 88}, IL1Iii.IL1Iii(new byte[]{82, 1, 7, 0, 2, 11}, "c1abf2")))).getAbsolutePath(), new File(file2, IL1Iii.IL1Iii(new byte[]{74, 93, 1, 72, 84, 80, 86}, IL1Iii.IL1Iii(new byte[]{15, 15, 91, 7, 0, 90}, IL1Iii.IL1Iii(new byte[]{0, 0, 14, 81, 15, 5}, "77709f")))).getAbsolutePath(), new File(file2, IL1Iii.IL1Iii(new byte[]{88, 92, 31, 75, 25, 69, 75, 77}, IL1Iii.IL1Iii(new byte[]{6, 11, 85, 11, 4, 4}, IL1Iii.IL1Iii(new byte[]{4, 2, 7, 85, 87, 1}, "104fd4")))).getAbsolutePath());
+  94:     }
+  95: 
+  96:     public static boolean loadNnccModel(String str, String str2, String str3, String str4, String str5) {
+  97:         return loadModeImp(false, str, str2, str3, str4, str5);
+  98:     }
+  99: 
+ 100:     public static boolean loadOnnxModel(String str, String str2, String str3, String str4) {
+ 101:         return loadModeImp(true, str, str2, str3, BuildConfig.FLAVOR, str4);
+ 102:     }
+ 103: 
+ 104:     public native Obj[] nativeDetect(Bitmap bitmap, int i, int i2, int i3, int i4, int i5, int i6);
+ 105: 
+ 106:     public native boolean nativeLoadMode(Class cls, String str, String str2, String str3, String str4, String str5, boolean z);
+ 107: 
+ 108:     public static String detect(Bitmap bitmap) {
+ 109:         return detect(bitmap, 0, 0, 50, 255, 255, 255);
+ 110:     }
+ 111: 
+ 112:     public static String detect(Bitmap bitmap, int i, int i2) {
+ 113:         return detect(bitmap, i, i2, 50, 255, 255, 255);
+ 114:     }
+ 115: 
+ 116:     public static String detect(Bitmap bitmap, int i, int i2, int i3, int i4, int i5, int i6) {
+ 117:         Obj[] objArrNativeDetect;
+ 118:         JSONArray jSONArray = new JSONArray();
+ 119:         PaddleOcr paddleOcr = sInstance;
+ 120:         if (paddleOcr != null && (objArrNativeDetect = paddleOcr.nativeDetect(bitmap, i, i2, i3, i4, i5, i6)) != null) {
+ 121:             int i7 = 0;
+ 122:             for (Obj obj : objArrNativeDetect) {
+ 123:                 try {
+ 124:                     JSONObject jSONObject = new JSONObject();
+ 125:                     jSONObject.put(IL1Iii.IL1Iii(new byte[]{27}, IL1Iii.IL1Iii(new byte[]{2, 83, 7, 81, 2, 0}, IL1Iii.IL1Iii(new byte[]{87, 81, 12, 0, 82, 3}, "6494d5"))), obj.f87x0);
+ 126:                     jSONObject.put(IL1Iii.IL1Iii(new byte[]{28}, IL1Iii.IL1Iii(new byte[]{3, 89, 2, 8, 83, 0}, IL1Iii.IL1Iii(new byte[]{94, 89, 82, 2, 84, 12}, "88d318"))), obj.f90y0);
+ 127:                     jSONObject.put(IL1Iii.IL1Iii(new byte[]{21}, IL1Iii.IL1Iii(new byte[]{87, 0, 80, 84, 2, 3}, IL1Iii.IL1Iii(new byte[]{2, 1, 83, 0, 80, 82}, "717fa4"))), obj.f88x1 - obj.f87x0);
+ 128:                     jSONObject.put(IL1Iii.IL1Iii(new byte[]{14}, IL1Iii.IL1Iii(new byte[]{0, 87, 5, 92, 1, 82}, IL1Iii.IL1Iii(new byte[]{94, 15, 9, 1, 95, 5}, "899df2"))), obj.f91y1 - obj.f90y0);
+ 129:                     jSONObject.put(IL1Iii.IL1Iii(new byte[]{90, 87, 90, 3, 90}, IL1Iii.IL1Iii(new byte[]{4, 6, 0, 4, 85, 86}, IL1Iii.IL1Iii(new byte[]{80, 6, 15, 81, 91, 82}, "b67381"))), obj.label);
+ 130:                     jSONObject.put(IL1Iii.IL1Iii(new byte[]{20, 71, 86, 85}, IL1Iii.IL1Iii(new byte[]{0, 1, 10, 7, 83, 6}, IL1Iii.IL1Iii(new byte[]{86, 86, 3, 3, 5, 93}, "2b03a9"))), obj.prob);
+ 131:                     int i8 = i7 + 1;
+ 132:                     try {
+ 133:                         jSONArray.put(i7, jSONObject);
+ 134:                     } catch (Exception unused) {
+ 135:                     }
+ 136:                     i7 = i8;
+ 137:                 } catch (Exception unused2) {
+ 138:                 }
+ 139:             }
+ 140:         }
+ 141:         return jSONArray.toString();
+ 142:     }
+ 143: }
+
+===== FILE: E:\Users\QuirrellRevess\Downloads\qianye\qianye_export\sources\I1I\IL1Iii.java =====
+LINE_COUNT: 14
+   1: package I1I;
+   2: 
+   3: /* JADX INFO: compiled from: OooOO0OO.java */
+   4: /* JADX INFO: loaded from: classes.dex */
+   5: public class IL1Iii {
+   6:     public static String IL1Iii(byte[] bArr, String str) {
+   7:         int length = bArr.length;
+   8:         int length2 = str.length();
+   9:         for (int i = 0; i < length; i++) {
+  10:             bArr[i] = (byte) (bArr[i] ^ str.charAt(i % length2));
+  11:         }
+  12:         return new String(bArr);
+  13:     }
+  14: }
+
+===== APP-SOURCE KEYWORD HITS =====
+HIT: E:\Users\QuirrellRevess\Downloads\qianye\qianye_export\sources\com\main\engine\Engine.java:87: public static native String paddleOcr(Object obj);
+HIT: E:\Users\QuirrellRevess\Downloads\qianye\qianye_export\sources\com\main\engine\NativeContext.java:183: public AssetManager getAssets() {
+HIT: E:\Users\QuirrellRevess\Downloads\qianye\qianye_export\sources\com\main\engine\NativeContext.java:184: return this.mContext.getAssets();
+HIT: E:\Users\QuirrellRevess\Downloads\qianye\qianye_export\sources\com\main\engine\NativeContext.java:361: public FileInputStream openFileInput(String str) throws FileNotFoundException {
+HIT: E:\Users\QuirrellRevess\Downloads\qianye\qianye_export\sources\com\p000nx\assist\lua\ApkLoader.java:65: public AssetManager getAssets() {
+HIT: E:\Users\QuirrellRevess\Downloads\qianye\qianye_export\sources\com\p000nx\assist\lua\PaddleOcr.java:13: public class PaddleOcr {
+HIT: E:\Users\QuirrellRevess\Downloads\qianye\qianye_export\sources\com\p000nx\assist\lua\PaddleOcr.java:15: private static PaddleOcr sInstance;
+HIT: E:\Users\QuirrellRevess\Downloads\qianye\qianye_export\sources\com\p000nx\assist\lua\PaddleOcr.java:77: sInstance = new PaddleOcr();
+HIT: E:\Users\QuirrellRevess\Downloads\qianye\qianye_export\sources\com\p000nx\assist\lua\PaddleOcr.java:80: return sInstance.nativeLoadMode(Obj.class, str, str2, str3, str4, str5, z);
+HIT: E:\Users\QuirrellRevess\Downloads\qianye\qianye_export\sources\com\p000nx\assist\lua\PaddleOcr.java:90: return loadOnnxModel(new File(file, IL1Iii.IL1Iii(new byte[]{80, 92, 77, 22, 11, 10, 90, 65}, IL1Iii.IL1Iii(new byte[]{4, 93, 88, 91, 83, 92}, IL1Iii.IL1Iii(new byte[]{7, 2, 88, 87, 3, 94}, "7f944f")))).getAbsolutePath(), new File(file, IL1Iii.IL1Iii(new byte[]{1, 88, 22, 23, 14, 90, 12, 76}, IL1Iii.IL1Iii(new byte[]{0, 81, 85, 13, 80, 86}, IL1Iii.IL1Iii(new byte[]{90, 87, 0, 13, 1, 90}, "820908")))).getAbsolutePath(), new File(file, IL1Iii.IL1Iii(new byte[]{19, 85, 83, 24, 88, 13, 15, 72}, IL1Iii.IL1Iii(new byte[]{82, 3, 86, 5, 2, 7}, IL1Iii.IL1Iii(new byte[]{11, 11, 4, 6, 86, 0}, "88b5cd")))).getAbsolutePath(), new File(file, IL1Iii.IL1Iii(new byte[]{95, 6, 72, 21, 28, 76, 76, 23}, IL1Iii.IL1Iii(new byte[]{0, 5, 80, 87, 84, 90}, IL1Iii.IL1Iii(new byte[]{86, 94, 7, 5, 7, 83}, "b8f4a1")))).getAbsolutePath());
+HIT: E:\Users\QuirrellRevess\Downloads\qianye\qianye_export\sources\com\p000nx\assist\lua\PaddleOcr.java:93: return loadNnccModel(new File(file2, IL1Iii.IL1Iii(new byte[]{82, 80, 77, 22, 67, 82, 68, 84, 84}, IL1Iii.IL1Iii(new byte[]{80, 2, 9, 11, 81, 7}, IL1Iii.IL1Iii(new byte[]{94, 82, 84, 1, 81, 87}, "8ed23c")))).getAbsolutePath(), new File(file2, IL1Iii.IL1Iii(new byte[]{71, 81, 84, 79, 22, 82, 71, 85, 90}, IL1Iii.IL1Iii(new byte[]{80, 80, 3, 85, 5, 11}, IL1Iii.IL1Iii(new byte[]{80, 92, 6, 81, 91, 9}, "582e81")))).getAbsolutePath(), new File(file2, IL1Iii.IL1Iii(new byte[]{93, 87, 21, 74, 81, 8, 87}, IL1Iii.IL1Iii(new byte[]{8, 2, 7, 6, 87, 88}, IL1Iii.IL1Iii(new byte[]{82, 1, 7, 0, 2, 11}, "c1abf2")))).getAbsolutePath(), new File(file2, IL1Iii.IL1Iii(new byte[]{74, 93, 1, 72, 84, 80, 86}, IL1Iii.IL1Iii(new byte[]{15, 15, 91, 7, 0, 90}, IL1Iii.IL1Iii(new byte[]{0, 0, 14, 81, 15, 5}, "77709f")))).getAbsolutePath(), new File(file2, IL1Iii.IL1Iii(new byte[]{88, 92, 31, 75, 25, 69, 75, 77}, IL1Iii.IL1Iii(new byte[]{6, 11, 85, 11, 4, 4}, IL1Iii.IL1Iii(new byte[]{4, 2, 7, 85, 87, 1}, "104fd4")))).getAbsolutePath());
+HIT: E:\Users\QuirrellRevess\Downloads\qianye\qianye_export\sources\com\p000nx\assist\lua\PaddleOcr.java:96: public static boolean loadNnccModel(String str, String str2, String str3, String str4, String str5) {
+HIT: E:\Users\QuirrellRevess\Downloads\qianye\qianye_export\sources\com\p000nx\assist\lua\PaddleOcr.java:100: public static boolean loadOnnxModel(String str, String str2, String str3, String str4) {
+HIT: E:\Users\QuirrellRevess\Downloads\qianye\qianye_export\sources\com\p000nx\assist\lua\PaddleOcr.java:104: public native Obj[] nativeDetect(Bitmap bitmap, int i, int i2, int i3, int i4, int i5, int i6);
+HIT: E:\Users\QuirrellRevess\Downloads\qianye\qianye_export\sources\com\p000nx\assist\lua\PaddleOcr.java:106: public native boolean nativeLoadMode(Class cls, String str, String str2, String str3, String str4, String str5, boolean z);
+HIT: E:\Users\QuirrellRevess\Downloads\qianye\qianye_export\sources\com\p000nx\assist\lua\PaddleOcr.java:117: Obj[] objArrNativeDetect;
+HIT: E:\Users\QuirrellRevess\Downloads\qianye\qianye_export\sources\com\p000nx\assist\lua\PaddleOcr.java:119: PaddleOcr paddleOcr = sInstance;
+HIT: E:\Users\QuirrellRevess\Downloads\qianye\qianye_export\sources\com\p000nx\assist\lua\PaddleOcr.java:120: if (paddleOcr != null && (objArrNativeDetect = paddleOcr.nativeDetect(bitmap, i, i2, i3, i4, i5, i6)) != null) {
+HIT: E:\Users\QuirrellRevess\Downloads\qianye\qianye_export\sources\com\p000nx\assist\lua\PaddleOcr.java:122: for (Obj obj : objArrNativeDetect) {
+HIT: E:\Users\QuirrellRevess\Downloads\qianye\qianye_export\sources\com\p000nx\assist\lua\YoloV5.java:39: Obj[] objArrNativeDetect;
+HIT: E:\Users\QuirrellRevess\Downloads\qianye\qianye_export\sources\com\p000nx\assist\lua\YoloV5.java:42: if (yoloV5 != null && (objArrNativeDetect = yoloV5.nativeDetect(bitmap, z)) != null) {
+HIT: E:\Users\QuirrellRevess\Downloads\qianye\qianye_export\sources\com\p000nx\assist\lua\YoloV5.java:44: for (Obj obj : objArrNativeDetect) {
+HIT: E:\Users\QuirrellRevess\Downloads\qianye\qianye_export\sources\com\p000nx\assist\lua\YoloV5.java:91: public native Obj[] nativeDetect(Bitmap bitmap, boolean z);
+HIT: E:\Users\QuirrellRevess\Downloads\qianye\qianye_export\sources\I1I\I1I\p008IL\lIlii.java:460: InputStream inputStreamOpen = context.getAssets().open(str);
+HIT: E:\Users\QuirrellRevess\Downloads\qianye\qianye_export\sources\I1I\I1I\p008IL\lIlii.java:3148: InputStream inputStreamOpen = context.getAssets().open(str);
+HIT: E:\Users\QuirrellRevess\Downloads\qianye\qianye_export\sources\I1I\p062Ilil\p063IL1Iii\I1I\IL.java:31: public AssetManager getAssets() {
+HIT: E:\Users\QuirrellRevess\Downloads\qianye\qianye_export\sources\I1I\p062Ilil\p063IL1Iii\I1I\IL.java:32: return this.f3440IL1Iii.getAssets();
+TOTAL_APP_SOURCE_HITS: 27
+
+===== SCRIPT.LRJ FILE IDENTITY =====
+PATH: E:\Users\QuirrellRevess\Downloads\qianye\assets\script.lrj
+SIZE: 80925066
+HEAD_HEX: 50-4B-03-04-14-00-00-08-08-00-00-00-00-00-23-40-B2-3A-4F-00-00-00-6B-00-00-00-0A-00-00-00-65-6E
+TAIL_HEX: E6-BA-90-2F-73-6D-6E-2E-72-63-50-4B-05-06-00-00-00-00-26-00-26-00-C2-08-00-00-B2-C8-D2-04-00-00
+SHA256: 7981B5AF9080F79FF5784930F238755ACF326EB1A078C9294D3602BA11D77C0C
+RESULT: SCAN_COMPLETED

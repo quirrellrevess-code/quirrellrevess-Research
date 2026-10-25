@@ -1,0 +1,19 @@
+﻿TASK: UMA_JAVA_SOURCE_DISCOVERY_RETRY
+MODE: READ_ONLY_SOURCE_SCAN
+JAVA_COUNT: 2159
+DEX_COUNT: 1
+KEYWORDS: findImageOC, imageBinariztion, DesDecrypt, nativeDetect, nativeLoadMode, m355L1l
+KEYWORD_MATCH_COUNT: 12
+MATCH: E:\Users\QuirrellRevess\Downloads\qianye\qianye_export\sources\com\p000nx\assist\lua\PaddleOcr.java:80: return sInstance.nativeLoadMode(Obj.class, str, str2, str3, str4, str5, z);
+MATCH: E:\Users\QuirrellRevess\Downloads\qianye\qianye_export\sources\com\p000nx\assist\lua\PaddleOcr.java:104: public native Obj[] nativeDetect(Bitmap bitmap, int i, int i2, int i3, int i4, int i5, int i6);
+MATCH: E:\Users\QuirrellRevess\Downloads\qianye\qianye_export\sources\com\p000nx\assist\lua\PaddleOcr.java:106: public native boolean nativeLoadMode(Class cls, String str, String str2, String str3, String str4, String str5, boolean z);
+MATCH: E:\Users\QuirrellRevess\Downloads\qianye\qianye_export\sources\com\p000nx\assist\lua\PaddleOcr.java:117: Obj[] objArrNativeDetect;
+MATCH: E:\Users\QuirrellRevess\Downloads\qianye\qianye_export\sources\com\p000nx\assist\lua\PaddleOcr.java:120: if (paddleOcr != null && (objArrNativeDetect = paddleOcr.nativeDetect(bitmap, i, i2, i3, i4, i5, i6)) != null) {
+MATCH: E:\Users\QuirrellRevess\Downloads\qianye\qianye_export\sources\com\p000nx\assist\lua\PaddleOcr.java:122: for (Obj obj : objArrNativeDetect) {
+MATCH: E:\Users\QuirrellRevess\Downloads\qianye\qianye_export\sources\com\p000nx\assist\lua\YoloV5.java:39: Obj[] objArrNativeDetect;
+MATCH: E:\Users\QuirrellRevess\Downloads\qianye\qianye_export\sources\com\p000nx\assist\lua\YoloV5.java:42: if (yoloV5 != null && (objArrNativeDetect = yoloV5.nativeDetect(bitmap, z)) != null) {
+MATCH: E:\Users\QuirrellRevess\Downloads\qianye\qianye_export\sources\com\p000nx\assist\lua\YoloV5.java:44: for (Obj obj : objArrNativeDetect) {
+MATCH: E:\Users\QuirrellRevess\Downloads\qianye\qianye_export\sources\com\p000nx\assist\lua\YoloV5.java:91: public native Obj[] nativeDetect(Bitmap bitmap, boolean z);
+MATCH: E:\Users\QuirrellRevess\Downloads\qianye\qianye_export\sources\com\tencent\smtt\utils\C0451h.java:131: TbsLog.m665i("Post3DESEncryption", "DesDecrypt deskeys is " + f804g);
+MATCH: E:\Users\QuirrellRevess\Downloads\qianye\qianye_export\sources\com\tencent\smtt\utils\C0451h.java:139: TbsLog.m665i("Post3DESEncryption", "DesDecrypt exception,  content is " + m755d(bArr));
+RESULT: SCAN_COMPLETED

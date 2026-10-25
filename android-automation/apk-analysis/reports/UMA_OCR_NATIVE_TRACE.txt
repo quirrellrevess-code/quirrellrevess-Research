@@ -1,0 +1,355 @@
+﻿TASK: UMA_OCR_NATIVE_TRACE
+MODE: READ_ONLY
+SOURCE_ROOT: E:\Users\QuirrellRevess\Downloads\qianye\qianye_export\sources
+
+===== PADDLE_OCR_SOURCE =====
+   1: package com.p000nx.assist.lua;
+   2: 
+   3: import I1I.I1I.ILil.L11I;
+   4: import I1I.I1I.p008IL.lIlii;
+   5: import I1I.IL1Iii;
+   6: import android.graphics.Bitmap;
+   7: import com.google.android.flexbox.BuildConfig;
+   8: import java.io.File;
+   9: import org.json.JSONArray;
+  10: import org.json.JSONObject;
+  11: 
+  12: /* JADX INFO: loaded from: classes.dex */
+  13: public class PaddleOcr {
+  14:     private static boolean bLoaded = false;
+  15:     private static PaddleOcr sInstance;
+  16: 
+  17:     public class Obj {
+  18:         public String label;
+  19:         public float prob;
+  20: 
+  21:         /* JADX INFO: renamed from: x0 */
+  22:         public int f87x0;
+  23: 
+  24:         /* JADX INFO: renamed from: x1 */
+  25:         public int f88x1;
+  26: 
+  27:         /* JADX INFO: renamed from: x2 */
+  28:         public int f89x2;
+  29: 
+  30:         /* JADX INFO: renamed from: y0 */
+  31:         public int f90y0;
+  32: 
+  33:         /* JADX INFO: renamed from: y1 */
+  34:         public int f91y1;
+  35: 
+  36:         public Obj() {
+  37:         }
+  38:     }
+  39: 
+  40:     public static String detect(int i, int i2, int i3, int i4) {
+  41:         JSONArray jSONArray = new JSONArray();
+  42:         Bitmap bitmapSnapShot = LuaEngine.snapShot(i, i2, i3, i4);
+  43:         if (bitmapSnapShot == null) {
+  44:             return jSONArray.toString();
+  45:         }
+  46:         String strDetect = detect(bitmapSnapShot, i, i2);
+  47:         if (!bitmapSnapShot.isRecycled()) {
+  48:             bitmapSnapShot.recycle();
+  49:         }
+  50:         return strDetect;
+  51:     }
+  52: 
+  53:     public static String detectWithPadding(Bitmap bitmap, int i, int i2, int i3, int i4) {
+  54:         return detect(bitmap, 0, 0, i, i2, i3, i4);
+  55:     }
+  56: 
+  57:     private static boolean loadModeImp(boolean z, String str, String str2, String str3, String str4, String str5) {
+  58:         if (!bLoaded) {
+  59:             if (!new File(str).exists() || !new File(str).exists() || !new File(str3).exists() || !new File(str5).exists()) {
+  60:                 return false;
+  61:             }
+  62:             if (!z && !new File(str4).exists()) {
+  63:                 return false;
+  64:             }
+  65:             if (lIlii.m1143L1l() == null) {
+  66:                 String strLlliI = L11I.I11L().llliI();
+  67:                 File file = new File(lIlii.m1172lIII());
+  68:                 lIlii.m1194llI11I(strLlliI, file, IL1Iii.IL1Iii(new byte[]{9, 89, 84, 86, 2, 8, 11, 30, 69, 87}, IL1Iii.IL1Iii(new byte[]{4, 5, 6, 93, 7, 86}, IL1Iii.IL1Iii(new byte[]{80, 5, 2, 3, 2, 6}, "102fd6"))), lIlii.m1189iILLl(), false, true, true);
+  69:                 lIlii.m1194llI11I(strLlliI, file, IL1Iii.IL1Iii(new byte[]{15, 80, 7, 21, 88, 0, 7, 85, 0, 10, 90, 22, 77, 74, 10}, IL1Iii.IL1Iii(new byte[]{80, 1, 85, 4, 91, 85}, IL1Iii.IL1Iii(new byte[]{7, 13, 6, 5, 4, 80}, "456dfa"))), lIlii.m1189iILLl(), false, true, true);
+  70:             } else {
+  71:                 System.loadLibrary(IL1Iii.IL1Iii(new byte[]{10, 87, 90, 86}, IL1Iii.IL1Iii(new byte[]{84, 4, 12, 11, 10, 87}, IL1Iii.IL1Iii(new byte[]{82, 84, 10, 86, 2, 0}, "bd2e02"))));
+  72:                 System.loadLibrary(IL1Iii.IL1Iii(new byte[]{68, 2, 1, 92, 95, 87, 91, 0, 23}, IL1Iii.IL1Iii(new byte[]{80, 91, 86, 1, 11, 6}, IL1Iii.IL1Iii(new byte[]{5, 0, 85, 88, 92, 85}, "a8fada"))));
+  73:             }
+  74:             bLoaded = true;
+  75:         }
+  76:         if (sInstance == null) {
+  77:             sInstance = new PaddleOcr();
+  78:         }
+  79:         try {
+  80:             return sInstance.nativeLoadMode(Obj.class, str, str2, str3, str4, str5, z);
+  81:         } catch (Exception unused) {
+  82:             return false;
+  83:         }
+  84:     }
+  85: 
+  86:     public static boolean loadModel(boolean z) {
+  87:         File fileI11li1 = L11I.I11L().I11li1();
+  88:         if (z) {
+  89:             File file = new File(fileI11li1, IL1Iii.IL1Iii(new byte[]{68, 85, 82, 87, 85, 4}, IL1Iii.IL1Iii(new byte[]{81, 6, 3, 3, 91, 83}, IL1Iii.IL1Iii(new byte[]{7, 84, 12, 1, 84, 2}, "bf9160"))));
+  90:             return loadOnnxModel(new File(file, IL1Iii.IL1Iii(new byte[]{80, 92, 77, 22, 11, 10, 90, 65}, IL1Iii.IL1Iii(new byte[]{4, 93, 88, 91, 83, 92}, IL1Iii.IL1Iii(new byte[]{7, 2, 88, 87, 3, 94}, "7f944f")))).getAbsolutePath(), new File(file, IL1Iii.IL1Iii(new byte[]{1, 88, 22, 23, 14, 90, 12, 76}, IL1Iii.IL1Iii(new byte[]{0, 81, 85, 13, 80, 86}, IL1Iii.IL1Iii(new byte[]{90, 87, 0, 13, 1, 90}, "820908")))).getAbsolutePath(), new File(file, IL1Iii.IL1Iii(new byte[]{19, 85, 83, 24, 88, 13, 15, 72}, IL1Iii.IL1Iii(new byte[]{82, 3, 86, 5, 2, 7}, IL1Iii.IL1Iii(new byte[]{11, 11, 4, 6, 86, 0}, "88b5cd")))).getAbsolutePath(), new File(file, IL1Iii.IL1Iii(new byte[]{95, 6, 72, 21, 28, 76, 76, 23}, IL1Iii.IL1Iii(new byte[]{0, 5, 80, 87, 84, 90}, IL1Iii.IL1Iii(new byte[]{86, 94, 7, 5, 7, 83}, "b8f4a1")))).getAbsolutePath());
+  91:         }
+  92:         File file2 = new File(fileI11li1, IL1Iii.IL1Iii(new byte[]{17, 0, 0, 86, 13, 84}, IL1Iii.IL1Iii(new byte[]{83, 81, 82, 83, 84, 83}, IL1Iii.IL1Iii(new byte[]{6, 82, 84, 86, 13, 0}, "4bb78b"))));
+  93:         return loadNnccModel(new File(file2, IL1Iii.IL1Iii(new byte[]{82, 80, 77, 22, 67, 82, 68, 84, 84}, IL1Iii.IL1Iii(new byte[]{80, 2, 9, 11, 81, 7}, IL1Iii.IL1Iii(new byte[]{94, 82, 84, 1, 81, 87}, "8ed23c")))).getAbsolutePath(), new File(file2, IL1Iii.IL1Iii(new byte[]{71, 81, 84, 79, 22, 82, 71, 85, 90}, IL1Iii.IL1Iii(new byte[]{80, 80, 3, 85, 5, 11}, IL1Iii.IL1Iii(new byte[]{80, 92, 6, 81, 91, 9}, "582e81")))).getAbsolutePath(), new File(file2, IL1Iii.IL1Iii(new byte[]{93, 87, 21, 74, 81, 8, 87}, IL1Iii.IL1Iii(new byte[]{8, 2, 7, 6, 87, 88}, IL1Iii.IL1Iii(new byte[]{82, 1, 7, 0, 2, 11}, "c1abf2")))).getAbsolutePath(), new File(file2, IL1Iii.IL1Iii(new byte[]{74, 93, 1, 72, 84, 80, 86}, IL1Iii.IL1Iii(new byte[]{15, 15, 91, 7, 0, 90}, IL1Iii.IL1Iii(new byte[]{0, 0, 14, 81, 15, 5}, "77709f")))).getAbsolutePath(), new File(file2, IL1Iii.IL1Iii(new byte[]{88, 92, 31, 75, 25, 69, 75, 77}, IL1Iii.IL1Iii(new byte[]{6, 11, 85, 11, 4, 4}, IL1Iii.IL1Iii(new byte[]{4, 2, 7, 85, 87, 1}, "104fd4")))).getAbsolutePath());
+  94:     }
+  95: 
+  96:     public static boolean loadNnccModel(String str, String str2, String str3, String str4, String str5) {
+  97:         return loadModeImp(false, str, str2, str3, str4, str5);
+  98:     }
+  99: 
+ 100:     public static boolean loadOnnxModel(String str, String str2, String str3, String str4) {
+ 101:         return loadModeImp(true, str, str2, str3, BuildConfig.FLAVOR, str4);
+ 102:     }
+ 103: 
+ 104:     public native Obj[] nativeDetect(Bitmap bitmap, int i, int i2, int i3, int i4, int i5, int i6);
+ 105: 
+ 106:     public native boolean nativeLoadMode(Class cls, String str, String str2, String str3, String str4, String str5, boolean z);
+ 107: 
+ 108:     public static String detect(Bitmap bitmap) {
+ 109:         return detect(bitmap, 0, 0, 50, 255, 255, 255);
+ 110:     }
+ 111: 
+ 112:     public static String detect(Bitmap bitmap, int i, int i2) {
+ 113:         return detect(bitmap, i, i2, 50, 255, 255, 255);
+ 114:     }
+ 115: 
+ 116:     public static String detect(Bitmap bitmap, int i, int i2, int i3, int i4, int i5, int i6) {
+ 117:         Obj[] objArrNativeDetect;
+ 118:         JSONArray jSONArray = new JSONArray();
+ 119:         PaddleOcr paddleOcr = sInstance;
+ 120:         if (paddleOcr != null && (objArrNativeDetect = paddleOcr.nativeDetect(bitmap, i, i2, i3, i4, i5, i6)) != null) {
+ 121:             int i7 = 0;
+ 122:             for (Obj obj : objArrNativeDetect) {
+ 123:                 try {
+ 124:                     JSONObject jSONObject = new JSONObject();
+ 125:                     jSONObject.put(IL1Iii.IL1Iii(new byte[]{27}, IL1Iii.IL1Iii(new byte[]{2, 83, 7, 81, 2, 0}, IL1Iii.IL1Iii(new byte[]{87, 81, 12, 0, 82, 3}, "6494d5"))), obj.f87x0);
+ 126:                     jSONObject.put(IL1Iii.IL1Iii(new byte[]{28}, IL1Iii.IL1Iii(new byte[]{3, 89, 2, 8, 83, 0}, IL1Iii.IL1Iii(new byte[]{94, 89, 82, 2, 84, 12}, "88d318"))), obj.f90y0);
+ 127:                     jSONObject.put(IL1Iii.IL1Iii(new byte[]{21}, IL1Iii.IL1Iii(new byte[]{87, 0, 80, 84, 2, 3}, IL1Iii.IL1Iii(new byte[]{2, 1, 83, 0, 80, 82}, "717fa4"))), obj.f88x1 - obj.f87x0);
+ 128:                     jSONObject.put(IL1Iii.IL1Iii(new byte[]{14}, IL1Iii.IL1Iii(new byte[]{0, 87, 5, 92, 1, 82}, IL1Iii.IL1Iii(new byte[]{94, 15, 9, 1, 95, 5}, "899df2"))), obj.f91y1 - obj.f90y0);
+ 129:                     jSONObject.put(IL1Iii.IL1Iii(new byte[]{90, 87, 90, 3, 90}, IL1Iii.IL1Iii(new byte[]{4, 6, 0, 4, 85, 86}, IL1Iii.IL1Iii(new byte[]{80, 6, 15, 81, 91, 82}, "b67381"))), obj.label);
+ 130:                     jSONObject.put(IL1Iii.IL1Iii(new byte[]{20, 71, 86, 85}, IL1Iii.IL1Iii(new byte[]{0, 1, 10, 7, 83, 6}, IL1Iii.IL1Iii(new byte[]{86, 86, 3, 3, 5, 93}, "2b03a9"))), obj.prob);
+ 131:                     int i8 = i7 + 1;
+ 132:                     try {
+ 133:                         jSONArray.put(i7, jSONObject);
+ 134:                     } catch (Exception unused) {
+ 135:                     }
+ 136:                     i7 = i8;
+ 137:                 } catch (Exception unused2) {
+ 138:                 }
+ 139:             }
+ 140:         }
+ 141:         return jSONArray.toString();
+ 142:     }
+ 143: }
+
+===== DICTIONARY_FILE_CANDIDATES =====
+CANDIDATE_FILE_COUNT: 18
+FILE: E:\Users\QuirrellRevess\Downloads\qianye\assets\eng.traineddata | SIZE: 3112137
+FILE: E:\Users\QuirrellRevess\Downloads\qianye\assets\script.lrj | SIZE: 80925066
+FILE: E:\Users\QuirrellRevess\Downloads\qianye\lib\arm64-v8a\libocrapi.so | SIZE: 3082480
+FILE: E:\Users\QuirrellRevess\Downloads\qianye\lib\arm64-v8a\libpaddleocr.so | SIZE: 952688
+FILE: E:\Users\QuirrellRevess\Downloads\qianye\lib\armeabi-v7a\libocrapi.so | SIZE: 2492212
+FILE: E:\Users\QuirrellRevess\Downloads\qianye\lib\armeabi-v7a\libpaddleocr.so | SIZE: 567128
+FILE: E:\Users\QuirrellRevess\Downloads\qianye\lib\x86\libocrapi.so | SIZE: 3278648
+FILE: E:\Users\QuirrellRevess\Downloads\qianye\lib\x86\libpaddleocr.so | SIZE: 960356
+FILE: E:\Users\QuirrellRevess\Downloads\qianye\qianye_export\resources\assets\eng.traineddata | SIZE: 3112137
+FILE: E:\Users\QuirrellRevess\Downloads\qianye\qianye_export\resources\assets\script.lrj | SIZE: 80925066
+FILE: E:\Users\QuirrellRevess\Downloads\qianye\qianye_export\resources\lib\arm64-v8a\libocrapi.so | SIZE: 3082480
+FILE: E:\Users\QuirrellRevess\Downloads\qianye\qianye_export\resources\lib\arm64-v8a\libpaddleocr.so | SIZE: 952688
+FILE: E:\Users\QuirrellRevess\Downloads\qianye\qianye_export\resources\lib\armeabi-v7a\libocrapi.so | SIZE: 2492212
+FILE: E:\Users\QuirrellRevess\Downloads\qianye\qianye_export\resources\lib\armeabi-v7a\libpaddleocr.so | SIZE: 567128
+FILE: E:\Users\QuirrellRevess\Downloads\qianye\qianye_export\resources\lib\x86\libocrapi.so | SIZE: 3278648
+FILE: E:\Users\QuirrellRevess\Downloads\qianye\qianye_export\resources\lib\x86\libpaddleocr.so | SIZE: 960356
+FILE: E:\Users\QuirrellRevess\Downloads\qianye\qianye_export\sources\com\p000nx\assist\lua\PaddleOcr.java | SIZE: 8674
+FILE: E:\Users\QuirrellRevess\Downloads\qianye\qianye_export\sources\org\opencv\dnn\DictValue.java | SIZE: 2312
+
+===== RESOURCE_AND_OCR_REFERENCES =====
+REF: E:\Users\QuirrellRevess\Downloads\qianye\qianye_export\sources\androidx\recyclerview\widget\GridLayoutManager.java:872: public boolean supportsPredictiveItemAnimations() {
+REF: E:\Users\QuirrellRevess\Downloads\qianye\qianye_export\sources\androidx\recyclerview\widget\LinearLayoutManager.java:412: private void layoutForPredictiveAnimations(RecyclerView.lL lLVar, RecyclerView.C1 c1, int i, int i2) {
+REF: E:\Users\QuirrellRevess\Downloads\qianye\qianye_export\sources\androidx\recyclerview\widget\LinearLayoutManager.java:413: if (!c1.m3300iILLL1() || getChildCount() == 0 || c1.Ilil() || !supportsPredictiveItemAnimations()) {
+REF: E:\Users\QuirrellRevess\Downloads\qianye\qianye_export\sources\androidx\recyclerview\widget\LinearLayoutManager.java:566: if (!c1.Ilil() && supportsPredictiveItemAnimations()) {
+REF: E:\Users\QuirrellRevess\Downloads\qianye\qianye_export\sources\androidx\recyclerview\widget\LinearLayoutManager.java:1298: layoutForPredictiveAnimations(lLVar, c1, i2, i);
+REF: E:\Users\QuirrellRevess\Downloads\qianye\qianye_export\sources\androidx\recyclerview\widget\LinearLayoutManager.java:1492: public boolean supportsPredictiveItemAnimations() {
+REF: E:\Users\QuirrellRevess\Downloads\qianye\qianye_export\sources\androidx\recyclerview\widget\RecyclerView.java:1980: public boolean supportsPredictiveItemAnimations() {
+REF: E:\Users\QuirrellRevess\Downloads\qianye\qianye_export\sources\androidx\recyclerview\widget\RecyclerView.java:3988: return "State{mTargetPosition=" + this.f5104IL1Iii + ", mData=" + this.f5105ILil + ", mItemCount=" + this.f2709lLi1LL + ", mIsMeasuring=" + this.f2710il + ", mPreviousLayoutItemCount=" + this.f5103I1I + ", mDeletedInvisibleItemCountSincePreviousLayout=" + this.f2702IL + ", mStructureChanged=" + this.f2706iILLL1 + ", mInPreLayout=" + this.f2703IiL + ", mRunSimpleAnimations=" + this.ILL + ", mRunPredictiveAnimations=" + this.f2704Ll1 + '}';
+REF: E:\Users\QuirrellRevess\Downloads\qianye\qianye_export\sources\androidx\recyclerview\widget\RecyclerView.java:4510: private boolean predictiveItemAnimationsEnabled() {
+REF: E:\Users\QuirrellRevess\Downloads\qianye\qianye_export\sources\androidx\recyclerview\widget\RecyclerView.java:4511: return this.mItemAnimator != null && this.mLayout.supportsPredictiveItemAnimations();
+REF: E:\Users\QuirrellRevess\Downloads\qianye\qianye_export\sources\androidx\recyclerview\widget\RecyclerView.java:4522: if (predictiveItemAnimationsEnabled()) {
+REF: E:\Users\QuirrellRevess\Downloads\qianye\qianye_export\sources\androidx\recyclerview\widget\RecyclerView.java:4531: if (c1.ILL && z3 && !this.mDataSetHasChangedAfterLayout && predictiveItemAnimationsEnabled()) {
+REF: E:\Users\QuirrellRevess\Downloads\qianye\qianye_export\sources\androidx\recyclerview\widget\StaggeredGridLayoutManager.java:1995: public boolean supportsPredictiveItemAnimations() {
+REF: E:\Users\QuirrellRevess\Downloads\qianye\qianye_export\sources\com\google\gson\internal\UnsafeAllocator.java:3: import java.io.ObjectInputStream;
+REF: E:\Users\QuirrellRevess\Downloads\qianye\qianye_export\sources\com\google\gson\internal\UnsafeAllocator.java:51: final Method declaredMethod3 = ObjectInputStream.class.getDeclaredMethod("newInstance", Class.class, Class.class);
+REF: E:\Users\QuirrellRevess\Downloads\qianye\qianye_export\sources\com\main\app\ProjectActivity.java:68: Bitmap bitmapDecodeStream = BitmapFactory.decodeStream(context.getContentResolver().openInputStream(Uri.fromFile(new File(str))));
+REF: E:\Users\QuirrellRevess\Downloads\qianye\qianye_export\sources\com\main\engine\Engine.java:87: public static native String paddleOcr(Object obj);
+REF: E:\Users\QuirrellRevess\Downloads\qianye\qianye_export\sources\com\main\engine\NativeContext.java:16: import android.content.res.AssetManager;
+REF: E:\Users\QuirrellRevess\Downloads\qianye\qianye_export\sources\com\main\engine\NativeContext.java:30: import java.io.FileInputStream;
+REF: E:\Users\QuirrellRevess\Downloads\qianye\qianye_export\sources\com\main\engine\NativeContext.java:34: import java.io.InputStream;
+REF: E:\Users\QuirrellRevess\Downloads\qianye\qianye_export\sources\com\main\engine\NativeContext.java:183: public AssetManager getAssets() {
+REF: E:\Users\QuirrellRevess\Downloads\qianye\qianye_export\sources\com\main\engine\NativeContext.java:184: return this.mContext.getAssets();
+REF: E:\Users\QuirrellRevess\Downloads\qianye\qianye_export\sources\com\main\engine\NativeContext.java:361: public FileInputStream openFileInput(String str) throws FileNotFoundException {
+REF: E:\Users\QuirrellRevess\Downloads\qianye\qianye_export\sources\com\main\engine\NativeContext.java:474: public void setWallpaper(InputStream inputStream) throws IOException {
+REF: E:\Users\QuirrellRevess\Downloads\qianye\qianye_export\sources\com\mysql\jdbc\Blob.java:3: import java.io.ByteArrayInputStream;
+REF: E:\Users\QuirrellRevess\Downloads\qianye\qianye_export\sources\com\mysql\jdbc\Blob.java:5: import java.io.InputStream;
+REF: E:\Users\QuirrellRevess\Downloads\qianye\qianye_export\sources\com\mysql\jdbc\Blob.java:41: public synchronized InputStream getBinaryStream() throws SQLException {
+REF: E:\Users\QuirrellRevess\Downloads\qianye\qianye_export\sources\com\mysql\jdbc\Blob.java:43: return new ByteArrayInputStream(getBinaryData());
+REF: E:\Users\QuirrellRevess\Downloads\qianye\qianye_export\sources\com\mysql\jdbc\Blob.java:124: public synchronized InputStream getBinaryStream(long j, long j2) throws SQLException {
+REF: E:\Users\QuirrellRevess\Downloads\qianye\qianye_export\sources\com\mysql\jdbc\Blob.java:140: return new ByteArrayInputStream(getBinaryData(), (int) j3, (int) j2);
+REF: E:\Users\QuirrellRevess\Downloads\qianye\qianye_export\sources\com\mysql\jdbc\BlobFromLocator.java:3: import java.io.BufferedInputStream;
+REF: E:\Users\QuirrellRevess\Downloads\qianye\qianye_export\sources\com\mysql\jdbc\BlobFromLocator.java:5: import java.io.InputStream;
+REF: E:\Users\QuirrellRevess\Downloads\qianye\qianye_export\sources\com\mysql\jdbc\BlobFromLocator.java:112: public InputStream getBinaryStream() throws SQLException {
+REF: E:\Users\QuirrellRevess\Downloads\qianye\qianye_export\sources\com\mysql\jdbc\BlobFromLocator.java:113: return new BufferedInputStream(new LocatorInputStream(), this.creatorResultSet.connection.getLocatorFetchBufferSize());
+REF: E:\Users\QuirrellRevess\Downloads\qianye\qianye_export\sources\com\mysql\jdbc\BlobFromLocator.java:348: public InputStream getBinaryStream(long j, long j2) throws SQLException {
+REF: E:\Users\QuirrellRevess\Downloads\qianye\qianye_export\sources\com\mysql\jdbc\BlobFromLocator.java:349: return new LocatorInputStream(j, j2);
+REF: E:\Users\QuirrellRevess\Downloads\qianye\qianye_export\sources\com\mysql\jdbc\BlobFromLocator.java:420: public class LocatorInputStream extends InputStream {
+REF: E:\Users\QuirrellRevess\Downloads\qianye\qianye_export\sources\com\mysql\jdbc\BlobFromLocator.java:425: public LocatorInputStream() throws SQLException {
+REF: E:\Users\QuirrellRevess\Downloads\qianye\qianye_export\sources\com\mysql\jdbc\BlobFromLocator.java:433: @Override // java.io.InputStream, java.io.Closeable, java.lang.AutoCloseable
+REF: E:\Users\QuirrellRevess\Downloads\qianye\qianye_export\sources\com\mysql\jdbc\BlobFromLocator.java:446: @Override // java.io.InputStream
+REF: E:\Users\QuirrellRevess\Downloads\qianye\qianye_export\sources\com\mysql\jdbc\BlobFromLocator.java:467: @Override // java.io.InputStream
+REF: E:\Users\QuirrellRevess\Downloads\qianye\qianye_export\sources\com\mysql\jdbc\BlobFromLocator.java:486: public LocatorInputStream(long j, long j2) throws Throwable {
+REF: E:\Users\QuirrellRevess\Downloads\qianye\qianye_export\sources\com\mysql\jdbc\BlobFromLocator.java:505: @Override // java.io.InputStream
+REF: E:\Users\QuirrellRevess\Downloads\qianye\qianye_export\sources\com\mysql\jdbc\BufferRow.java:4: import java.io.ByteArrayInputStream;
+REF: E:\Users\QuirrellRevess\Downloads\qianye\qianye_export\sources\com\mysql\jdbc\BufferRow.java:6: import java.io.InputStream;
+REF: E:\Users\QuirrellRevess\Downloads\qianye\qianye_export\sources\com\mysql\jdbc\BufferRow.java:7: import java.io.InputStreamReader;
+REF: E:\Users\QuirrellRevess\Downloads\qianye\qianye_export\sources\com\mysql\jdbc\BufferRow.java:28: private List<InputStream> openStreams;
+REF: E:\Users\QuirrellRevess\Downloads\qianye\qianye_export\sources\com\mysql\jdbc\BufferRow.java:203: List<InputStream> list = this.openStreams;
+REF: E:\Users\QuirrellRevess\Downloads\qianye\qianye_export\sources\com\mysql\jdbc\BufferRow.java:205: Iterator<InputStream> it = list.iterator();
+REF: E:\Users\QuirrellRevess\Downloads\qianye\qianye_export\sources\com\mysql\jdbc\BufferRow.java:217: public synchronized InputStream getBinaryInputStream(int i) throws SQLException {
+REF: E:\Users\QuirrellRevess\Downloads\qianye\qianye_export\sources\com\mysql\jdbc\BufferRow.java:227: ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(this.rowFromServer.getByteBuffer(), position, (int) fieldLength);
+REF: E:\Users\QuirrellRevess\Downloads\qianye\qianye_export\sources\com\mysql\jdbc\BufferRow.java:231: return byteArrayInputStream;
+REF: E:\Users\QuirrellRevess\Downloads\qianye\qianye_export\sources\com\mysql\jdbc\BufferRow.java:411: InputStream binaryInputStream = getBinaryInputStream(i);
+REF: E:\Users\QuirrellRevess\Downloads\qianye\qianye_export\sources\com\mysql\jdbc\BufferRow.java:412: if (binaryInputStream == null) {
+REF: E:\Users\QuirrellRevess\Downloads\qianye\qianye_export\sources\com\mysql\jdbc\BufferRow.java:416: return new InputStreamReader(binaryInputStream, this.metadata[i].getEncoding());
+REF: E:\Users\QuirrellRevess\Downloads\qianye\qianye_export\sources\com\mysql\jdbc\ByteArrayRow.java:4: import java.io.ByteArrayInputStream;
+REF: E:\Users\QuirrellRevess\Downloads\qianye\qianye_export\sources\com\mysql\jdbc\ByteArrayRow.java:5: import java.io.InputStream;
+REF: E:\Users\QuirrellRevess\Downloads\qianye\qianye_export\sources\com\mysql\jdbc\ByteArrayRow.java:6: import java.io.InputStreamReader;
+REF: E:\Users\QuirrellRevess\Downloads\qianye\qianye_export\sources\com\mysql\jdbc\ByteArrayRow.java:30: public InputStream getBinaryInputStream(int i) throws SQLException {
+REF: E:\Users\QuirrellRevess\Downloads\qianye\qianye_export\sources\com\mysql\jdbc\ByteArrayRow.java:34: return new ByteArrayInputStream(this.internalRowData[i]);
+REF: E:\Users\QuirrellRevess\Downloads\qianye\qianye_export\sources\com\mysql\jdbc\ByteArrayRow.java:172: InputStream binaryInputStream = getBinaryInputStream(i);
+REF: E:\Users\QuirrellRevess\Downloads\qianye\qianye_export\sources\com\mysql\jdbc\ByteArrayRow.java:173: if (binaryInputStream == null) {
+REF: E:\Users\QuirrellRevess\Downloads\qianye\qianye_export\sources\com\mysql\jdbc\ByteArrayRow.java:177: return new InputStreamReader(binaryInputStream, this.metadata[i].getEncoding());
+REF: E:\Users\QuirrellRevess\Downloads\qianye\qianye_export\sources\com\mysql\jdbc\CallableStatement.java:4: import java.io.InputStream;
+REF: E:\Users\QuirrellRevess\Downloads\qianye\qianye_export\sources\com\mysql\jdbc\CallableStatement.java:1261: public void setAsciiStream(String str, InputStream inputStream, int i) throws SQLException {
+REF: E:\Users\QuirrellRevess\Downloads\qianye\qianye_export\sources\com\mysql\jdbc\CallableStatement.java:1262: setAsciiStream(getNamedParamIndex(str, false), inputStream, i);
+REF: E:\Users\QuirrellRevess\Downloads\qianye\qianye_export\sources\com\mysql\jdbc\CallableStatement.java:1271: public void setBinaryStream(String str, InputStream inputStream, int i) throws SQLException {
+REF: E:\Users\QuirrellRevess\Downloads\qianye\qianye_export\sources\com\mysql\jdbc\CallableStatement.java:1272: setBinaryStream(getNamedParamIndex(str, false), inputStream, i);
+REF: E:\Users\QuirrellRevess\Downloads\qianye\qianye_export\sources\com\mysql\jdbc\CallableStatement.java:1384: public void setAsciiStream(String str, InputStream inputStream) throws SQLException {
+REF: E:\Users\QuirrellRevess\Downloads\qianye\qianye_export\sources\com\mysql\jdbc\CallableStatement.java:1385: setAsciiStream(getNamedParamIndex(str, false), inputStream);
+REF: E:\Users\QuirrellRevess\Downloads\qianye\qianye_export\sources\com\mysql\jdbc\CallableStatement.java:1389: public void setBinaryStream(String str, InputStream inputStream) throws SQLException {
+REF: E:\Users\QuirrellRevess\Downloads\qianye\qianye_export\sources\com\mysql\jdbc\CallableStatement.java:1390: setBinaryStream(getNamedParamIndex(str, false), inputStream);
+REF: E:\Users\QuirrellRevess\Downloads\qianye\qianye_export\sources\com\mysql\jdbc\CallableStatement.java:1394: public void setBlob(String str, InputStream inputStream) throws SQLException {
+REF: E:\Users\QuirrellRevess\Downloads\qianye\qianye_export\sources\com\mysql\jdbc\CallableStatement.java:1395: setBlob(getNamedParamIndex(str, false), inputStream);
+REF: E:\Users\QuirrellRevess\Downloads\qianye\qianye_export\sources\com\mysql\jdbc\CallableStatement.java:1444: public void setAsciiStream(String str, InputStream inputStream, long j) throws SQLException {
+REF: E:\Users\QuirrellRevess\Downloads\qianye\qianye_export\sources\com\mysql\jdbc\CallableStatement.java:1445: setAsciiStream(getNamedParamIndex(str, false), inputStream, j);
+REF: E:\Users\QuirrellRevess\Downloads\qianye\qianye_export\sources\com\mysql\jdbc\CallableStatement.java:1449: public void setBinaryStream(String str, InputStream inputStream, long j) throws SQLException {
+REF: E:\Users\QuirrellRevess\Downloads\qianye\qianye_export\sources\com\mysql\jdbc\CallableStatement.java:1450: setBinaryStream(getNamedParamIndex(str, false), inputStream, j);
+REF: E:\Users\QuirrellRevess\Downloads\qianye\qianye_export\sources\com\mysql\jdbc\CallableStatement.java:1454: public void setBlob(String str, InputStream inputStream, long j) throws SQLException {
+REF: E:\Users\QuirrellRevess\Downloads\qianye\qianye_export\sources\com\mysql\jdbc\CallableStatement.java:1455: setBlob(getNamedParamIndex(str, false), inputStream, j);
+REF: E:\Users\QuirrellRevess\Downloads\qianye\qianye_export\sources\com\mysql\jdbc\Clob.java:4: import java.io.ByteArrayInputStream;
+REF: E:\Users\QuirrellRevess\Downloads\qianye\qianye_export\sources\com\mysql\jdbc\Clob.java:5: import java.io.InputStream;
+REF: E:\Users\QuirrellRevess\Downloads\qianye\qianye_export\sources\com\mysql\jdbc\Clob.java:28: public InputStream getAsciiStream() throws SQLException {
+REF: E:\Users\QuirrellRevess\Downloads\qianye\qianye_export\sources\com\mysql\jdbc\Clob.java:30: return new ByteArrayInputStream(StringUtils.getBytes(this.charData));
+REF: E:\Users\QuirrellRevess\Downloads\qianye\qianye_export\sources\com\mysql\jdbc\CompressedInputStream.java:7: import java.io.InputStream;
+REF: E:\Users\QuirrellRevess\Downloads\qianye\qianye_export\sources\com\mysql\jdbc\CompressedInputStream.java:14: public class CompressedInputStream extends InputStream {
+REF: E:\Users\QuirrellRevess\Downloads\qianye\qianye_export\sources\com\mysql\jdbc\CompressedInputStream.java:18: private InputStream f78in;
+REF: E:\Users\QuirrellRevess\Downloads\qianye\qianye_export\sources\com\mysql\jdbc\CompressedInputStream.java:26: public CompressedInputStream(Connection connection, InputStream inputStream) {
+REF: E:\Users\QuirrellRevess\Downloads\qianye\qianye_export\sources\com\mysql\jdbc\CompressedInputStream.java:33: this.f78in = inputStream;
+REF: E:\Users\QuirrellRevess\Downloads\qianye\qianye_export\sources\com\mysql\jdbc\CompressedInputStream.java:119: @Override // java.io.InputStream
+REF: E:\Users\QuirrellRevess\Downloads\qianye\qianye_export\sources\com\mysql\jdbc\CompressedInputStream.java:125: @Override // java.io.InputStream, java.io.Closeable, java.lang.AutoCloseable
+REF: E:\Users\QuirrellRevess\Downloads\qianye\qianye_export\sources\com\mysql\jdbc\CompressedInputStream.java:135: @Override // java.io.InputStream
+REF: E:\Users\QuirrellRevess\Downloads\qianye\qianye_export\sources\com\mysql\jdbc\CompressedInputStream.java:148: @Override // java.io.InputStream
+REF: E:\Users\QuirrellRevess\Downloads\qianye\qianye_export\sources\com\mysql\jdbc\CompressedInputStream.java:157: @Override // java.io.InputStream
+REF: E:\Users\QuirrellRevess\Downloads\qianye\qianye_export\sources\com\mysql\jdbc\CompressedInputStream.java:162: @Override // java.io.InputStream
+REF: E:\Users\QuirrellRevess\Downloads\qianye\qianye_export\sources\com\mysql\jdbc\ExportControlled.java:4: import java.io.BufferedInputStream;
+REF: E:\Users\QuirrellRevess\Downloads\qianye\qianye_export\sources\com\mysql\jdbc\ExportControlled.java:7: import java.io.InputStream;
+REF: E:\Users\QuirrellRevess\Downloads\qianye\qianye_export\sources\com\mysql\jdbc\ExportControlled.java:121: /* JADX WARN: Type inference failed for: r10v18, types: [java.io.InputStream] */
+REF: E:\Users\QuirrellRevess\Downloads\qianye\qianye_export\sources\com\mysql\jdbc\ExportControlled.java:127: /* JADX WARN: Type inference failed for: r10v5, types: [java.io.InputStream] */
+REF: E:\Users\QuirrellRevess\Downloads\qianye\qianye_export\sources\com\mysql\jdbc\ExportControlled.java:132: /* JADX WARN: Type inference failed for: r3v26, types: [java.io.InputStream] */
+REF: E:\Users\QuirrellRevess\Downloads\qianye\qianye_export\sources\com\mysql\jdbc\ExportControlled.java:138: InputStream inputStreamOpenStream;
+REF: E:\Users\QuirrellRevess\Downloads\qianye\qianye_export\sources\com\mysql\jdbc\ExportControlled.java:194: inputStreamOpenStream = null;
+REF: E:\Users\QuirrellRevess\Downloads\qianye\qianye_export\sources\com\mysql\jdbc\ExportControlled.java:199: inputStreamOpenStream = url.openStream();
+REF: E:\Users\QuirrellRevess\Downloads\qianye\qianye_export\sources\com\mysql\jdbc\ExportControlled.java:201: keyStore2.load(inputStreamOpenStream, charArray);
+REF: E:\Users\QuirrellRevess\Downloads\qianye\qianye_export\sources\com\mysql\jdbc\ExportControlled.java:223: r10 = inputStreamOpenStream;
+REF: E:\Users\QuirrellRevess\Downloads\qianye\qianye_export\sources\com\mysql\jdbc\ExportControlled.java:233: if (inputStreamOpenStream != null) {
+REF: E:\Users\QuirrellRevess\Downloads\qianye\qianye_export\sources\com\mysql\jdbc\ExportControlled.java:235: inputStreamOpenStream.close();
+REF: E:\Users\QuirrellRevess\Downloads\qianye\qianye_export\sources\com\mysql\jdbc\ExportControlled.java:264: InputStream inputStreamOpenStream2 = new URL(trustCertificateKeyStoreUrl).openStream();
+REF: E:\Users\QuirrellRevess\Downloads\qianye\qianye_export\sources\com\mysql\jdbc\ExportControlled.java:267: keyStore3.load(inputStreamOpenStream2, charArray2);
+REF: E:\Users\QuirrellRevess\Downloads\qianye\qianye_export\sources\com\mysql\jdbc\ExportControlled.java:268: IsNullOrEmpty = inputStreamOpenStream2;
+REF: E:\Users\QuirrellRevess\Downloads\qianye\qianye_export\sources\com\mysql\jdbc\ExportControlled.java:444: mysqlIO.mysqlInput = mysqlIO.mysqlConnection.getInputStream();
+REF: E:\Users\QuirrellRevess\Downloads\qianye\qianye_export\sources\com\mysql\jdbc\ExportControlled.java:446: mysqlIO.mysqlInput = new BufferedInputStream(mysqlIO.mysqlConnection.getInputStream(), 16384);
+REF: E:\Users\QuirrellRevess\Downloads\qianye\qianye_export\sources\com\mysql\jdbc\JDBC4MysqlSQLXML.java:3: import java.io.ByteArrayInputStream;
+REF: E:\Users\QuirrellRevess\Downloads\qianye\qianye_export\sources\com\mysql\jdbc\JDBC4MysqlSQLXML.java:6: import java.io.InputStream;
+REF: E:\Users\QuirrellRevess\Downloads\qianye\qianye_export\sources\com\mysql\jdbc\JDBC4MysqlSQLXML.java:60: private Reader binaryInputStreamStreamToReader(ByteArrayOutputStream byteArrayOutputStream) {
+REF: E:\Users\QuirrellRevess\Downloads\qianye\qianye_export\sources\com\mysql\jdbc\JDBC4MysqlSQLXML.java:64: XMLStreamReader xMLStreamReaderCreateXMLStreamReader = this.inputFactory.createXMLStreamReader(new ByteArrayInputStream(byteArrayOutputStream.toByteArray()));
+REF: E:\Users\QuirrellRevess\Downloads\qianye\qianye_export\sources\com\mysql\jdbc\JDBC4MysqlSQLXML.java:137: public synchronized InputStream getBinaryStream() throws SQLException {
+REF: E:\Users\QuirrellRevess\Downloads\qianye\qianye_export\sources\com\mysql\jdbc\JDBC4MysqlSQLXML.java:239: return binaryInputStreamStreamToReader(byteArrayOutputStream);
+REF: E:\Users\QuirrellRevess\Downloads\qianye\qianye_export\sources\com\mysql\jdbc\JDBC4MysqlSQLXML.java:264: return readerToString(binaryInputStreamStreamToReader(byteArrayOutputStream));
+REF: E:\Users\QuirrellRevess\Downloads\qianye\qianye_export\sources\com\mysql\jdbc\JDBC4ResultSet.java:3: import java.io.InputStream;
+REF: E:\Users\QuirrellRevess\Downloads\qianye\qianye_export\sources\com\mysql\jdbc\JDBC4ResultSet.java:129: public void updateAsciiStream(int i, InputStream inputStream) throws SQLException {
+REF: E:\Users\QuirrellRevess\Downloads\qianye\qianye_export\sources\com\mysql\jdbc\JDBC4ResultSet.java:134: public void updateBinaryStream(int i, InputStream inputStream) throws SQLException {
+REF: E:\Users\QuirrellRevess\Downloads\qianye\qianye_export\sources\com\mysql\jdbc\JDBC4ResultSet.java:139: public void updateBlob(int i, InputStream inputStream) throws SQLException {
+REF: E:\Users\QuirrellRevess\Downloads\qianye\qianye_export\sources\com\mysql\jdbc\JDBC4ResultSet.java:187: public void updateAsciiStream(String str, InputStream inputStream) throws SQLException {
+REF: E:\Users\QuirrellRevess\Downloads\qianye\qianye_export\sources\com\mysql\jdbc\JDBC4ResultSet.java:188: updateAsciiStream(findColumn(str), inputStream);
+REF: E:\Users\QuirrellRevess\Downloads\qianye\qianye_export\sources\com\mysql\jdbc\JDBC4ResultSet.java:192: public void updateBinaryStream(String str, InputStream inputStream) throws SQLException {
+REF: E:\Users\QuirrellRevess\Downloads\qianye\qianye_export\sources\com\mysql\jdbc\JDBC4ResultSet.java:193: updateBinaryStream(findColumn(str), inputStream);
+REF: E:\Users\QuirrellRevess\Downloads\qianye\qianye_export\sources\com\mysql\jdbc\JDBC4ResultSet.java:197: public void updateBlob(String str, InputStream inputStream) throws SQLException {
+REF: E:\Users\QuirrellRevess\Downloads\qianye\qianye_export\sources\com\mysql\jdbc\JDBC4ResultSet.java:198: updateBlob(findColumn(str), inputStream);
+REF: E:\Users\QuirrellRevess\Downloads\qianye\qianye_export\sources\com\mysql\jdbc\JDBC4ResultSet.java:241: public void updateAsciiStream(int i, InputStream inputStream, long j) throws SQLException {
+REF: E:\Users\QuirrellRevess\Downloads\qianye\qianye_export\sources\com\mysql\jdbc\JDBC4ResultSet.java:246: public void updateBinaryStream(int i, InputStream inputStream, long j) throws SQLException {
+REF: E:\Users\QuirrellRevess\Downloads\qianye\qianye_export\sources\com\mysql\jdbc\JDBC4ResultSet.java:251: public void updateBlob(int i, InputStream inputStream, long j) throws SQLException {
+REF: E:\Users\QuirrellRevess\Downloads\qianye\qianye_export\sources\com\mysql\jdbc\JDBC4ResultSet.java:276: public void updateAsciiStream(String str, InputStream inputStream, long j) throws SQLException {
+REF: E:\Users\QuirrellRevess\Downloads\qianye\qianye_export\sources\com\mysql\jdbc\JDBC4ResultSet.java:277: updateAsciiStream(findColumn(str), inputStream, j);
+REF: E:\Users\QuirrellRevess\Downloads\qianye\qianye_export\sources\com\mysql\jdbc\JDBC4ResultSet.java:281: public void updateBinaryStream(String str, InputStream inputStream, long j) throws SQLException {
+REF: E:\Users\QuirrellRevess\Downloads\qianye\qianye_export\sources\com\mysql\jdbc\JDBC4ResultSet.java:282: updateBinaryStream(findColumn(str), inputStream, j);
+REF: E:\Users\QuirrellRevess\Downloads\qianye\qianye_export\sources\com\mysql\jdbc\JDBC4ResultSet.java:286: public void updateBlob(String str, InputStream inputStream, long j) throws SQLException {
+REF: E:\Users\QuirrellRevess\Downloads\qianye\qianye_export\sources\com\mysql\jdbc\JDBC4ResultSet.java:287: updateBlob(findColumn(str), inputStream, j);
+REF: E:\Users\QuirrellRevess\Downloads\qianye\qianye_export\sources\com\mysql\jdbc\JDBC4UpdatableResultSet.java:3: import java.io.InputStream;
+REF: E:\Users\QuirrellRevess\Downloads\qianye\qianye_export\sources\com\mysql\jdbc\JDBC4UpdatableResultSet.java:111: public void updateAsciiStream(int i, InputStream inputStream) throws SQLException {
+REF: E:\Users\QuirrellRevess\Downloads\qianye\qianye_export\sources\com\mysql\jdbc\JDBC4UpdatableResultSet.java:116: public void updateBinaryStream(int i, InputStream inputStream) throws SQLException {
+REF: E:\Users\QuirrellRevess\Downloads\qianye\qianye_export\sources\com\mysql\jdbc\JDBC4UpdatableResultSet.java:121: public void updateBlob(int i, InputStream inputStream) throws SQLException {
+REF: E:\Users\QuirrellRevess\Downloads\qianye\qianye_export\sources\com\mysql\jdbc\JDBC4UpdatableResultSet.java:191: public void updateAsciiStream(int i, InputStream inputStream, long j) throws SQLException {
+REF: E:\Users\QuirrellRevess\Downloads\qianye\qianye_export\sources\com\mysql\jdbc\JDBC4UpdatableResultSet.java:196: public void updateBinaryStream(int i, InputStream inputStream, long j) throws SQLException {
+REF: E:\Users\QuirrellRevess\Downloads\qianye\qianye_export\sources\com\mysql\jdbc\JDBC4UpdatableResultSet.java:201: public void updateBlob(int i, InputStream inputStream, long j) throws SQLException {
+REF: E:\Users\QuirrellRevess\Downloads\qianye\qianye_export\sources\com\mysql\jdbc\JDBC4UpdatableResultSet.java:231: public void updateAsciiStream(String str, InputStream inputStream) throws SQLException {
+REF: E:\Users\QuirrellRevess\Downloads\qianye\qianye_export\sources\com\mysql\jdbc\JDBC4UpdatableResultSet.java:232: updateAsciiStream(findColumn(str), inputStream);
+REF: E:\Users\QuirrellRevess\Downloads\qianye\qianye_export\sources\com\mysql\jdbc\JDBC4UpdatableResultSet.java:236: public void updateBinaryStream(String str, InputStream inputStream) throws SQLException {
+REF: E:\Users\QuirrellRevess\Downloads\qianye\qianye_export\sources\com\mysql\jdbc\JDBC4UpdatableResultSet.java:237: updateBinaryStream(findColumn(str), inputStream);
+REF: E:\Users\QuirrellRevess\Downloads\qianye\qianye_export\sources\com\mysql\jdbc\JDBC4UpdatableResultSet.java:241: public void updateBlob(String str, InputStream inputStream) throws SQLException {
+REF: E:\Users\QuirrellRevess\Downloads\qianye\qianye_export\sources\com\mysql\jdbc\JDBC4UpdatableResultSet.java:242: updateBlob(findColumn(str), inputStream);
+REF: E:\Users\QuirrellRevess\Downloads\qianye\qianye_export\sources\com\mysql\jdbc\JDBC4UpdatableResultSet.java:266: public void updateAsciiStream(String str, InputStream inputStream, long j) throws SQLException {
+REF: E:\Users\QuirrellRevess\Downloads\qianye\qianye_export\sources\com\mysql\jdbc\JDBC4UpdatableResultSet.java:267: updateAsciiStream(findColumn(str), inputStream, j);
+REF: E:\Users\QuirrellRevess\Downloads\qianye\qianye_export\sources\com\mysql\jdbc\JDBC4UpdatableResultSet.java:271: public void updateBinaryStream(String str, InputStream inputStream, long j) throws SQLException {
+REF: E:\Users\QuirrellRevess\Downloads\qianye\qianye_export\sources\com\mysql\jdbc\JDBC4UpdatableResultSet.java:272: updateBinaryStream(findColumn(str), inputStream, j);
+REF: E:\Users\QuirrellRevess\Downloads\qianye\qianye_export\sources\com\mysql\jdbc\JDBC4UpdatableResultSet.java:276: public void updateBlob(String str, InputStream inputStream, long j) throws SQLException {
+REF: E:\Users\QuirrellRevess\Downloads\qianye\qianye_export\sources\com\mysql\jdbc\JDBC4UpdatableResultSet.java:277: updateBlob(findColumn(str), inputStream, j);
+REF: E:\Users\QuirrellRevess\Downloads\qianye\qianye_export\sources\com\mysql\jdbc\MysqlIO.java:14: import com.mysql.jdbc.util.ReadAheadInputStream;
+REF: E:\Users\QuirrellRevess\Downloads\qianye\qianye_export\sources\com\mysql\jdbc\MysqlIO.java:17: import java.io.BufferedInputStream;
+REF: E:\Users\QuirrellRevess\Downloads\qianye\qianye_export\sources\com\mysql\jdbc\MysqlIO.java:21: import java.io.FileInputStream;
+REF: E:\Users\QuirrellRevess\Downloads\qianye\qianye_export\sources\com\mysql\jdbc\MysqlIO.java:23: import java.io.InputStream;
+REF: E:\Users\QuirrellRevess\Downloads\qianye\qianye_export\sources\com\mysql\jdbc\MysqlIO.java:103: public InputStream mysqlInput;
+REF: E:\Users\QuirrellRevess\Downloads\qianye\qianye_export\sources\com\mysql\jdbc\MysqlIO.java:241: this.mysqlInput = new ReadAheadInputStream(this.mysqlConnection.getInputStream(), 16384, this.connection.getTraceProtocol(), this.connection.getLog());
+REF: E:\Users\QuirrellRevess\Downloads\qianye\qianye_export\sources\com\mysql\jdbc\MysqlIO.java:243: this.mysqlInput = this.mysqlConnection.getInputStream();
+REF: E:\Users\QuirrellRevess\Downloads\qianye\qianye_export\sources\com\mysql\jdbc\MysqlIO.java:245: this.mysqlInput = new BufferedInputStream(this.mysqlConnection.getInputStream(), 16384);
+REF: E:\Users\QuirrellRevess\Downloads\qianye\qianye_export\sources\com\mysql\jdbc\MysqlIO.java:487: clearInputStream();
+REF: E:\Users\QuirrellRevess\Downloads\qianye\qianye_export\sources\com\mysql\jdbc\MysqlIO.java:1014: if ((this.serverCapabilities & 32) != 0 && this.connection.getUseCompression() && !(this.mysqlInput instanceof CompressedInputStream)) {
+REF: E:\Users\QuirrellRevess\Downloads\qianye\qianye_export\sources\com\mysql\jdbc\MysqlIO.java:1017: this.mysqlInput = new CompressedInputStream(this.connection, this.mysqlInput);
+REF: E:\Users\QuirrellRevess\Downloads\qianye\qianye_export\sources\com\mysql\jdbc\MysqlIO.java:1029: private final int readFully(InputStream inputStream, byte[] bArr, int i, int i2) throws IOException {
+REF: E:\Users\QuirrellRevess\Downloads\qianye\qianye_export\sources\com\mysql\jdbc\MysqlIO.java:1035: int i4 = inputStream.read(bArr, i + i3, i2 - i3);
+REF: E:\Users\QuirrellRevess\Downloads\qianye\qianye_export\sources\com\mysql\jdbc\MysqlIO.java:1068: clearInputStream();
+REF: E:\Users\QuirrellRevess\Downloads\qianye\qianye_export\sources\com\mysql\jdbc\MysqlIO.java:1289: BufferedInputStream bufferedInputStream;
+REF: E:\Users\QuirrellRevess\Downloads\qianye\qianye_export\sources\com\mysql\jdbc\MysqlIO.java:1290: BufferedInputStream bufferedInputStream2;
+REF: E:\Users\QuirrellRevess\Downloads\qianye\qianye_export\sources\com\mysql\jdbc\MysqlIO.java:1291: BufferedInputStream bufferedInputStream3;
+REF: E:\Users\QuirrellRevess\Downloads\qianye\qianye_export\sources\com\mysql\jdbc\MysqlIO.java:1297: BufferedInputStream bufferedInputStream4 = null;
+REF: E:\Users\QuirrellRevess\Downloads\qianye\qianye_export\sources\com\mysql\jdbc\MysqlIO.java:1316: InputStream localInfileInputStream = statementImpl != null ? statementImpl.getLocalInfileInputStream() : null;
+REF: E:\Users\QuirrellRevess\Downloads\qianye\qianye_export\sources\com\mysql\jdbc\MysqlIO.java:1317: if (localInfileInputStream != null) {
+REF: E:\Users\QuirrellRevess\Downloads\qianye\qianye_export\sources\com\mysql\jdbc\MysqlIO.java:1318: bufferedInputStream2 = new BufferedInputStream(localInfileInputStream);
+REF: E:\Users\QuirrellRevess\Downloads\qianye\qianye_export\sources\com\mysql\jdbc\MysqlIO.java:1322: bufferedInputStream2 = new BufferedInputStream(new URL(str).openStream());
+REF: E:\Users\QuirrellRevess\Downloads\qianye\qianye_export\sources\com\mysql\jdbc\MysqlIO.java:1324: bufferedInputStream = new BufferedInputStream(new FileInputStream(str));
+TOTAL_REFERENCE_HITS: 2091
+REFERENCE_OUTPUT_LIMIT: 180
+
+RESULT: SCAN_COMPLETED
