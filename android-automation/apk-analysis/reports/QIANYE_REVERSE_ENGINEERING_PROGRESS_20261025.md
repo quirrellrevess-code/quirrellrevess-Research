@@ -388,3 +388,11 @@ Status: PASS for the Java plugin-loading path; NOT_VERIFIED for actual callers a
 - After copying, `PluginManager` applies mode-dependent file preparation and constructs a `DexClassLoader`; `ApkLoader` mounts APK assets and optionally discovers a plugin entry through manifest metadata/reflection.
 - This strengthens the classification of `LuaEngine.loadApk` as an APK/DEX plugin-loading route, separate from `L11I -> Native.unZip -> Engine.start`. The actual caller and concrete input path of `loadApk` remain unverified; no link to the `installLR` target is established.
 - Static source review only; no APK/game execution and no GitHub Actions run.
+
+
+### loadApk caller tracing status (2026-10-25)
+
+- Reviewed the main visible startup candidates `ScriptMain`, `NativeService`, `MainService`, `MainActivity`, `ScriptActivity`, and the app entry class for direct `LuaEngine.loadApk` / `loadPlugin` references. These inspected files did not expose a direct call to `loadApk`; `ScriptMain` only visibly initializes `LuaEngine` before constructing and starting the core `L11I` worker.
+- `ScriptActivity` has a separate file-exists check and invokes `iIilII1.m991li11(activity, path)` for its own path, then prepares UI from configuration files. The current review does not establish that this path reaches `LuaEngine.loadApk`.
+- This is a bounded review of selected entrypoint candidates, not proof that no caller exists anywhere in the 2,159-file decompiled Java tree. GitHub code search did not return usable results for the active analysis branch, so the concrete caller/input path remains unresolved.
+- Continue with targeted static call-chain tracing from the plugin manager's public methods and relevant obfuscated wrappers. Keep APK/DEX plugin loading separate from the native archive path unless a source-level link is found. No APK/game execution; no Actions run.
