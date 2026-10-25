@@ -52,8 +52,29 @@
 4. 将 `Engine`/OCR 的 JNI 声明与 `libengine.so`、`libpaddleocr.so` 等对应起来；若静态证据不足，标记为需要本地只读二进制分析，而不是臆测。
 5. 最后才评估可复用边界，并以台服实际截图单独验证 OCR 准确率；不能因库存在就宣称验证通过。
 
+### 4. OCR 模型运行时路径与初始化检查
+
+新增证据文件：
+- `android-automation/apk-analysis/qianye-export/sources/I1I/I1I/ILil/L11I.java`
+- `android-automation/apk-analysis/qianye-export/sources/I1I/I1I/ILil/l1IIi1.java`
+- `android-automation/apk-analysis/qianye-export/sources/I1I/I1I/p008IL/lIlii.java`
+- `android-automation/apk-analysis/qianye-export/sources/com/p000nx/assist/lua/PaddleOcr.java`
+
+观察：
+- `L11I.m9501()` 将 `I11li1()` 返回的目录设为应用 `filesDir/assets`；`PaddleOcr.loadModel(...)` 在该目录下再拼接 `paddle`。因此 Java 层期望的模型运行时目录为 **`Context.getFilesDir()/assets/paddle/`**，不是仓库导出目录的直接路径。
+- ONNX 模式期望 `det.onnx`、`cls.onnx`、`rec.onnx`、`keys.txt`；NNCC 模式期望 `det.param`、`rec.param`、`det.bin`、`rec.bin`、`keys.txt`。这是由混淆字符串解码与路径拼接直接得到的文件名。
+- `L11I.I11L().I11li1()` 返回的是运行时 `assets` 目录。仓库导出树中 `resources/assets/paddle/keys.txt` 的存在不能单独证明模型文件已复制到上述运行时目录。
+- `loadModeImp(...)` 的存在性检查存在疑似遗漏：ONNX 分支重复检查第一个路径而未检查 `cls.onnx`；NNCC 分支未检查 `rec.param`。这只是静态代码问题，运行时影响尚未验证。
+- `lIlii.m1194llI11I(...)` 的已读实现围绕 native library 文件、临时文件/标记文件及 `System.load(...)` 展开，不能据此将其认定为 OCR 模型文件的下载或解压入口。
+
+## 本轮结论与限制
+
+- 状态：路径构造与文件名解码 `PASS`（静态）；模型实际部署来源 `NOT_VERIFIED`。
+- 尚未定位：将 APK 打包资源 `resources/assets/paddle/keys.txt` 或模型文件复制到 `filesDir/assets/paddle/` 的完整调用链；也未确认模型是否由其他目录、动态下载或原生组件提供。
+- 本轮仅只读 GitHub 源码；未执行 APK、原生库或游戏，没有运行 GitHub Actions。
+
 ## 状态
 
-- 已完成：本轮 Java OCR 接口、资源路径与原生库清单的静态核查。
-- 未完成：Lua 调用链、模型定位、JNI 原生实现映射、台服截图准确率验证。
+- 已完成：Java OCR 接口、模型文件名解码、运行时目录构造的静态核查。
+- 未完成：模型文件从打包资源到运行时目录的来源链、Lua 调用链、JNI 原生实现映射、台服截图准确率验证。
 - 限制：GitHub Actions 额度耗尽；后续优先使用 GitHub 文件读取和静态分析，不触发 Actions。
