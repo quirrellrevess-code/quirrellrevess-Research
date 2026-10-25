@@ -203,3 +203,11 @@
 - `PASS`（静态）：确认 installLR 文件传输 → Binder sendCmd(8) → Java 侧事件 99（参数为目标文件路径）→ 返回 `"0"`。
 - `NOT_VERIFIED`：事件 99 的订阅者与业务语义、该路径对应文件格式、是否触发 Lua 加载/执行、JNI/native 层是否另有处理。
 - 下一步：追踪事件总线 `p051lLi1LL.ILil.IL1Iii.I1I.I1I().ILL(...)` 的事件 99 消费端及相关监听注册。仍仅做 GitHub 只读分析，不运行 APK/游戏，不触发 Actions。
+
+
+## 2026-10-25 补充：事件 99 的事件类型确认
+
+- 已定位事件对象源码：`qianye-export/sources/I1I/I1I/ILil/IIi.java`，反编译注释标记原始类名为 `MessageEvent`。构造参数依次写入整数事件码、字符串参数 1、字符串参数 2；对应 getter 分别返回这三个字段。
+- `iIilII1.sendCmd(...)` 的 code=8 分支发布 `new IIi(99, str, BuildConfig.FLAVOR)`，因此事件 99 的第二字段是刚复制到 Core 文件区的目标路径，第三字段是构建 flavor（当前反编译表达式为 `BuildConfig.FLAVOR`，不能直接假定其运行值为空）。
+- 事件总线 `p051lLi1LL.ILil.IL1Iii.I1I` 的 `ILL(Object)` 是通用同步/队列式发布入口；这只是分发机制，不等于已找到事件 99 的业务订阅者。
+- **当前结论：** 已确认“文件复制 → sendCmd(8) → MessageEvent(code=99, path, flavor) 发布 → 返回字符串 0”的 Java 侧链路；尚未定位订阅者，也未证明该路径会被 Lua 读取、解析或执行。继续静态搜索 `I1I.I1I.ILil.IIi` 的订阅方法/注册位置，不触发 Actions、不运行 APK。
