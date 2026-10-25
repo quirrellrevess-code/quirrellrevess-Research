@@ -614,3 +614,35 @@ The recursive Git tree contains two script.lrj files: android-automation/apk-ana
 - `PASS`：复核现有库存报告、Lua 字节码签名及 OCR trace 的证据边界。
 - `NOT_VERIFIED`：模型权重是否藏于未展开的字节码/运行时目录、OCR/YOLO 的真实调用链、模型加载成功、对台服画面的识别质量。
 - 未运行本地测试、未启动游戏或 APK、未执行 native 库、未触发 GitHub Actions；没有进行游戏输入。
+
+
+### 16. 将主要验证方向转向结构化育成状态与推荐关联（2026-10-25）
+
+本轮复核 `AutoTrainingPlugin/UmaAutoTrainingPlugin.cs`、`AIRedirectorIntegration/LegendAiRecommendationSink.cs` 和 `AutoTrainingPlugin/README.md`。这条方向可能比继续逆向 Qianye 的视觉模型更快回答“能否自动化育成”的核心问题。
+
+#### 已有代码直接证明的能力
+
+- URA 插件的响应分析器会被动读取 `data.chara_info` 与 `data.home_info.command_info_array`，并记录 turn、scenario_id、体力、五维属性，以及可见训练命令的 `command_id`、失败率和训练伙伴数量。它不需要先从屏幕 OCR 这些状态。
+- 请求分析器会被动记录已观察到的 `command_type`、`command_id`、`command_group_id`、`select_id`、`current_turn` 等字段；这证明当前插件可以观察到一部分既有请求的结构化字段，但不代表它拥有受支持的命令提交接口。
+- AIRedirector sink 能保存 LegendAI 的建议文本和当时可用的 `single_mode_chara_id/turn` 上下文，但状态标记明确是 `target_context_available_unverified`，且建议本身 `verified=false`、`executable=false`。
+- README 明确指出观察到的 URA `/notify/request` 与 `/notify/response` 是通知/分发路径，不足以证明存在受支持的游戏命令提交通道。不得把观察请求的字段直接重放成游戏操作。
+
+#### 对技术路线的影响
+
+- **优先级调整**：先研究结构化育成状态和 LegendAI 推荐如何建立可审计的同回合关联；不要把 Qianye OCR 复用当作唯一突破口。
+- 对育成属性、训练命令候选、失败率等决策输入，现有结构化数据理论上可减少甚至避免视觉识别需求；屏幕识别仍可能用于界面阶段、事件选项或结果确认，但必须先证明它确实必要。
+- 仍有两个硬阻塞：①真实运行日志缺失，尚不能证明响应快照、动作请求与推荐属于同一育成 run/角色/状态；②自由文本推荐尚未可靠映射到可验证的 `command_id/select_id`，且没有经过验证的输入后端或受支持的提交 API。
+- 因此现在不能声称已实现自动育成，也不能仅凭同回合、相近时间或角色/turn 字段就自动执行。
+
+#### 下一步只做能改变决策的工作
+
+1. 若现有日志文件已由被动插件生成，优先只读审计少量脱敏真实记录，验证角色/run 身份字段是否存在、推荐上下文是否切换正确、推荐时的命令列表是否与实际请求命令相容。
+2. 若没有真实记录，下一次本地工作应仅启动/使用现有被动记录器采集自然运行数据，不要求用户逐屏截图、不触发额外游戏动作；采集后再判断是否能建立关联。
+3. 只有当真实数据证明推荐与命令候选可稳定关联，才调查合法、受支持的动作执行入口。若没有受支持入口，也不通过请求重放、内存注入或盲点坐标来绕过。
+4. Qianye 视觉路线保持暂停，直到出现明确模型来源/调用链证据；不继续扩建人工模板系统。
+
+#### 本轮状态
+
+- `PASS`：静态确认现有 URA 插件能被动读取部分结构化状态与命令候选；确认请求记录器只观察、不提交。
+- `BLOCKED / NOT_VERIFIED`：真实运行数据中的统一身份字段、推荐与状态的因果关联、文本推荐到命令 ID 的映射、受支持的动作执行接口。
+- 仅静态读取 GitHub 文件并更新本报告；未执行本地测试、未启动游戏、未触发 GitHub Actions、未发送任何游戏输入。
