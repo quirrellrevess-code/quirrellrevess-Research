@@ -211,3 +211,10 @@
 - `iIilII1.sendCmd(...)` 的 code=8 分支发布 `new IIi(99, str, BuildConfig.FLAVOR)`，因此事件 99 的第二字段是刚复制到 Core 文件区的目标路径，第三字段是构建 flavor（当前反编译表达式为 `BuildConfig.FLAVOR`，不能直接假定其运行值为空）。
 - 事件总线 `p051lLi1LL.ILil.IL1Iii.I1I` 的 `ILL(Object)` 是通用同步/队列式发布入口；这只是分发机制，不等于已找到事件 99 的业务订阅者。
 - **当前结论：** 已确认“文件复制 → sendCmd(8) → MessageEvent(code=99, path, flavor) 发布 → 返回字符串 0”的 Java 侧链路；尚未定位订阅者，也未证明该路径会被 Lua 读取、解析或执行。继续静态搜索 `I1I.I1I.ILil.IIi` 的订阅方法/注册位置，不触发 Actions、不运行 APK。
+
+
+### Event 99 subscriber trace update (2026-10-25)
+- Confirmed event payload class: `android-automation/apk-analysis/qianye-export/sources/I1I/I1I/ILil/IIi.java`, JADX identifies it as `MessageEvent`; constructor accepts `int, String, String`, matching the dispatch `new IIi(99, targetPath, BuildConfig.FLAVOR)`.
+- The event bus implementation is `p051lLi1LL.ILil.IL1Iii.I1I` (JADX identifies it as EventBus); its `ILL(Object)` method posts events and dispatches to registered subscribers.
+- Current static source pass has not yet located a subscriber method whose parameter type is `IIi`, nor confirmed any handler for code 99. Therefore, whether the copied file is parsed or executed remains NOT_VERIFIED. Do not infer execution from the command's `"0"` response.
+- Method: GitHub source inspection only; no APK execution, local PowerShell, game interaction, or GitHub Actions run.
