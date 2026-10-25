@@ -183,3 +183,13 @@
 - 相关线索：`Engine` 有 `paddleOcr(Object)` native 声明、截图字节获取包装和 `installLR(String)`；后者调用 `L11I.I11L().m942LlLLL(str)`。但尚未确认该安装入口对应 `script.lrj`，也没有证据证明实际 Lua 脚本调用 `PaddleOcr.loadModel(...)`。
 - 限制：反射能力存在不等于某个类已暴露给 Lua，更不等于脚本实际调用；Lua VM 类绑定表、脚本加载链和 OCR 模型成功加载仍未验证。未执行 APK/游戏，未触发 Actions。
 - 下一步：追踪 `L11I.m942LlLLL` 的代理/核心实现、`script.lrj` 与 `lua.zip` 的读取点，并检查 native/JNI 的 Lua 类绑定机制。
+
+
+### 2026-10-25 — Qianye installLR 文件传递链（只读静态）
+
+- 执行模式：READ_ONLY；分支：analysis/qianye-reverse-engineering-20261025。
+- 证据：qianye-export/sources/com/main/engine/Engine.java、I1I/I1I/ILil/L11I.java、I1I/I1I/ILil/ILL.java、android/app/INXCoreNative.java、com/p000nx/assist/lua/LuaEngine.java。
+- 静态 PASS：`Engine.installLR(String)` 转调 `L11I.m942LlLLL(String)`；该方法以输入路径为源，经 `ILL.m868lIlii(String,String)` 将文件复制到核心服务文件路径，再调用 `ILL.I11L(8,0,0,path)`，并按返回字符串是否等于 `"0"` 决定结果。可见成功分支会 sleep 600000 ms。
+- 静态 PASS：`ILL.m868lIlii` 使用 `FileInputStream` 读取源文件，并经 `INXCoreNative.openFile/writeFile/closeFile` 写入服务端文件句柄，确认这是核心服务文件传输机制；该函数本身不解析脚本格式。
+- 限制：操作码 8 的服务端语义、混淆目标文件名、`script.lrj` 与 installLR 的对应关系仍未验证。LuaEngine 的可见接口包含插件对象、资源路径与截图包装，但尚未找到 `script.lrj` / `lua.zip` 的直接消费者。LuaNative 反射能力不能单独证明 OCR 类对 Lua 可见或被实际调用。
+- 下一步：定位 INXCoreNative 服务端实现/native 注册表与脚本文件消费者；若当前导出缺少相关二进制/服务端证据，记录边界而不猜测。未运行 APK/游戏，未触发 GitHub Actions。
