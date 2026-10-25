@@ -118,7 +118,7 @@
 
 1. 继续追踪 `LuaEngine.java` 及调用者，确认 Lua 初始化、脚本加载、截图与 OCR 生命周期。
 2. 只读检查 `lua.zip` 的目录清单，并追踪 `script.lrj` 的读取入口和格式；在证据不足时不假定其为普通 Lua 源码。
-3. 已通过静态字符串解码确认 OCR 模型文件名与运行时目录构造；下一步追踪 `resources/assets/paddle/keys.txt` 及模型文件到 `filesDir/assets/paddle/` 的复制/解压/下载来源链，区分 native library 加载辅助方法与 OCR 模型资源处理。
+3. 已确认 Java 层通过 `lIlii.m1192lL(Context, String, File)` 从 APK AssetManager 复制 `assets/paddle/det.bin`、`det.param`、`rec.bin`、`rec.param`、`keys.txt` 及 ONNX 变体到 `filesDir/assets/paddle/`。下一步追踪 `lIlii.L1ii1(Context)` 的调用者/启动时机，并核对当前导出是否遗漏模型二进制；继续区分 native library 加载辅助方法与 OCR 模型资源处理。
 4. 关联 Java JNI 声明与原生库实现；静态证据不足时标记需要本地只读二进制分析。
 5. 分开推进 LegendAI 建议输出桥接与游戏操作提交协议研究；Hachimi 的 `/notify/request`、`/notify/response` 不得视为动作提交 API。
 6. 在协议边界有证据后，才设计独立的影子模式/动作守卫验证；最终用台服实际截图或手动操作样本做单独的运行时验证。
@@ -153,3 +153,14 @@
 - 静态代码疑点：ONNX 存在性检查重复检查第一个模型路径，未检查 `cls.onnx`；NNCC 检查未覆盖 `rec.param`。影响尚未通过运行时验证。
 - 重要限制：`lIlii.m1194llI11I(...)` 的实现围绕 native library 文件与 `System.load(...)`，不能据此视为 OCR 模型下载/解压入口。仓库中存在 `resources/assets/paddle/keys.txt`，但尚未追踪它及模型到 `filesDir/assets/paddle/` 的完整部署链。
 - 归档状态：专题报告更新后待远端回读；本文件更新后也须分别核验。未运行 APK/游戏、未运行 GitHub Actions。
+
+
+### 2026-10-25 — Qianye APK AssetManager → OCR 模型目录复制链
+
+- 执行模式：READ_ONLY；仓库/分支：wosafety0/UmaAI-Research / analysis/qianye-reverse-engineering-20261025。
+- 证据：qianye-export/sources/I1I/I1I/p008IL/lIlii.java、qianye-export/sources/com/main/engine/Engine.java、qianye-export/sources/com/p000nx/assist/lua/PaddleOcr.java、qianye-export/sources/I1I/IL1Iii.java，并检查本分支递归 Git tree。
+- 静态 PASS：解混淆确认 lIlii.L1ii1(Context) 创建 filesDir/assets、filesDir/assets/tessdata、filesDir/assets/paddle；m1192lL(Context,String,File) 通过 context.getAssets().open(sourcePath) 读取 APK AssetManager 资源并写入指定目标文件。
+- 已解码的 OCR 资源源路径包括 assets/paddle/det.bin、det.param、rec.bin、rec.param、keys.txt 及 det.onnx、cls.onnx、rec.onnx。方法也复制 assets/models.zip、assets/lua.zip 等其他资源。
+- 限制：当前导出 Git tree 的 resources/assets/paddle/ 仅列出 keys.txt；不能由此证明原 APK 的 AssetManager 也缺少模型，因为导出资源可能不完整。尚未确认 L1ii1(Context) 的实际调用点/启动时机、模型资源在 APK 中的存在性或模型成功加载。Engine.extractApkAssets(...) 是另一种归档条目复制路径，尚无证据认定它是 OCR 模型主入口；m1194llI11I(...) 与 native library 加载相关，不应混同。
+- 安全/额度：仅只读 GitHub 文件与 tree；未运行 APK、原生库或游戏，未触发 GitHub Actions（额度仍按已知状态视为耗尽）。
+- 下一步：追踪 L1ii1(Context) 调用者和初始化时序；确认导出资源缺项情况；继续追踪 Lua 初始化与 PaddleOcr.loadModel 的调用链。
