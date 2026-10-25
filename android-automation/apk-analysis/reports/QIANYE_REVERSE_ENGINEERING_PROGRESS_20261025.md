@@ -646,3 +646,29 @@ The recursive Git tree contains two script.lrj files: android-automation/apk-ana
 - `PASS`：静态确认现有 URA 插件能被动读取部分结构化状态与命令候选；确认请求记录器只观察、不提交。
 - `BLOCKED / NOT_VERIFIED`：真实运行数据中的统一身份字段、推荐与状态的因果关联、文本推荐到命令 ID 的映射、受支持的动作执行接口。
 - 仅静态读取 GitHub 文件并更新本报告；未执行本地测试、未启动游戏、未触发 GitHub Actions、未发送任何游戏输入。
+
+
+### 17. 核实推荐 sink 是否真正接入，以及仓库是否含真实运行日志（2026-10-25）
+
+本轮通过 GitHub API 读取当前分支的完整递归文件树（HEAD：`99020a30dff568697ae2b8ba7a624298cc455923`），并读取 AIRedirector 补丁、sink 源码、集成说明和校验工作流。
+
+#### 关键发现：sink 目前是补丁资产，不是已运行的集成
+
+- 当前分支包含 `AutoTrainingPlugin/AIRedirectorIntegration/LegendAiRecommendationSink.cs` 和 `patches/0001-passive-recommendation-sink.patch`。
+- 补丁文件的目标是上游 AIRedirector 的 `Class1.cs`；它在 stdout 消费点调用 `TryRecord(output.Line)`，并在 `SetLegendDisplayId` 处同步/清空角色与回合上下文。
+- 但补丁说明 `docs/AIRedirector_RECOMMENDATION_SINK_PATCH.md` 明确标记：**尚未合入或编译 AIRedirector 本体**。sink 单独存放在研究仓库不会自动运行。
+- `.github/workflows/airredirector-patch-check.yml` 只在指定分支/路径变化时验证补丁能否干净应用；它不是 AIRedirector 编译、游戏端运行或日志采集证据。本轮没有触发该工作流。
+- 当前分支树中没有发现真实运行生成的 `observations.jsonl`、`action-requests-observed.jsonl`、`legendai-recommendations.jsonl` 或对应脱敏样本。存在这些文件的代码路径和文档示例，不等于日志已生成。
+
+#### 对项目可行性的影响
+
+这把阻塞从“日志有没有提交”进一步缩小为：**尚未证明被动记录器在用户当前实际运行的 URA/AIRedirector 安装中启用并写出了可用日志**。此前关于状态读取和推荐 sink 的结论只是静态源码能力，不是运行时集成已生效。
+
+当前不应继续增加离线报告功能或合成数据测试来替代这项证据。下一步应先确认真实安装/运行的 URA 插件是否已经启用 `UmaAutoTraining` 被动记录器，以及 AIRedirector 是否应用了推荐 sink 补丁。若未接入，最小必要动作是把补丁应用到隔离的 AIRedirector 源码副本、编译并在不发送游戏输入的前提下运行被动采集；若用户当前无法提供或启动这套运行环境，则静态研究无法继续证明关联可靠性。
+
+#### 本轮状态
+
+- `PASS`：递归树读取成功；读取并核实补丁、sink、集成说明和工作流的真实状态。
+- `NOT_FOUND_IN_REPO_TREE`：真实运行 JSONL 与脱敏日志样本。
+- `NOT_INTEGRATED / NOT_COMPILED`：AIRedirector sink 补丁在当前仓库中仍是待应用的补丁文件；未找到本体已接入的证据。
+- 未修改本地文件、未运行游戏、未执行测试、未触发 GitHub Actions、未发送游戏输入。
