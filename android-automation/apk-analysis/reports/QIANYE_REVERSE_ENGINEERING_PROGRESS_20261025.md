@@ -276,3 +276,31 @@
 - NOT_VERIFIED：目标文件的真实文件名/格式、替换后文件的消费者、`L11I` 读取或解释该文件的具体函数、状态 9 的业务含义、Lua/native 实际执行链。
 - 下一步：从 `I1I.I1I.ILil.L11I` 的构造函数和 `m940LlIl()` 开始追踪，结合 `m942LlLLL` 使用的目标路径及 `INXCoreNative` 文件接口，寻找读取/解码/执行入口；同时检查 `NativeService` 的调用参数如何传入 `L11I`。若证据进入仅有二进制的 native 库，应明确标注边界，不推测补齐。
 - 执行边界：仅 GitHub 源码只读检查；未运行 APK/游戏、未使用本地 PowerShell、未触发 GitHub Actions。
+
+
+### installLR 目标文件与核心脚本启动分支进一步连接 (2026-10-25)
+
+新增证据：
+- `qianye-export/sources/I1I/I1I/ILil/L11I.java`：构造函数、`m940LlIl()`、核心线程中的文件检查/解压/启动逻辑。
+- `qianye-export/sources/com/main/app/NativeService.java`：`IL1Iii.run()` 向 `ScriptMain.main(...)` 传入六个参数，其中第六项来自该线程持有的字符串参数。
+- `qianye-export/sources/com/main/engine/ScriptMain.java`：读取六个参数并用第六项构造 `L11I` 的最后一个参数。
+- `qianye-export/sources/com/main/engine/Engine.java`：声明 native `Engine.start(long, int, String, String)`。
+
+已证实的运行时分支：
+- `L11I(int,int,int,String,String,String)` 将第六个参数赋给字段 `f975iILLL1`，并执行初始化。
+- `L11I.m940LlIl()` 启动该对象的工作线程；线程中的相关逻辑检查 `new File(this.f975iILLL1).exists()`。
+- 若该文件存在，代码调用 `Native.unZip(new File(this.f975iILLL1).getAbsolutePath(), this.ILL.getAbsolutePath())`，检查返回码；成功后调用 `Engine.start(0L, this.f972IiL, this.ILL.getAbsolutePath(), file2.getAbsolutePath())`。可见这是“文件存在 → native 解压到工作目录 → Engine.start” 的明确执行路径。
+- 若该文件不存在，代码改走 `this.f971IL.m860ILl(this.f975iILLL1, new IiL(file2))` 的核心服务文件获取分支；在成功后同样会调用 `Engine.start(...)`。该分支的完整 native/服务端行为仍需进一步确认。
+- `NativeService.IL1Iii.run()` 将持有的路径字符串作为 `ScriptMain.main` 的第六个参数；`ScriptMain.main` 将第六个参数传入 `new L11I(..., str3)`。因此可以确认，传给 `NativeService` 的路径会成为 `L11I.f975iILLL1`，而该字段确实被后续文件存在性检查、解压和引擎启动逻辑使用。
+- `Engine.start` 本身是 native 声明，当前 Java 源码只证明调用发生；未凭 Java 声明推断 native 内部的 Lua 解释执行细节。
+
+证据边界：
+- 已证实：`f975iILLL1` 指向的文件若存在，会进入 `Native.unZip → Engine.start` 路径；`NativeService → ScriptMain → L11I` 的参数传递链成立。
+- 尚未完全闭合：本轮未通过字符串解码/完整调用参数逐一比对，证明事件 99 中 `MainService.f2875iILLL1` 与某一次 `L11I.f975iILLL1` 在运行时必然是同一绝对路径；代码说明二者有明确的文件交接意图，但严格的路径同一性仍应标记为待验证。
+- 尚未确认：归档内部文件的类型、`Engine.start` 在 native 层如何加载脚本、Lua 虚拟机实际执行哪个入口，以及状态 9 的精确定义。
+
+状态：
+- PASS（静态）：确认核心脚本对象的文件检查、`Native.unZip`、`Engine.start` 以及 `NativeService → ScriptMain → L11I` 的参数传递。
+- NOT_VERIFIED：事件 99 目标与核心脚本路径的绝对路径同一性、native 解压后脚本执行细节、状态 9 的语义。
+- 下一步：追踪 `iIilII1.m987i1I1I1l(this, str)` 如何启动 `NativeService` 并传入路径；检查 `Engine.start` 的 native 实现是否能从仓库已有的共享库分析材料中得到静态证据。若没有可读的 native 反汇编结果，则将其作为明确阻塞项记录。
+- 执行边界：仅 GitHub 静态源码读取与文档归档；未运行 APK/游戏、未使用本地 PowerShell、未触发 GitHub Actions。
