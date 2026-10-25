@@ -218,3 +218,10 @@
 - The event bus implementation is `p051lLi1LL.ILil.IL1Iii.I1I` (JADX identifies it as EventBus); its `ILL(Object)` method posts events and dispatches to registered subscribers.
 - Current static source pass has not yet located a subscriber method whose parameter type is `IIi`, nor confirmed any handler for code 99. Therefore, whether the copied file is parsed or executed remains NOT_VERIFIED. Do not infer execution from the command's `"0"` response.
 - Method: GitHub source inspection only; no APK execution, local PowerShell, game interaction, or GitHub Actions run.
+
+
+### Event 99 subscriber search pass 2 (2026-10-25)
+- Rechecked the exported Java tree (2,159 Java source files) and the likely obfuscated event-bus/package candidates on GitHub. The event class `I1I.I1I.ILil.IIi` is confirmed as `MessageEvent`; the EventBus implementation is present, but this pass did not produce a confirmed subscriber method for `IIi` or a handler branch for event code 99.
+- This is a bounded static search, not proof that no subscriber exists: obfuscation, reflection, omitted export files, or handlers in native/script assets may hide the consumer. File parsing/execution remains NOT_VERIFIED.
+- Next evidence target: enumerate EventBus registration call sites and inspect candidates that register runtime/core objects, then follow the registered subscriber methods. Do not claim the file is executed until a concrete consumer path is identified.
+- No local execution, PowerShell, game actions, or GitHub Actions were used.
