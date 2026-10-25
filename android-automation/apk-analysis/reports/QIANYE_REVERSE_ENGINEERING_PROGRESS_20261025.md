@@ -304,3 +304,24 @@
 - NOT_VERIFIED：事件 99 目标与核心脚本路径的绝对路径同一性、native 解压后脚本执行细节、状态 9 的语义。
 - 下一步：追踪 `iIilII1.m987i1I1I1l(this, str)` 如何启动 `NativeService` 并传入路径；检查 `Engine.start` 的 native 实现是否能从仓库已有的共享库分析材料中得到静态证据。若没有可读的 native 反汇编结果，则将其作为明确阻塞项记录。
 - 执行边界：仅 GitHub 静态源码读取与文档归档；未运行 APK/游戏、未使用本地 PowerShell、未触发 GitHub Actions。
+
+
+### MainService 启动请求到 NativeService 的参数传递链 (2026-10-25)
+
+新增证据：
+- `qianye-export/sources/com/main/app/MainService.java`：`m3461ILl(String, boolean)`。
+- `qianye-export/sources/I1I/I1I/ILil/iIilII1.java`：`m987i1I1I1l(Context,String)`、内部 `L11I` 回调、`RunnableC0602il.run()`、`m986ill(Context,C1,String)`。
+- `qianye-export/sources/com/main/app/NativeService.java`：Binder 绑定与 `ScriptMain.main(...)` 参数传递。
+
+观察：
+- `MainService.m3461ILl(str, z)` 在需要启动时把路径字符串传给 `iIilII1.LLL().m987i1I1I1l(this, str)`；空字符串时会先用 `MainService.f2875iILLL1` 作为默认路径。
+- `iIilII1.m987i1I1I1l(context,str)` 经核心服务回调对象进入异步流程，最终由 `m986ill(context,c1,str)` 创建用于绑定 `NativeService` 的连接对象；该连接对象构造参数包含原始路径字符串。
+- 在满足相关门控的分支中，`RunnableC0602il.run()` 对该路径调用 `Native.chmod(path)`，再调用核心服务接口 `c1.Ilil(3,0,0,path)`。这是可见的路径交接/权限处理行为；尚不能仅凭操作码 3 的调用认定脚本已运行。
+- `NativeService` 的启动线程把收到的路径作为 `ScriptMain.main` 第六个参数，`ScriptMain.main` 将其交给 `L11I.f975iILLL1`。在 `L11I` 中，若该路径文件存在，则调用 `Native.unZip(path, workDir)`，随后调用 `Engine.start(..., workDir, file2)`；这建立了 Java 可见的“路径 → NativeService/ScriptMain → L11I → 解压 → Engine.start”调用链。
+- 结合事件 99 的 `MainService.m3464lIiI(path)`，已经可以确认：事件处理会把传入文件重命名到 `MainService.f2875iILLL1`，而正常启动入口在路径为空时会默认选用这个字段，并将路径向核心服务/NativeService 传递。不过，事件 99 分支调用的是状态通知 `mo1027il(9)`，而非直接调用 `m3461ILl`；因此，不能声称状态 9 本身必然同步触发启动。严格的事件后续时序/状态机关系仍待追踪。
+
+状态：
+- PASS（静态）：确认 MainService 默认路径选择、向 ScriptEngine 管理对象传递路径、路径 chmod/核心服务操作码 3、NativeService 参数传递及 L11I 解压/Engine.start 分支。
+- NOT_VERIFIED：事件 99 后状态 9 如何改变服务状态、该事件路径替换后是否在所有情形都会进入启动分支、native 的操作码 3 和 Engine.start 的内部语义。
+- 下一步：追踪状态通知 `mo1027il(9)` 对应的核心服务状态更新，以及 `L11I` 的 `Native.unZip`/ `Engine.start` native 声明是否有仓库内可读实现或现成静态分析结果。若只有共享库二进制，则保留为阻塞项，不假定其内部行为。
+- 执行边界：GitHub 源码只读检查与进度归档；没有运行 APK/游戏、没有本地 PowerShell、没有触发 GitHub Actions。
