@@ -518,3 +518,19 @@ The recursive Git tree contains two script.lrj files: android-automation/apk-ana
 3. 在身份/同回合状态关联通过审计前，继续保持 `verified=false`、`executable=false`，不接通真实输入 backend。
 
 状态：静态字段缺口 `PASS`；上游是否提供可补充身份字段 `NOT_VERIFIED`；未运行测试或游戏、未触发 Actions。
+
+### 11. 身份字段证据来源复核与当前阻塞（2026-10-25）
+
+本轮继续检查 `AutoTrainingPlugin/UmaAutoTrainingPlugin.cs`、`LegendAiRecommendationSink.cs`、`observation_replay_report.py`、`test_observation_replay_report.py` 及当前分支文件树。
+
+- 当前仓库的 `AutoTrainingPlugin/` 下有回放报告工具和单元测试，但没有提交真实运行生成的 `observations.jsonl`、`action-requests-observed.jsonl` 或 LegendAI 推荐日志样本。
+- `test_observation_replay_report.py` 中的记录是测试自行构造的合成 fixture。它们能验证字段别名、缺失身份处理、时间戳和命令成员审计逻辑，但不能证明实际 URA 响应或 AIRedirector 上下文包含哪些字段。
+- 回放工具只比较记录中明确存在的 `run_id`、`scenario_id`、`single_mode_chara_id`、`chara_id`；身份缺失时会返回 `identity_unavailable`，不会从相同 turn 或相近时间推断身份。这一 fail-closed 行为符合当前安全边界。
+- 因此，下一步不能仅靠现有合成测试决定应从上游读取哪个角色/run 字段。需要检查已有本地 JSONL 样本或实际响应 JSON 的字段结构；只需提供少量脱敏记录，移除账号、令牌、Cookie、完整请求头及无关个人数据即可。若本地尚无记录，应先被动采集，不触发游戏操作。
+- 在拿到真实样本前，不改写上游字段映射、不新增猜测字段路径、不宣称身份关联已解决；`verified=false`、`executable=false` 和无真实输入 backend 的约束继续保持。
+
+本轮结果：
+- `PASS`：确认当前仓库中可见的是工具代码与合成测试数据，而非真实运行日志；确认回放审计不推断缺失身份。
+- `BLOCKED / NOT_VERIFIED`：实际 URA 响应和 AIRedirector 上下文是否提供可共用的角色、run 或场景身份字段。
+- 未运行本地测试、未启动游戏/APK、未启用输入、未触发 GitHub Actions。
+- 下一步：取得最小化脱敏真实日志样本后，先做只读字段清点，再决定是否需要修改插件 schema 和回放测试。
