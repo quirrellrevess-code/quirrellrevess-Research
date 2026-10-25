@@ -99,3 +99,22 @@
 - `PASS`（静态）：发现 AssetManager 复制函数、解码出 OCR 资源源路径及其目标目录关系。
 - `NOT_VERIFIED`：模型二进制是否确实存在于原 APK 的 AssetManager、`L1ii1(Context)` 的启动调用点及调用时机、模型复制后能否成功加载。
 - 下一步优先追踪 `L1ii1(Context)` 的调用者/初始化生命周期，并核对 `resources/assets` 导出是否遗漏大文件；随后继续 Lua 初始化与 `PaddleOcr.loadModel` 调用链。仍只读 GitHub，不触发 Actions，不运行 APK 或游戏。
+
+
+### 6. 资源复制函数的启动调用点
+
+新增证据文件：
+- `android-automation/apk-analysis/qianye-export/sources/com/main/app/App.java`
+- `android-automation/apk-analysis/qianye-export/sources/I1I/I1I/p008IL/lIlii.java`
+
+观察：
+- `App.onCreate()` 调用 `lIlii.IL1Iii(this)`。
+- `lIlii.IL1Iii(Application)` 完成若干初始化与门控检查后，明确调用 `L1ii1(application)`；因此资源复制函数不是完全孤立的死代码，而是应用正常初始化路径上的一个调用点。若前面的 `m1188iIIi1(application)` 检查失败，该初始化方法会提前返回，后续复制流程不会执行。
+- `L1ii1(Context)` 在源 APK 文件存在时创建 `filesDir/assets` 及子目录，并对多个 AssetManager 资源调用 `m1192lL(...)`。但复制调用返回值在可见代码中未用于统一失败判定，不能仅凭调用存在就断言每个资源复制成功。
+- 递归 Git tree 对 `resources/assets/paddle/` 的检查仍只列出 `keys.txt`。因此，代码引用模型资源与仓库导出中缺少模型文件是并存的证据；应继续核查导出流程/原 APK AssetManager 实际资源，而不是推断模型一定存在或一定不存在。
+
+## 更新后的状态
+
+- `PASS`（静态）：已追到 `App.onCreate()` → `lIlii.IL1Iii(Application)` → `L1ii1(application)` 的初始化调用路径。
+- `NOT_VERIFIED`：初始化门控在实际运行中是否通过、各 AssetManager 资源是否存在及复制成功、OCR 模型是否被调用加载。
+- 下一步：检查 `PaddleOcr` 是否由 Lua 绑定/反射调用、`LuaEngine` 如何加载脚本，以及 `script.lrj` / `lua.zip` 的实际加载入口；静态 Java 搜索未发现直接的 `PaddleOcr.loadModel(...)` 调用点，不能排除 Lua 侧动态调用。
