@@ -325,3 +325,26 @@
 - NOT_VERIFIED：事件 99 后状态 9 如何改变服务状态、该事件路径替换后是否在所有情形都会进入启动分支、native 的操作码 3 和 Engine.start 的内部语义。
 - 下一步：追踪状态通知 `mo1027il(9)` 对应的核心服务状态更新，以及 `L11I` 的 `Native.unZip`/ `Engine.start` native 声明是否有仓库内可读实现或现成静态分析结果。若只有共享库二进制，则保留为阻塞项，不假定其内部行为。
 - 执行边界：GitHub 源码只读检查与进度归档；没有运行 APK/游戏、没有本地 PowerShell、没有触发 GitHub Actions。
+
+
+### Status 9 语义边界与 native/Lua 执行证据盘点 (2026-10-25)
+
+新增检查：
+- `qianye-export/sources/com/main/app/MainService.java` 的 `mo1027il(int)`。
+- `qianye-export/sources/I1I/I1I/ILil/iIilII1.java` 的 `m982iI1LI()`。
+- `qianye-export/sources/com/main/app/App.java` 的静态初始化块。
+- `qianye-export/sources/com/main/app/Native.java`、`com/main/engine/Engine.java`、`com/p000nx/assist/lua/LuaNative.java`。
+- 已有报告 `reports/UMA_SCRIPT_LRJ_INVENTORY.txt` 与当前分支资源树。
+
+关键结论：
+- 对 `MainService.m3464lIiI(path)` 成功分支，源码会设置 `f2872IiL = true` 并调用 `mo1027il(9)`。但 `mo1027il(int)` 不按参数值分支：它写日志、在必要时清除暂停状态，随后统一调用 `iIilII1.LLL().m982iI1LI()`。
+- `iIilII1.m982iI1LI()` 尝试通过现有核心接口发出 `(4,0,0,"")`；没有该接口时，回退到 `InterfaceC0604lIII.mo1027il(12)` 或 `C1.Ilil(4,0,0,"")`。因此，状态 9 是传入的日志/状态编号，不能直接解释为“脚本执行成功”。此处只能证明成功替换文件后会发出通用核心状态通知；具体状态机效果仍未解码。
+- `App.java` 的静态块调用三次 `System.loadLibrary(obfuscatedName)`。当前 Java 源码的字符串仍为混淆解码表达式；资源树中存在 `libengine.so` 与 `libnative.so`（以及 OCR/视觉等其他库），但当前仓库检索到的资料没有给出这两个目标 native 函数的反编译实现或 JNI 符号映射。因此 `Native.unZip` 和 `Engine.start` 的内部细节仍然是 native 边界。
+- `LuaNative.java` 暴露 Lua C API 风格的 native 方法，包括 `newthread`、`pcall`、`getGlobal`、`setGlobal`、栈操作和类型查询；这是 Java 层与 Lua native runtime 接口存在的直接证据，但本轮未找到把归档中的某个 Lua 入口文件传给这些 API 的具体调用点。
+- 现有 `UMA_SCRIPT_LRJ_INVENTORY.txt` 记录了一份 `script.lrj` 的 ZIP 清单，其中包含 `entry.json`、多个 `.lua` 项，且选中 Lua 项以 `1B 4C 75 61`（Lua bytecode 签名）开头。该报告可以证明仓库已有一份 Lua 归档样本的静态清单；**不能单凭文件名相似认定它就是当前 `L11I.f975iILLL1` 指向的同一文件**，路径与 SHA/来源对应关系尚未闭合。
+
+当前证据分级：
+- PASS（静态）：事件 99 的文件存在检查与重命名；目标文件存在时的 `Native.unZip → Engine.start` 分支；路径经 `MainService → iIilII1 → NativeService → ScriptMain → L11I` 传递；Java 层存在 Lua native API；状态 9 并非显式“执行成功”分支。
+- BLOCKED / NOT_VERIFIED：`Native.unZip`、`Engine.start` 的 native 实现；加载的库名和 JNI 绑定细节；`script.lrj` 样本与目标路径是否同一归档；归档入口是否被 native Lua runtime 实际加载/执行。
+- 下一步：在现有仓库静态材料中检查 `libengine.so` / `libnative.so` 是否有已生成的符号表、字符串提取或反汇编报告；若没有，则不再把 Java 声明当成执行证据，并把 native 反编译作为明确阻塞。若能定位现有 `LuaEngine`/ `LuaNative` 的 Java 调用点，再尝试将归档入口与运行时 API 建立静态调用关联。
+- 执行边界：仅 GitHub 源码与已提交报告只读检查，更新本进度文档；未运行 APK/游戏、未使用本地 PowerShell、未触发 GitHub Actions。
