@@ -313,3 +313,14 @@
 - 当前决策：停止重复目录扫描，聚焦已存在的 `LegendAiRecommendationSink.cs` 与 AIRedirector 集成；先在隔离源码副本接入并编译，之后安排受控重启/部署验证，不在当前育成中热替换 DLL。尚未验证任何动作执行接口，保持只读。
 - 状态：`PASS(user-observed)` AI 给出建议；`PASS` 结构化状态文件与插件文件存在；`BLOCKED` 自动建议捕获/同回合关联；`NOT_VERIFIED` 当前 DLL 源码对应关系、补丁可编译性及执行入口。
 - 本次仅依据用户 PowerShell 只读输出及 GitHub 源码核查；没有本地修改、游戏输入、插件替换、编译或 GitHub Actions。
+
+
+### 2026-10-26 — Cross-project rule ownership audit (UmaAI-Research / KancolleBot)
+
+- Mode: repository-backed documentation audit; read-only inspection before this archive. This entry records the findings; it does not change runtime configuration or game state.
+- Confirmed on branch `analysis/qianye-reverse-engineering-20261025`: this repository's project-level progress/rules record is `docs/PROJECT_UMAAI_Progress.md`; the focused passive-capture log is `android-automation/legendai-readonly-capture/PROGRESS.md`. The recursive tree inspected on this branch did not contain a separate `PROJECT_MASTER.md`, `PROJECT_RULES.md`, or `PROJECT_UMAAI_MASTER.md`. This finding is scoped to the inspected branch/tree, not every local worktree or branch.
+- The project-level file is branch-specific: the inspected `main` tree did not contain `docs/PROJECT_UMAAI_Progress.md`. Do not assume this branch's project record is present on `main`.
+- Rule ownership decision: the UmaAI MVP-01 restriction against manual per-screen screenshot work, bulk PNG template creation, and hand-labelled button coordinates belongs to UmaAI-Research. Keep the existing MVP-01 scope and fail-closed/read-only boundary here; do not infer a matching rule for KancolleBot from this project's instructions.
+- Cross-check against `wosafety0/KancolleBot`, branch `dev/expedition-closed-loop-mvp`: its project rule file is `docs/PROJECT_kancollebot_MASTER.md` and progress/decision log is `docs/PROJECT_kancollebot_Progress.md`. KancolleBot's own progress explicitly corrected the earlier assistant-added PNG/coordinate prohibition: it is not a verified KancolleBot rule. For KancolleBot, evaluate targeting options under its own evidence, safety, reliability, and cost constraints.
+- Evidence/limits: repository tree and the named Markdown files were inspected through GitHub. This is a documentation ownership audit, not runtime validation. No local files were changed, no game input was sent, and GitHub Actions were not triggered.
+- Follow-up: preserve project-specific rules in each repository's own progress/rules documents; do not copy constraints across projects without an explicit user decision backed by that project's evidence.
