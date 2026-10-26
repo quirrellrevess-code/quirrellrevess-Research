@@ -302,3 +302,14 @@
 - **止损规则：** 若在短期、定向调查后仍找不到可复用且可验证的执行入口，必须明确报告阻塞与 NO-GO/替代执行器评估，不以扩大研究范围代替结论。无法确认执行结果时不得继续下一动作或盲目重试。
 - **验收标准：** (1) 自动获取真实 LegendAI 建议；(2) 建议与角色/运行及当前回合可靠关联；(3) 唯一映射到速度训练动作；(4) 通过已验证执行入口执行一次；(5) 新状态证明动作生效并推进回合；(6) 生成含成功/失败原因的最小记录。只有全部通过，才允许提出 MVP-02。
 - **操作边界：** 在执行入口与动作语义验证前保持只读/影子模式；真实输入前需有明确授权。不得触发 GitHub Actions；归档结果时必须区分 GitHub 远端变更与本地状态，不得虚报。
+
+
+### 2026-10-26 — MVP-01 实机路径确认与建议采集阻塞
+
+- 用户已确认当天登录游戏进入育成，小黑板和 LegendAI 正常运行并展示建议。此为用户实机反馈，尚未由桥接程序自动采集验证。
+- 当前安装根目录：`D:\Games\ai`。已发现 `.portable\PluginData\SendGameStatusPlugin\GameStatusSend_Legend\thisTurn.json`（4722 字节，18:34:07），以及 `LegendAI\thisTurn.json`（同大小/时间）；`LegendAI\log\turn0_2.json` 至 `turn2_2.json` 为当天更新的育成状态快照。仅凭大小和时间不能证明内容完全一致。
+- 已发现 `.portable\Plugins\AIRedirector\AIRedirector.dll`（17920 字节，2026-07-05）；其目录还含旧 DLL 和 CodePages 依赖。当前 `.portable\PluginData\AIRedirector` 为空，`.portable\PluginData\UmaAutoTraining` 不存在，未找到 `legendai-recommendations.jsonl`。这说明尚无已发现的采集日志，不足以断言 DLL 不具备其他内部输出能力。
+- GitHub 只读核查：`Akkarriin/UmaAi` README 说明 UmaAi 负责结构化状态决策，实际执行由外部承担；`URA-Plugins/AIRedirector` 上游指定提交的 `Class1.cs` 存在子进程 stdout 消费路径和角色/回合上下文。上游能力不能直接等同于用户当前 DLL 版本。
+- 当前决策：停止重复目录扫描，聚焦已存在的 `LegendAiRecommendationSink.cs` 与 AIRedirector 集成；先在隔离源码副本接入并编译，之后安排受控重启/部署验证，不在当前育成中热替换 DLL。尚未验证任何动作执行接口，保持只读。
+- 状态：`PASS(user-observed)` AI 给出建议；`PASS` 结构化状态文件与插件文件存在；`BLOCKED` 自动建议捕获/同回合关联；`NOT_VERIFIED` 当前 DLL 源码对应关系、补丁可编译性及执行入口。
+- 本次仅依据用户 PowerShell 只读输出及 GitHub 源码核查；没有本地修改、游戏输入、插件替换、编译或 GitHub Actions。
