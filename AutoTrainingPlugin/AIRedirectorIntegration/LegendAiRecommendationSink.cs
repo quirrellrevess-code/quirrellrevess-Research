@@ -87,6 +87,8 @@ public sealed class LegendAiRecommendationSink : IDisposable
 
     private static string Classify(string body)
     {
+        if (body is "速" or "耐" or "力" or "根" or "智" or "速度" or "耐力" or "力量" or "根性" or "智力")
+            return "training";
         if (body.Contains("训练", StringComparison.Ordinal) ||
             body.Contains("トレーニング", StringComparison.Ordinal))
             return "training";
