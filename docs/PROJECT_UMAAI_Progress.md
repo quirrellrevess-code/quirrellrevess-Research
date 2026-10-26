@@ -324,3 +324,11 @@
 - Cross-check against `wosafety0/KancolleBot`, branch `dev/expedition-closed-loop-mvp`: its project rule file is `docs/PROJECT_kancollebot_MASTER.md` and progress/decision log is `docs/PROJECT_kancollebot_Progress.md`. KancolleBot's own progress explicitly corrected the earlier assistant-added PNG/coordinate prohibition: it is not a verified KancolleBot rule. For KancolleBot, evaluate targeting options under its own evidence, safety, reliability, and cost constraints.
 - Evidence/limits: repository tree and the named Markdown files were inspected through GitHub. This is a documentation ownership audit, not runtime validation. No local files were changed, no game input was sent, and GitHub Actions were not triggered.
 - Follow-up: preserve project-specific rules in each repository's own progress/rules documents; do not copy constraints across projects without an explicit user decision backed by that project's evidence.
+
+
+## 2026-10-26 — Cross-project documentation entry order confirmed
+
+- User-confirmed operating rule: before any UmaAI work, read `docs/PROJECT_UMAAI_Progress.md` on branch `analysis/qianye-reverse-engineering-20261025`, then read the relevant topic-level `PROGRESS.md`.
+- If the actual branch differs, verify the branch and file tree first; do not guess paths.
+- Keep project-specific constraints isolated. Do not import KancolleBot rules into UmaAI or UmaAI rules into KancolleBot without an explicit user decision for the receiving project.
+- This is a documentation/workflow rule, not a claim that any implementation or runtime task was performed. No game actions or GitHub Actions were used.
