@@ -111,3 +111,26 @@ recommendationSink.Dispose();
 - [ ] 游戏端到端测试
 
 以上未完成项不能视为通过。
+
+## 2026-10-26 真实 stdout 证据与过滤顺序修正
+
+用户提供实机 AI 窗口原文 `AI建议：力`，证实 sink 正则覆盖真实前缀；这是力量训练，不满足 MVP-01 的速度训练动作条件。AI 窗口记录第 3 回合，小黑板记录第 4 回合，不能按窗口出现顺序推断同一回合。
+
+**重要修正：** 不应在 `bridge.ProcessLine(output.Line)` 返回 true 之后才调用 `recommendationSink.TryRecord`，因为该展示解析器可能过滤建议行。将采集放在通过 Legend 输出来源、gameStarted、非空输出及 bridge 存在检查之后、`bridge.ProcessLine` 之前。原来的复合条件中移除 `!bridge.ProcessLine(output.Line)`，改为：
+
+```csharp
+if (!rawOutput.PublishLine(output.Line) ||
+    !output.ApplyToLegend ||
+    !Volatile.Read(ref gameStarted) ||
+    string.IsNullOrEmpty(output.Line) ||
+    Volatile.Read(ref legendOutput) is not { } bridge)
+    continue;
+
+cancellationToken.ThrowIfCancellationRequested();
+_ = recommendationSink.TryRecord(output.Line);
+if (!bridge.ProcessLine(output.Line))
+    continue;
+_ = bridge.ApplyTargetDisplay(cancellationToken);
+```
+
+该片段替换原消费循环中的筛选和展示部分，不要同时保留旧位置的 `TryRecord`，避免重复写入。此为待编译的源码接入指导，不代表当前用户 DLL 已更新；不在正在育成时热替换插件。后续必须用真实建议记录与结构化状态验证回合一致性，保持 `verified=false`、`executable=false`。
