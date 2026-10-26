@@ -73,7 +73,7 @@ namespace UmaAiConsoleProbe {
             $lines.Add(("CONSOLE_ATTACH: FAILED; Win32Error={0}" -f $err))
             $lines.Add('INTERPRETATION: Analyzer may use a pseudoconsole or have no attachable Win32 console.')
         } else {
-            $handle = [UmaAiConsoleProbe.Native]::CreateFile('CONOUT$', ([uint32]0x80000000), [uint32]3, [IntPtr]::Zero, [uint32]3, [uint32]0, [IntPtr]::Zero)
+            $handle = [UmaAiConsoleProbe.Native]::CreateFile('CONOUT$', ([uint32]2147483648), [uint32]3, [IntPtr]::Zero, [uint32]3, [uint32]0, [IntPtr]::Zero)
             if ($handle -eq [IntPtr](-1)) {
                 $err = [Runtime.InteropServices.Marshal]::GetLastWin32Error()
                 $lines.Add(("CONSOLE_OPEN: FAILED; Win32Error={0}" -f $err))
