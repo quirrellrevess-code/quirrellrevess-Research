@@ -32,3 +32,14 @@ The missing link is a safe, machine-readable way to capture the analyzer's exist
 - Taiwan server first; Japan only as reference; China server excluded.
 - No GitHub Actions.
 - No repository files or local configuration were changed during the investigation described above.
+
+
+## Source-level findings added 2026-10-26
+
+The public URA source repository `UmamusumeResponseAnalyzer/UmamusumeResponseAnalyzer` was inspected read-only:
+
+- `Server.cs` registers only three relevant routes: `POST /notify/request`, `POST /notify/response`, and `GET /notify/ping`. The first two ingest game request/response MessagePack payloads; `/notify/ping` returns `pong`. No recommendation-read endpoint is documented or registered there.
+- The project README describes URA as a local Terminal.Gui TUI host. The process expects an interactive terminal and exits when stdin/stdout are redirected. Therefore, the earlier observation of no ordinary window handle/UI Automation controls is consistent with a terminal UI and does not rule out reading its console screen buffer.
+- The Hachimi plugin source explicitly POSTs game traffic to `/notify/request` and `/notify/response`; it does not implement a recommendation retrieval endpoint.
+- This narrows the next low-cost experiment: use a read-only Windows console-buffer probe against the existing analyzer process (attach to its console, read the current screen buffer, detach), and pair any extracted recommendation with a stable snapshot of `thisTurn.json`. Do not send HTTP POSTs, touch game state, change settings, restart processes, or use screenshots/templates.
+- Feasibility is not yet proven. Console attachment may fail if the process is hosted in a pseudoconsole or another incompatible terminal setup. If so, inspect only the existing process/terminal setup next rather than guessing network APIs.
