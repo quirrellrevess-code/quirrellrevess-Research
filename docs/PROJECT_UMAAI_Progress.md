@@ -278,3 +278,16 @@
   2. 继续追踪千叶/姬塔的动作分发器、外部调用入口和执行结果确认机制；将视觉识别作为可能的一个环节，而不是预设其为唯一机制。
   3. 确认现有被动记录器和 LegendAI recommendation sink 的真实部署状态；在不发送游戏输入的前提下取得少量自然运行的脱敏样本。
   4. 如果无法找到可复用执行入口，及时报告阻塞与止损判断，不回退到人工模板/坐标制作路线。
+
+
+### 2026-10-26 — 仓库回顾与最小执行闭环优先级调整
+
+- 模式：READ_ONLY 仓库文档回顾 + WRITE 进度归档；目标分支：analysis/qianye-reverse-engineering-20261025。
+- 本轮回读：PROJECT_UMAAI_Progress.md、LEGEND_AI_EXECUTOR_CONTRACT.md、UMA_AI_CORE_ARCHITECTURE.md、AIRedirector_RECOMMENDATION_SINK_PATCH.md、Qianye 逆向报告及 AutoTrainingPlugin/README.md。
+- 关键结论：UmaAi/LegendAI 的决策已由用户实机验证；仓库具有 URA 结构化状态观察、请求字段观察、建议 sink 源码、千叶 Lua/JNI/OCR 逆向线索及离线控制器。但 sink 尚未证实在用户实际 AIRedirector 部署中集成运行；无已验证的游戏动作执行通道，也没有完整自动育成闭环。
+- 决策调整：以“取得真实建议 → 验证当前回合和唯一动作映射 → 找到合法可复用的千叶/姬塔执行入口或独立执行适配器 → 受控执行一个动作并确认状态变化”为最小闭环。先确认执行入口，再按需完善识别、状态机和防护，不继续泛化模板、模型权重、复杂离线校验或重造 UmaAi 策略。
+- 千叶研究优先追踪实际动作分发、Lua/核心服务/触摸事件和执行后确认；OCR/YOLO 是否承担全部识别尚未证实。姬塔作为平行候选进行低成本可行性评估。
+- 止损：不接受人工逐屏截图、批量制作 PNG 模板或手工坐标；如果没有可复用的合法执行入口，明确 NO-GO/阻塞，不将通知接口或观察到的请求重放成游戏动作。
+- NOT_VERIFIED：sink 真实部署、真实日志的 run/turn 关联、千叶/姬塔外部接口、台服执行闭环。
+- 安全：本轮未运行 APK/游戏、未执行测试、未触发 Actions、未发送游戏输入、未修改本地文件。
+- 下一步：先确认 AIRedirector sink 实际部署与一条真实建议记录；随后集中做执行入口的短期可行性判断。
