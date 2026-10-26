@@ -43,3 +43,11 @@ The public URA source repository `UmamusumeResponseAnalyzer/UmamusumeResponseAna
 - The Hachimi plugin source explicitly POSTs game traffic to `/notify/request` and `/notify/response`; it does not implement a recommendation retrieval endpoint.
 - This narrows the next low-cost experiment: use a read-only Windows console-buffer probe against the existing analyzer process (attach to its console, read the current screen buffer, detach), and pair any extracted recommendation with a stable snapshot of `thisTurn.json`. Do not send HTTP POSTs, touch game state, change settings, restart processes, or use screenshots/templates.
 - Feasibility is not yet proven. Console attachment may fail if the process is hosted in a pseudoconsole or another incompatible terminal setup. If so, inspect only the existing process/terminal setup next rather than guessing network APIs.
+
+
+## Probe script committed 2026-10-26
+
+- Added `android-automation/legendai-readonly-capture/Probe-AnalyzerConsole.ps1` as a PowerShell 5.1-compatible, read-only console-buffer probe.
+- It locates the analyzer by exact executable path, snapshots `thisTurn.json` before and after, attempts to attach to the analyzer console and read up to the last 80 non-empty buffer rows, writes a report under `%TEMP%`, and copies/verifies the report in the clipboard.
+- It does not send input, click, restart processes, edit configuration, or change game state. The script has been committed to GitHub but has **not** been executed on the user's PC; success/failure of console attachment remains unverified.
+- If it reports `CONSOLE_ATTACH: FAILED`, do not treat that alone as proof that the route is impossible; next inspect whether the analyzer is hosted by a classic Win32 console or a pseudoconsole. If it captures no suggestion text, the current buffer may not contain the desired rows; do not infer that the recommendation path is absent.
