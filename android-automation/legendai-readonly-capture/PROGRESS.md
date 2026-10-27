@@ -91,3 +91,12 @@ The public URA source repository `UmamusumeResponseAnalyzer/UmamusumeResponseAna
 - Fixed the collector to use .NET regex Unicode escapes for the Chinese recommendation marker (AI Unicode code points), avoiding non-ASCII source literals in that regex. Commit: 25eef5a5437146374489d59492865156d9f5e95c.
 - The fix is committed but not yet run on the user's PC. The previous run remains a failed collector test; no recommendation JSON was successfully parsed in that run.
 - Safety: no game input, clicks, restarts, network requests, config changes, or GitHub Actions.
+
+
+## 2026-10-27 — Second collector parsing failure and non-regex fix
+
+- The user's second collector run still failed with the same malformed-regex error; its JSON had `probeExitCode=1`, `stateAfter=null`, and no parsed recommendation. The report was found, so this is still a collector parsing failure, not evidence that the state file is missing.
+- Read back the committed collector source. It contained .NET regex Unicode escapes, but the observed runtime error still showed the mojibake marker and regex parser failure. The Unicode-escape approach is therefore not accepted as validated.
+- Replaced regex-based recommendation extraction with ordinal string matching. The marker is built at runtime from UTF-16 code points (`AI` + U+5EFA + U+8BAE + U+FF1A), avoiding Chinese source literals and regex parsing entirely. Commit: 2928382252ff94f518d4e299e5ff972642ee452a.
+- This change is committed but not yet run on the user's PC. For the next test, use a cache-busting query on the raw GitHub collector URL so an old CDN copy is not reused. Do not treat the collector as working until its new JSON is inspected.
+- Safety remains read-only; no game actions, process restarts, configuration edits, network requests from the collector, or GitHub Actions were performed.
