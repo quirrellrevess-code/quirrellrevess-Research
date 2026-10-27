@@ -110,3 +110,11 @@ The public URA source repository `UmamusumeResponseAnalyzer/UmamusumeResponseAna
 - Important unresolved diagnostic: `probeExitCode=1` despite the report being present and recommendation parsing succeeding. The probe source can emit a report after console attach/read, but the nonzero child exit must be diagnosed from the captured stderr/report before calling the subprocess path clean.
 - Recommendation freshness and turn association remain unverified. The same state before/after only establishes that the state file did not change during this one sample; it does not prove that `比赛` was generated for turn 11.
 - Next step: inspect the reported probe stderr and the full probe report read-only, then perform passive repeated sampling / freshness analysis without advancing the game. No game input, clicks, restarts, config edits, or GitHub Actions.
+
+
+## 2026-10-27 — Probe report review after successful capture
+
+- User supplied the complete probe report for the successful collector run at 2026-10-27 16:53:55. It shows analyzer PID 16668, a 120x30 buffer, `SCREEN[27]: AI建议：比赛`, and stable state `turn=11; isRacing=True; scenarioId=10` before and after.
+- The report contains no explicit console attach, buffer info, or probe exception failure lines. This confirms the console-buffer read succeeded for that sample.
+- The collector still recorded child `probeExitCode=1`; this is not explained by the report text alone. The next read-only diagnostic is the associated stderr file. Do not infer the exact source of the nonzero exit code until stderr is inspected.
+- Current milestone: single-sample structured extraction works. Continuous capture, recommendation freshness, and turn association remain unverified. No game input or configuration change is authorized or performed.
