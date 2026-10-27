@@ -100,3 +100,13 @@ The public URA source repository `UmamusumeResponseAnalyzer/UmamusumeResponseAna
 - Replaced regex-based recommendation extraction with ordinal string matching. The marker is built at runtime from UTF-16 code points (`AI` + U+5EFA + U+8BAE + U+FF1A), avoiding Chinese source literals and regex parsing entirely. Commit: 2928382252ff94f518d4e299e5ff972642ee452a.
 - This change is committed but not yet run on the user's PC. For the next test, use a cache-busting query on the raw GitHub collector URL so an old CDN copy is not reused. Do not treat the collector as working until its new JSON is inspected.
 - Safety remains read-only; no game actions, process restarts, configuration edits, network requests from the collector, or GitHub Actions were performed.
+
+
+## 2026-10-27 — First successful structured collector run
+
+- User ran the cache-busted latest collector and reported `CAPTURED_SINGLE_SAMPLE_STATE_UNCHANGED`.
+- Captured recommendation: `比赛`; state before and after both show `turn=11`, `isRacing=true`, `scenarioId=10`; `stateFileUnchanged=true`; `errors=[]`.
+- This validates the non-regex parser and confirms that the collector can produce a structured single-sample record from the visible analyzer buffer.
+- Important unresolved diagnostic: `probeExitCode=1` despite the report being present and recommendation parsing succeeding. The probe source can emit a report after console attach/read, but the nonzero child exit must be diagnosed from the captured stderr/report before calling the subprocess path clean.
+- Recommendation freshness and turn association remain unverified. The same state before/after only establishes that the state file did not change during this one sample; it does not prove that `比赛` was generated for turn 11.
+- Next step: inspect the reported probe stderr and the full probe report read-only, then perform passive repeated sampling / freshness analysis without advancing the game. No game input, clicks, restarts, config edits, or GitHub Actions.
