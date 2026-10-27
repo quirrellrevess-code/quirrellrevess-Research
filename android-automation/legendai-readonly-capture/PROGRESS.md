@@ -84,3 +84,10 @@ The public URA source repository `UmamusumeResponseAnalyzer/UmamusumeResponseAna
 - Safety remains read-only: no game input, clicks, process restarts, network requests, or configuration changes. No GitHub Actions were run.
 - Next: perform static review of the new script and regex against the supplied report; then provide one complete download-and-run command. Review the resulting JSON before making further changes. Do not start action execution until repeated capture and turn-association checks pass.
 
+## 2026-10-27 — Collector runtime failure and encoding fix
+
+- User-run collector produced a probe report but exited with code 1 while parsing the report: .NET Regex rejected the recommendation marker because the Chinese literal in the PowerShell script was decoded incorrectly by Windows PowerShell 5.1 when downloaded as UTF-8 without a BOM.
+- The probe report itself exists; the failure happened in the collector parsing stage, before the post-capture state snapshot was read. Therefore stateAfter=null is a consequence of the parser exception, not evidence that the state file disappeared.
+- Fixed the collector to use .NET regex Unicode escapes for the Chinese recommendation marker (AI Unicode code points), avoiding non-ASCII source literals in that regex. Commit: 25eef5a5437146374489d59492865156d9f5e95c.
+- The fix is committed but not yet run on the user's PC. The previous run remains a failed collector test; no recommendation JSON was successfully parsed in that run.
+- Safety: no game input, clicks, restarts, network requests, config changes, or GitHub Actions.
