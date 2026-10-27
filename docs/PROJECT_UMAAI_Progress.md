@@ -352,3 +352,10 @@
 - Static validation: current project/workflow path strings and tree entries were read back. Full workflow path existence checks passed for the 38 distinct source paths referenced by the offline-test workflow on the research branch. The current research branch root has neutralized top-level names.
 - Not run: local compilation, Python unit tests, GitHub Actions, game process, or game input. Build/runtime status remains `NOT_VERIFIED`; only path-contract inconsistencies were statically repaired.
 - MVP-01 remains unchanged. Next useful functional step is to execute the already committed read-only console-buffer probe on the user's PC and inspect its redacted report; do not infer success from source presence alone.
+
+
+### 2026-10-27 — Build-reference existence boundary
+
+- Compared the current tree with the pre-rename baseline `6e46e42d340881cc60152ca0f547fd5555a7ec2f`. Four DLLs referenced by the project files — `Spectre.Console.dll`, `YamlDotNet.dll`, `WatsonWebserver.Lite.dll`, and `WatsonWebserver.Core.dll` — are absent from the tracked root dependency directory both before and after the rename. This is a pre-existing repository-content gap, not evidence that the directory rename deleted those files.
+- The paths that do exist in the tracked tree now resolve to the renamed dependency directory, and the workflow's 38 distinct source-file paths all exist. However, the four missing DLL references mean a clean build cannot be declared ready based on repository contents alone; dependencies may be supplied externally, but that has not been verified.
+- Status: rename-induced stale path references repaired across all five branches; tracked-source path checks PASS; complete build PASS is NOT_VERIFIED. No Actions, local build, tests, game launch, or game input were run.

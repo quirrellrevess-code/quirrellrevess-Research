@@ -67,3 +67,9 @@ The public URA source repository `UmamusumeResponseAnalyzer/UmamusumeResponseAna
 - Repairs were committed and refs updated across all five existing public branches. The upload branch's root source directory was normalized to `components/`; workflow file paths were updated wherever they still referenced the old root source path. One intermediate root-level duplicate project file in the feature branch was removed in a follow-up commit.
 - Static readback confirms the repaired paths and expected root entries. No compile, offline unit tests, Actions, game launch, or game input was run; runtime/build outcome remains `NOT_VERIFIED`.
 - Next MVP-01 step remains a user-side run of the read-only console-buffer probe, then review the report for recommendation extraction and turn-state association.
+
+
+## 2026-10-27 — Build dependency boundary
+
+- Baseline comparison against pre-rename commit `6e46e42d340881cc60152ca0f547fd5555a7ec2f` shows that four referenced dependency DLLs (`Spectre.Console.dll`, `YamlDotNet.dll`, `WatsonWebserver.Lite.dll`, `WatsonWebserver.Core.dll`) were already absent from the tracked dependency directory before the rename and remain absent. Do not attribute these missing files to the rename.
+- Stale root-relative references and workflow source paths have been repaired across all five branches; all 38 unique source paths referenced by the research branch's offline-test workflow exist in its current tree. Full build/test status remains NOT_VERIFIED because Actions and local builds were not run and the four DLLs are not tracked here.
