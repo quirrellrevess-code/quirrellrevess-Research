@@ -4,7 +4,7 @@
 
 适用的上游源码基线：`URA-Plugins/AIRedirector`，提交
 `6e31c415e5774aaab3d5203432f5133c41e47b57`。本仓库新增
-`AutoTrainingPlugin/AIRedirectorIntegration/LegendAiRecommendationSink.cs`。
+`components/AIRedirectorIntegration/LegendAiRecommendationSink.cs`。
 该文件应加入 AIRedirector 项目编译，或复制到其项目目录；它不属于 URA 的普通 Analyzer 插件，单独放在本仓库不会自动运行。
 
 ## 最小接入位置

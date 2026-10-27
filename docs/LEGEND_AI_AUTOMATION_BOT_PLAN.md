@@ -39,7 +39,7 @@
 
 ### 本轮实现：只读动作请求观察器
 
-- `AutoTrainingPlugin/UmaAutoTrainingPlugin.cs` 已新增 `[Analyzer(response: false)]` 请求观察方法。
+- `components/UmaAutoTrainingPlugin.cs` 已新增 `[Analyzer(response: false)]` 请求观察方法。
 - 它只筛选 `single_mode_exec_command_request_common`，把 `command_type`、`command_id`、`command_group_id`、`select_id`、`current_turn`、`current_vital`、`exec_auto_play_plan_id` 写入 `PluginData/UmaAutoTraining/action-requests-observed.jsonl`；不会保存完整请求，也不会发送/重放请求。
 - 这一步用于让真实游戏客户端先自行完成一次操作，从被动观察中确认动作参数和建议映射。源码已提交，但尚未在实际 URA 部署中编译或运行，必须先验证请求 analyzer 收到的 JSON 结构是否与预期一致。
 
