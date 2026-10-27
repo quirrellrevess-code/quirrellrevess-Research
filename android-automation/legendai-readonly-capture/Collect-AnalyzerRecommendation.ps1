@@ -59,12 +59,14 @@ try {
 
     if ($probeReport) {
         $reportText = Get-Content -LiteralPath $probeReport.FullName -Raw -Encoding UTF8
-        $match = [regex]::Match($reportText, '(?m)^SCREEN\[\d+\]:\s*.*?AI建议：([^\r\n]+)')
+        # Use Unicode escapes so Windows PowerShell 5.1 can parse this UTF-8 script even if downloaded without a BOM.
+        $marker = 'AI\u5efa\u8bae\uff1a'
+        $match = [regex]::Match($reportText, '(?m)^SCREEN\[\d+\]:\s*.*?' + $marker + '([^\r\n]+)')
         if ($match.Success) {
             $recommendation = $match.Groups[1].Value.Trim()
         }
         if (-not $recommendation) {
-            $match = [regex]::Match($reportText, '(?m)^SCREEN\[\d+\]:\s*AI建议：([^\r\n]+)')
+            $match = [regex]::Match($reportText, '(?m)^SCREEN\[\d+\]:\s*' + $marker + '([^\r\n]+)')
             if ($match.Success) {
                 $recommendation = $match.Groups[1].Value.Trim()
             }
