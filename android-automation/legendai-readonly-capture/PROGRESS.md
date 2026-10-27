@@ -51,3 +51,11 @@ The public URA source repository `UmamusumeResponseAnalyzer/UmamusumeResponseAna
 - It locates the analyzer by exact executable path, snapshots `thisTurn.json` before and after, attempts to attach to the analyzer console and read up to the last 80 non-empty buffer rows, writes a report under `%TEMP%`, and copies/verifies the report in the clipboard.
 - It does not send input, click, restart processes, edit configuration, or change game state. The script has been committed to GitHub but has **not** been executed on the user's PC; success/failure of console attachment remains unverified.
 - If it reports `CONSOLE_ATTACH: FAILED`, do not treat that alone as proof that the route is impossible; next inspect whether the analyzer is hosted by a classic Win32 console or a pseudoconsole. If it captures no suggestion text, the current buffer may not contain the desired rows; do not infer that the recommendation path is absent.
+
+
+## 2026-10-27 — Root path rename impact check
+
+- Static audit found a concrete build-path dependency: the plugin project defaulted to `..\\URA` for reference DLLs, while this branch's root directory is now `hshdbaj/`. The default would point to a missing directory unless overridden externally.
+- Repair committed with the path-neutralization follow-up: project reference default now targets `..\\hshdbaj`; the source folder is normalized to `components/`, and workflow source paths/working directory are updated to match.
+- Scope: static source/config verification only. No compilation, offline test run, GitHub Actions, game process, or game input was performed. Build/runtime behavior remains `NOT_VERIFIED` pending a permitted local offline test.
+- MVP-01 priority unchanged: validate the read-only recommendation capture path and turn association before considering any real action.

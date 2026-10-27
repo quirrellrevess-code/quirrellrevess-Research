@@ -332,3 +332,13 @@
 - If the actual branch differs, verify the branch and file tree first; do not guess paths.
 - Keep project-specific constraints isolated. Do not import KancolleBot rules into UmaAI or UmaAI rules into KancolleBot without an explicit user decision for the receiving project.
 - This is a documentation/workflow rule, not a claim that any implementation or runtime task was performed. No game actions or GitHub Actions were used.
+
+
+### 2026-10-27 — Root-level path rename impact audit and repair
+
+- Mode: static repository audit + source/config path repair; branch: `analysis/qianye-reverse-engineering-20261025`; baseline: `5361d971432ee8c15529403606efe4ece94c51ed`.
+- Confirmed impact: after the root directory `URA/` was renamed to its neutral alias, `AutoTrainingPlugin/AutoTrainingPlugin.csproj` still defaulted `UraReferenceDir` to `..\\URA`. That relative path no longer resolves to the reference DLL directory in this branch, so a normal build using the default property is at risk of failing to resolve the analyzer references. This is a concrete path-contract break found by static inspection; no build was run.
+- Repair: update the default reference directory to the current root alias `..\\hshdbaj`; normalize the remaining root-level source folder to its approved neutral alias `components/`; update both workflow files' source paths and working directory to match the renamed folder. The workflow branch filter remains unchanged because it is a branch name, not a file or directory path.
+- Validation performed: inspected the branch root tree, project file, and both workflow definitions; confirmed the old source-folder path references in the workflows and the stale `..\\URA` project reference. After commit, re-read the changed files and root tree to verify the paths agree.
+- Not performed: no local compilation, no Python test execution, no GitHub Actions, no game launch or input. Runtime/build outcome remains `NOT_VERIFIED`; this is not a claim that the whole program is unaffected.
+- MVP-01 remains unchanged: continue passive recommendation capture and reliable turn association first; do not execute game input before a verified action path and explicit authorization.
