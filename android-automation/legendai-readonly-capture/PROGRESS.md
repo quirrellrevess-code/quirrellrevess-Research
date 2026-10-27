@@ -59,3 +59,11 @@ The public URA source repository `UmamusumeResponseAnalyzer/UmamusumeResponseAna
 - Repair committed with the path-neutralization follow-up: project reference default now targets `..\\hshdbaj`; the source folder is normalized to `components/`, and workflow source paths/working directory are updated to match.
 - Scope: static source/config verification only. No compilation, offline test run, GitHub Actions, game process, or game input was performed. Build/runtime behavior remains `NOT_VERIFIED` pending a permitted local offline test.
 - MVP-01 priority unchanged: validate the read-only recommendation capture path and turn association before considering any real action.
+
+
+## 2026-10-27 — Cross-branch path-reference repair
+
+- Broader static inspection found six additional stale `..\\URA\\*.dll` HintPaths in `data/UmamusumeResponseAnalyzer.csproj`, in addition to the plugin project's default reference directory. They were changed to target the current root alias `hshdbaj/`.
+- Repairs were committed and refs updated across all five existing public branches. The upload branch's root source directory was normalized to `components/`; workflow file paths were updated wherever they still referenced the old root source path. One intermediate root-level duplicate project file in the feature branch was removed in a follow-up commit.
+- Static readback confirms the repaired paths and expected root entries. No compile, offline unit tests, Actions, game launch, or game input was run; runtime/build outcome remains `NOT_VERIFIED`.
+- Next MVP-01 step remains a user-side run of the read-only console-buffer probe, then review the report for recommendation extraction and turn-state association.

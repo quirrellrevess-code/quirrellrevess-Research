@@ -342,3 +342,13 @@
 - Validation performed: inspected the branch root tree, project file, and both workflow definitions; confirmed the old source-folder path references in the workflows and the stale `..\\URA` project reference. After commit, re-read the changed files and root tree to verify the paths agree.
 - Not performed: no local compilation, no Python test execution, no GitHub Actions, no game launch or input. Runtime/build outcome remains `NOT_VERIFIED`; this is not a claim that the whole program is unaffected.
 - MVP-01 remains unchanged: continue passive recommendation capture and reliable turn association first; do not execute game input before a verified action path and explicit authorization.
+
+
+### 2026-10-27 — Cross-branch path-reference repair completed
+
+- Follow-up correction to the earlier impact audit: the stale reference was not limited to the plugin project. `data/UmamusumeResponseAnalyzer.csproj` also contained six `..\\URA\\*.dll` HintPaths. After the root directory was normalized, those references also pointed to the old path.
+- Repairs were applied and remote branch refs updated for all five existing public branches: `analysis/qianye-reverse-engineering-20261025`, `feature/auto-training-plugin`, `main`, `maintenance/neutral-paths-20261027`, and `research/upload-ocr-native-20261024-130222`. All affected project references now point to `hshdbaj/`; workflow source paths now follow `components/`; the upload branch's source directory was also normalized to `components/`.
+- The feature branch briefly received an unintended root-level duplicate `AutoTrainingPlugin.csproj` during the first repair attempt. A follow-up commit removed that stray root entry and updated the intended `components/AutoTrainingPlugin.csproj`; the current branch tree must be checked, not the intermediate commit.
+- Static validation: current project/workflow path strings and tree entries were read back. Full workflow path existence checks passed for the 38 distinct source paths referenced by the offline-test workflow on the research branch. The current research branch root has neutralized top-level names.
+- Not run: local compilation, Python unit tests, GitHub Actions, game process, or game input. Build/runtime status remains `NOT_VERIFIED`; only path-contract inconsistencies were statically repaired.
+- MVP-01 remains unchanged. Next useful functional step is to execute the already committed read-only console-buffer probe on the user's PC and inspect its redacted report; do not infer success from source presence alone.
