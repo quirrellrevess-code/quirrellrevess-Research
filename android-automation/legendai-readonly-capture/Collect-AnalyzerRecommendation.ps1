@@ -59,16 +59,16 @@ try {
 
     if ($probeReport) {
         $reportText = Get-Content -LiteralPath $probeReport.FullName -Raw -Encoding UTF8
-        # Use Unicode escapes so Windows PowerShell 5.1 can parse this UTF-8 script even if downloaded without a BOM.
-        $marker = 'AI\u5efa\u8bae\uff1a'
-        $match = [regex]::Match($reportText, '(?m)^SCREEN\[\d+\]:\s*.*?' + $marker + '([^\r\n]+)')
-        if ($match.Success) {
-            $recommendation = $match.Groups[1].Value.Trim()
-        }
-        if (-not $recommendation) {
-            $match = [regex]::Match($reportText, '(?m)^SCREEN\[\d+\]:\s*' + $marker + '([^\r\n]+)')
-            if ($match.Success) {
-                $recommendation = $match.Groups[1].Value.Trim()
+        # Avoid regex and source-file Chinese literals: build the marker from Unicode code points
+        # so PowerShell 5.1 works even when this script is downloaded as UTF-8 without a BOM.
+        $marker = 'AI' + [char]0x5efa + [char]0x8bae + [char]0xff1a
+        foreach ($line in ($reportText -split [string][char]10)) {
+            $line = $line.TrimEnd([char]13)
+            if (-not $line.StartsWith('SCREEN[', [System.StringComparison]::Ordinal)) { continue }
+            $markerIndex = $line.IndexOf($marker, [System.StringComparison]::Ordinal)
+            if ($markerIndex -ge 0) {
+                $recommendation = $line.Substring($markerIndex + $marker.Length).Trim()
+                if ($recommendation) { break }
             }
         }
     } else {
