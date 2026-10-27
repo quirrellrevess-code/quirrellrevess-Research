@@ -8,7 +8,7 @@
     <RootNamespace>UmaAutoTrainingPlugin</RootNamespace>
   </PropertyGroup>
   <PropertyGroup>
-    <UraReferenceDir Condition="'$(UraReferenceDir)' == ''">$(MSBuildThisFileDirectory)..\URA</UraReferenceDir>
+    <UraReferenceDir Condition="'$(UraReferenceDir)' == ''">$(MSBuildThisFileDirectory)..\hshdbaj</UraReferenceDir>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="UmamusumeResponseAnalyzer"><HintPath>$(UraReferenceDir)\UmamusumeResponseAnalyzer.dll</HintPath><Private>false</Private></Reference>

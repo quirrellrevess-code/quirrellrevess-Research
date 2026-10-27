@@ -5,7 +5,7 @@ on:
     branches:
       - feature/auto-training-plugin
     paths:
-      - "AutoTrainingPlugin/AIRedirectorIntegration/**"
+      - "components/AIRedirectorIntegration/**"
       - ".github/workflows/airredirector-patch-check.yml"
   workflow_dispatch:
 
@@ -38,12 +38,12 @@ jobs:
           git init -q
           git add Class1.cs
           git -c user.name=CI -c user.email=ci@example.invalid commit -qm "Pinned AIRedirector source"
-          PATCH="$GITHUB_WORKSPACE/AutoTrainingPlugin/AIRedirectorIntegration/patches/0001-passive-recommendation-sink.patch"
+          PATCH="$GITHUB_WORKSPACE/components/AIRedirectorIntegration/patches/0001-passive-recommendation-sink.patch"
           git apply --check --verbose "$PATCH"
           git apply "$PATCH"
           git diff --check
           grep -Fq 'recommendationSink.TryRecord(output.Line)' Class1.cs
           grep -Fq 'recommendationSink.SetTarget(null, null)' Class1.cs
           grep -Fq 'Capture(recommendationSink.Dispose)' Class1.cs
-          test -s "$GITHUB_WORKSPACE/AutoTrainingPlugin/AIRedirectorIntegration/LegendAiRecommendationSink.cs"
+          test -s "$GITHUB_WORKSPACE/components/AIRedirectorIntegration/LegendAiRecommendationSink.cs"
           echo "PASS: pinned source accepts passive sink patch; sink source exists"
