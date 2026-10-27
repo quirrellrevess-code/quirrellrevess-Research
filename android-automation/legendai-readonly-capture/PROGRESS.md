@@ -118,3 +118,11 @@ The public URA source repository `UmamusumeResponseAnalyzer/UmamusumeResponseAna
 - The report contains no explicit console attach, buffer info, or probe exception failure lines. This confirms the console-buffer read succeeded for that sample.
 - The collector still recorded child `probeExitCode=1`; this is not explained by the report text alone. The next read-only diagnostic is the associated stderr file. Do not infer the exact source of the nonzero exit code until stderr is inspected.
 - Current milestone: single-sample structured extraction works. Continuous capture, recommendation freshness, and turn association remain unverified. No game input or configuration change is authorized or performed.
+
+## 2026-10-27 — Probe exit-code diagnosis and defensive console clear
+
+- The user's stderr file contains only a Win32 error from assigning `$RawUI.CursorPosition`, with error identifier `ExceptionWhenSetting` and Win32 code `0x6` (invalid handle). The probe report itself had no console attach/read exception and contained a valid recommendation row.
+- The probe's final `Clear-Host` is the likely trigger because the built-in clear-host operation manipulates console cursor state; the failure occurs after the report has already been written. This explains how a valid report can coexist with child exit code 1, though the fix still needs a user-side runtime check.
+- Updated `Probe-AnalyzerConsole.ps1` to make the final `Clear-Host` best-effort inside `try/catch`, so an unsupported console cursor operation should not abort the probe after successful capture. Commit: `2a72642be497f2b677470a4016929ef57b25fc6a`.
+- No game actions, clicks, process restarts, network requests, or configuration edits were performed. No GitHub Actions were run.
+- Next: run the updated probe/collector once using the cache-busted raw URL, then verify that the recommendation/report still appear and `probeExitCode` is 0. If the exit code remains nonzero, inspect the new stderr rather than assuming the fix succeeded. Continuous capture, recommendation freshness, and turn association remain unverified.
