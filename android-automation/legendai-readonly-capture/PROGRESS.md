@@ -73,3 +73,14 @@ The public URA source repository `UmamusumeResponseAnalyzer/UmamusumeResponseAna
 
 - Baseline comparison against pre-rename commit `6e46e42d340881cc60152ca0f547fd5555a7ec2f` shows that four referenced dependency DLLs (`Spectre.Console.dll`, `YamlDotNet.dll`, `WatsonWebserver.Lite.dll`, `WatsonWebserver.Core.dll`) were already absent from the tracked dependency directory before the rename and remain absent. Do not attribute these missing files to the rename.
 - Stale root-relative references and workflow source paths have been repaired across all five branches; all 38 unique source paths referenced by the research branch's offline-test workflow exist in its current tree. Full build/test status remains NOT_VERIFIED because Actions and local builds were not run and the four DLLs are not tracked here.
+
+## 2026-10-27 — First successful console capture and structured collector
+
+- User-run report UmaAI-AnalyzerConsoleProbe-20261027-145753.txt confirms that the probe read a 120x30 console buffer from analyzer PID 21228.
+- Captured line SCREEN[27]: AI建议：休息; state before and after remained turn=3, isRacing=False, scenarioId=10; the probe reports STATE_FILE_UNCHANGED_DURING_PROBE: True.
+- This proves one successful read of the currently visible console buffer and extraction of one recommendation. It does not prove continuous capture, freshness of the recommendation, or reliable association across turn transitions.
+- Added Collect-AnalyzerRecommendation.ps1: a PowerShell 5.1-compatible launcher that runs the console-attaching probe as a child process, redirects child stdout/stderr to TEMP files, parses the report into a JSON record, snapshots thisTurn.json before and after, and labels the result as a single-sample status rather than claiming full MVP acceptance.
+- Expected output is a JSON file under %TEMP%. The collector has not yet been executed on the user's PC; PowerShell syntax/runtime behavior and its child-process behavior remain NOT_VERIFIED.
+- Safety remains read-only: no game input, clicks, process restarts, network requests, or configuration changes. No GitHub Actions were run.
+- Next: perform static review of the new script and regex against the supplied report; then provide one complete download-and-run command. Review the resulting JSON before making further changes. Do not start action execution until repeated capture and turn-association checks pass.
+
