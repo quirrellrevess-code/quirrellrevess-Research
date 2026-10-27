@@ -133,7 +133,7 @@ try {
 } catch {
     $clipboardStatus = ('FAILED: ' + $_.Exception.Message)
 }
-Clear-Host
+try { Clear-Host } catch { }
 Write-Host 'UmaAI analyzer console probe' -ForegroundColor Magenta
 Write-Host ('Report: {0}' -f $reportPath) -ForegroundColor Magenta
 Write-Host ('Clipboard: {0}' -f $clipboardStatus) -ForegroundColor Magenta
