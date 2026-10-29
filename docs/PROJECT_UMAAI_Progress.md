@@ -1,7 +1,7 @@
 # UmaAI-Research 项目进度与自动归档规则
 
-- 仓库：`wosafety0/UmaAI-Research`（Private）
-- 仓库地址：https://github.com/wosafety0/UmaAI-Research
+- 仓库：`quirrellrevess-code/quirrellrevess-Research`（Public；以当前 GitHub 仓库元数据为准）
+- 仓库地址：https://github.com/quirrellrevess-code/quirrellrevess-Research
 - 本文档：`docs/PROJECT_UMAAI_Progress.md`
 - 本轮归档日期：2026-10-25（+08:00）
 - 当前研究分支：`analysis/qianye-reverse-engineering-20261025`
@@ -368,3 +368,11 @@
 - User-reported local blocker (not independently verified in this repository): UmamusumeResponseAnalyzer 1.14.3.2 crashed with a .NET FailFast callback; LegendAI\\aiConfig_cpu.json was reported invalid because of comments and a duplicate object. The local logs/config are not present here, so this entry does not claim a root cause or a repair. No local configuration was edited, and no game or APK was launched.
 - Next: when sanitized crash logs are available, investigate the reported local failure from evidence; separately confirm whether the passive recorder and recommendation sink are actually enabled and produce real logs. If no real samples exist, keep the correlation/action path blocked rather than substituting synthetic data or continuing untargeted Qianye deobfuscation.
 - Safety: no game input, account operation, runtime action, or deployment was performed. Taiwan server remains first priority, Japan is reference-only, and China server is excluded.
+
+
+### 2026-10-30 — Correct current research repository identity
+
+- GitHub repository metadata independently confirms that the active repository is `quirrellrevess-code/quirrellrevess-Research`, default branch `main`, visibility `public`; the previous header pointed to the historical `wosafety0/UmaAI-Research` identity and incorrectly labeled the current repository private.
+- Updated only the current-facing repository identity and URL at the top of this progress log. Historical references and branch-specific findings remain untouched; this does not rename paths or alter the private path alias map.
+- Work branch: `analysis/research-repo-identity-20261030`, based on `758294757cbf8bdad55f8ec78ecfe379c7f8bd58`. This is a documentation correction, not a runtime implementation or game verification. The active Taiwan-first passive observation scope and fail-closed action policy remain unchanged.
+- No game input, account access, local file edits, deployment or action-channel testing. Validation status must be checked against the exact commit CI result before claiming offline tests passed.
