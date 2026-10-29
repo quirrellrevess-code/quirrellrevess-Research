@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - feature/auto-training-plugin
+      - "analysis/**"
   pull_request:
     branches:
       - main
