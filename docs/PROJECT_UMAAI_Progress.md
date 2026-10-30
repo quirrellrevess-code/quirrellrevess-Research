@@ -376,3 +376,12 @@
 - Updated only the current-facing repository identity and URL at the top of this progress log. Historical references and branch-specific findings remain untouched; this does not rename paths or alter the private path alias map.
 - Work branch: `analysis/research-repo-identity-20261030`, based on `758294757cbf8bdad55f8ec78ecfe379c7f8bd58`. This is a documentation correction, not a runtime implementation or game verification. The active Taiwan-first passive observation scope and fail-closed action policy remain unchanged.
 - No game input, account access, local file edits, deployment or action-channel testing. Validation status must be checked against the exact commit CI result before claiming offline tests passed.
+
+
+### 2026-10-31 — Upgrade CI actions to immutable Node 24-compatible pins (implementation; CI pending)
+
+- Reviewed the latest workflow at the research branch. Exact-head CI [40976127514](https://github.com/quirrellrevess-code/quirrellrevess-Research/actions/runs/40976127514) passed its existing checks but emitted runner warnings because `actions/checkout@v4`, `actions/setup-python@v5`, and `actions/setup-dotnet@v4` use Node.js 20 and were being forced to run on Node.js 24.
+- Verified the version tags against GitHub refs and inspected each pinned `action.yml`: checkout v5 `fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09` (blob `5b0524f730db83f9513c18ab31a6c086c7239076`), setup-python v6 `ece7cb06caefa5fff74198d8649806c4678c61a1` (blob `7a9a7b634ec348b35b882f1f14fcaa4d41836a8e`), and setup-dotnet v5 `26b0ec14cb23fa6904739307f278c14f94c95bf1` (blob `e2ac19d07d473ac8bfeaafef97d5142d2c89c146`). All three action manifests declare the Node 24 runtime.
+- Updated only `.github/workflows/auto-training-tests.yml` to use these immutable commit pins with version comments. Test commands, permissions (`contents: read`), target .NET version, and research scope are unchanged.
+- Development branch: `analysis/actions-node24-maintenance-20261031`, based on `4ecdb37dd95a77cf25e0af6281395a0b7503954a`; the new workflow run is pending. This is workflow-maintenance work, not game-runtime validation.
+- No game input, account operation, local configuration edit, deployment, or change to the Taiwan-first/Japan-reference/China-excluded research boundary.
