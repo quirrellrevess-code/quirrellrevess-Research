@@ -397,3 +397,7 @@
 - Status: public source behavior `VERIFIED` at the cited commits; local runtime, installed DLL identity, Taiwan-specific behavior, and action execution `NOT_VERIFIED`. No local file/configuration change, game launch/input, account operation, request replay, build, or deployment occurred.
 - Documentation implementation commit: `a178068f15bc116951c316e86eb17895c00ab38c`; topic document blob `48aea1be84c3ba15b8ebcf44bd7f78bdfba84cc1`. This progress entry is a documentation archive only; exact-head CI is required before claiming the archive revision is CI-verified.
 - Next priority: obtain only sanitized local version/hash and natural-run output/state evidence through a read-only path; do not infer installed-binary behavior from upstream source and do not enable game actions.
+
+
+
+- Follow-up verification: exact-head Push CI [41254041358](https://github.com/quirrellrevess-code/quirrellrevess-Research/actions/runs/41254041358) completed successfully for candidate `3e9e1d3985c4f9b39e56809e879a76b1013e1eba`: Python compilation + 142 offline tests, pinned AIRedirector patch check, and .NET 10 recommendation-sink smoke test all passed. This follow-up progress commit records that evidence; its own exact-head CI must also pass before this final archive head is marked CI-verified.
