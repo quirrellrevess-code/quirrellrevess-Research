@@ -401,3 +401,5 @@
 
 
 - Follow-up verification: exact-head Push CI [41254041358](https://github.com/quirrellrevess-code/quirrellrevess-Research/actions/runs/41254041358) completed successfully for candidate `3e9e1d3985c4f9b39e56809e879a76b1013e1eba`: Python compilation + 142 offline tests, pinned AIRedirector patch check, and .NET 10 recommendation-sink smoke test all passed. This follow-up progress commit records that evidence; its own exact-head CI must also pass before this final archive head is marked CI-verified.
+
+- Follow-up exact-head verification: Push CI [41254102250](https://github.com/quirrellrevess-code/quirrellrevess-Research/actions/runs/41254102250) passed on `7b21fb41cd91d4a6b19d870f97f2d3412b729557`: Python compilation and 142 offline tests, AIRedirector pinned-source patch check, and .NET 10 recommendation-sink smoke test all passed. The progress file at that tested head was remotely read back as blob `21e82b474b241d2b4e01973c39b902bc0a8fabe1`.
