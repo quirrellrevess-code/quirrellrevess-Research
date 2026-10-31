@@ -38,3 +38,36 @@
 - AI 建议的外部读取桥接尚未实现。
 - 游戏动作提交尚未实现。
 - 本轮为源码调查，没有在本机编译或运行 URA/游戏，因此不代表端到端验证通过。
+
+
+
+## 2026-11-01 — Upstream LegendAI / AIRedirector / URA action-channel boundary recheck
+
+### Source revisions inspected
+
+This is a public-source reference audit, not a claim that these repositories or revisions match the user's installed binaries:
+
+- `Akkarriin/UmaAi` HEAD `e855d52e6bf7284269df84ab61aca4f687c19b26`: [README](https://github.com/Akkarriin/UmaAi/blob/e855d52e6bf7284269df84ab61aca4f687c19b26/README.md), [MainAi.cpp](https://github.com/Akkarriin/UmaAi/blob/e855d52e6bf7284269df84ab61aca4f687c19b26/UmaSimulator/MainCommands/MainAi.cpp).
+- `URA-Plugins/AIRedirector` HEAD `c18c17716fb9f94efd68e50d3c493e13c8693123`: [AGENTS.md](https://github.com/URA-Plugins/AIRedirector/blob/c18c17716fb9f94efd68e50d3c493e13c8693123/AGENTS.md), [Class1.cs](https://github.com/URA-Plugins/AIRedirector/blob/c18c17716fb9f94efd68e50d3c493e13c8693123/Class1.cs), [UmaAiRawOutputWorkspace.cs](https://github.com/URA-Plugins/AIRedirector/blob/c18c17716fb9f94efd68e50d3c493e13c8693123/UmaAiRawOutputWorkspace.cs), [LegendAiOutputBuffer.cs](https://github.com/URA-Plugins/AIRedirector/blob/c18c17716fb9f94efd68e50d3c493e13c8693123/LegendAiOutputBuffer.cs).
+- `UmamusumeResponseAnalyzer/UmamusumeResponseAnalyzer` HEAD `af5f2a37372fa7ad5a7c30553b1c8443e35908fa`: [Server.cs](https://github.com/UmamusumeResponseAnalyzer/UmamusumeResponseAnalyzer/blob/af5f2a37372fa7ad5a7c30553b1c8443e35908fa/UmamusumeResponseAnalyzer/Server.cs), [RequestBase.cs](https://github.com/UmamusumeResponseAnalyzer/UmamusumeResponseAnalyzer/blob/af5f2a37372fa7ad5a7c30553b1c8443e35908fa/UmamusumeResponseAnalyzer/Gallop/RequestBase.cs), [RequestCommon.cs](https://github.com/UmamusumeResponseAnalyzer/UmamusumeResponseAnalyzer/blob/af5f2a37372fa7ad5a7c30553b1c8443e35908fa/UmamusumeResponseAnalyzer/Gallop/RequestCommon.cs), [SingleModeExecCommandRequestCommon.cs](https://github.com/UmamusumeResponseAnalyzer/UmamusumeResponseAnalyzer/blob/af5f2a37372fa7ad5a7c30553b1c8443e35908fa/UmamusumeResponseAnalyzer/Gallop/SingleModeExecCommandRequestCommon.cs).
+
+### Verified source behavior
+
+1. **Akkarriin/UmaAi is a simulator/decision-analysis program, not the game-action executor.** Its README says it consumes already structured game state, computes and displays recommendations, and leaves state acquisition and actual action execution to the user or an external frontend. It documents `localfile`, `urafile`, and `websocket` input modes. `MainAi.cpp` reads the URA `thisTurn.json` path in `urafile` mode or receives state through the local `127.0.0.1:4693` WebSocket mode; this path emits decision output and does not establish a game-action submission channel. The README also says this repository is no longer maintained. Do not equate this public repository with the exact LegendAI executable installed locally.
+
+2. **Current upstream AIRedirector routes process stdout to UI, not to an external structured recommendation bridge.** `Class1.cs` starts the configured UmaAI child process, reads UTF-8 stdout/stderr, publishes raw lines to `UmaAiRawOutputWorkspace`, and, when Legend is available, passes recognized lines to `LegendAiOutputBuffer` to update Legend's training/selection display. `UmaAiRawOutputWorkspace` retains at most 300 lines in an in-memory list for the workspace; the inspected path does not write a JSONL recommendation stream or expose a named-pipe/WebSocket consumer. This confirms the current upstream UI-display path only; it does not prove what the user's older installed DLL contains.
+
+3. **Current upstream AIRedirector has a startup side effect on state files.** During `Initialize`, if `PluginData/SendGameStatusPlugin` exists, `Class1.cs` enumerates its JSON files and overwrites every file named `thisTurn.json` with `{}`. This is an observed behavior in the inspected upstream revision, not proof that the user's installed DLL has the same code or that it caused a reported local failure. The project progress record previously identified the local `AIRedirector.dll` as dated 2026-07-05; its exact source revision/hash has not been matched to this upstream HEAD.
+
+4. **URA notification endpoints are receive-and-analyze hooks, not an action sender.** In `Server.cs`, `/notify/request` and `/notify/response` accept already-forwarded payloads and selected headers, then call `DispatchPacket`. `DispatchPacket` resolves an endpoint and invokes registered analyzers; the HTTP handler returns an empty response. The inspected `RequestBase` / `RequestCommon` / `SingleModeExecCommandRequestCommon` types are protocol DTOs. Their existence and command fields do not establish a supported way to originate a new authenticated game request; the common request model also contains client/session identity fields.
+
+### Conclusion and scope
+
+- No supported game-action submission path was established by these public sources. Do not treat `/notify/request`, `/notify/response`, a DTO, or the local WebSocket state feed as an action API; do not synthesize or replay requests.
+- The current upstream source gives a concrete stdout/UI integration model, but the installed DLL identity, actual local output, same-run/turn correlation, and any Taiwan-server-specific behavior remain unverified.
+- These sources are generic upstream references. Taiwan remains the primary research target; Japan is reference-only; China is excluded. No Taiwan-server protocol conclusion is inferred from this audit.
+- Next useful evidence is a read-only comparison of the installed DLL version/hash with a source revision, plus sanitized natural-run stdout and state samples with run/turn identifiers. Until that is available, keep the recommendation bridge in shadow/read-only mode and keep action submission blocked.
+
+### Execution boundary
+
+Static public-source inspection only. No local files/configuration were read or changed in this round, no game was launched, no game input or account operation was performed, no request was constructed or sent, and no deployment or upstream repository change was made.
