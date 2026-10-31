@@ -71,3 +71,11 @@ This is a public-source reference audit, not a claim that these repositories or 
 ### Execution boundary
 
 Static public-source inspection only. No local files/configuration were read or changed in this round, no game was launched, no game input or account operation was performed, no request was constructed or sent, and no deployment or upstream repository change was made.
+
+
+
+### Cross-check against the exact AIRedirector patch base used by this project
+
+- The current branch's `.github/workflows/auto-training-tests.yml` pins AIRedirector source commit `6e31c415e5774aaab3d5203432f5133c41e47b57` for the recommendation-sink patch check.
+- Fetching `Class1.cs` at that exact pinned commit returns blob `c5ee169c28e2f07c17b0a6c87ecd5c689fb4ca72`, identical to the `Class1.cs` blob fetched from current AIRedirector master `c18c17716fb9f94efd68e50d3c493e13c8693123`.
+- The `Initialize` behavior that overwrites matching `thisTurn.json` files with `{}` is therefore present not only in current master but also in the exact upstream source revision used by this project's patch-validation workflow. This still does **not** prove that the user's locally installed 2026-07-05 DLL contains the same behavior.
