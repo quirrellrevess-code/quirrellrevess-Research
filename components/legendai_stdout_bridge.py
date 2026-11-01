@@ -19,13 +19,13 @@ def parse_recommendation(line: str) -> dict[str, str] | None:
     """Extract a conservative human-readable candidate, never a game command ID."""
     raw = line.rstrip("\r\n")
     normalized = raw.strip()
-    if not normalized.startswith("AI建议"):
+    prefix = "AI建议"
+    if not normalized.startswith(prefix):
         return None
-
-    separator = next((i for i, char in enumerate(normalized) if char in ":："), -1)
-    if separator < 0:
+    remainder = normalized[len(prefix):].lstrip()
+    if not remainder or remainder[0] not in ":：":
         return None
-    body = normalized[separator + 1 :].strip()
+    body = remainder[1:].strip()
     if not body:
         return None
 
