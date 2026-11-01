@@ -405,3 +405,10 @@
 - Follow-up exact-head verification: Push CI [41254102250](https://github.com/quirrellrevess-code/quirrellrevess-Research/actions/runs/41254102250) passed on `7b21fb41cd91d4a6b19d870f97f2d3412b729557`: Python compilation and 142 offline tests, AIRedirector pinned-source patch check, and .NET 10 recommendation-sink smoke test all passed. The progress file at that tested head was remotely read back as blob `21e82b474b241d2b4e01973c39b902bc0a8fabe1`.
 
 - Additional source cross-check: this repository's `.github/workflows/auto-training-tests.yml` pins AIRedirector `Class1.cs` at `6e31c415e5774aaab3d5203432f5133c41e47b57`; that exact file resolves to blob `c5ee169c28e2f07c17b0a6c87ecd5c689fb4ca72`, identical to the current upstream master file. Therefore the observed `thisTurn.json` reset is present in the exact upstream source used by the project's patch-check workflow, but still cannot be attributed to the user's older local DLL without a local binary/source match.
+
+
+### 2026-11-02 — Final exact-head CI evidence archived
+
+- The final source-audit candidate HEAD 946c1e026a62bc5d14c6a47d40c2147a4b54ff02 passed Push CI [run 41254459552](https://github.com/quirrellrevess-code/quirrellrevess-Research/actions/runs/41254459552). GitHub job readback confirms all three jobs completed successfully: python-offline-tests, airredirector-patch-check, and recommendation-sink-dotnet-smoke.
+- The PR record and GitHub readback identify the tested progress-file blob as b7e895f5f564dbdb9ed9ad05102d88a01a681c66. This entry records that already-verified candidate head; the new documentation-only archive commit's own CI is not claimed until separately checked.
+- Scope remains Taiwan-first, Japan-reference-only, China-excluded. Installed local DLL identity, Taiwan runtime behavior, natural-run state/recommendation correlation, and any supported game-action submission path remain NOT_VERIFIED / BLOCKED. No local configuration, game input, account action, or upstream repository change was performed.
