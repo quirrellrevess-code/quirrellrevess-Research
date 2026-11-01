@@ -37,5 +37,22 @@ class LegendAiBridgeTests(unittest.TestCase):
             self.assertTrue(all(r["turn_association_status"] == "unavailable_in_stdout_only" for r in rows))
 
 
+    def test_requires_exact_recommendation_prefix_before_separator(self):
+        invalid_lines = (
+            "AI建议debug:休息",
+            "AI建议 extra:休息",
+            "AI建议foo：速",
+            "AI建议",
+            "AI建议：",
+        )
+        for line in invalid_lines:
+            with self.subTest(line=line):
+                self.assertIsNone(parse_recommendation(line))
+
+    def test_accepts_only_optional_whitespace_before_colon(self):
+        for line in ("AI建议:休息", "AI建议 ：休息", "  AI建议   : 速  "):
+            with self.subTest(line=line):
+                self.assertIsNotNone(parse_recommendation(line))
+
 if __name__ == "__main__":
     unittest.main()
