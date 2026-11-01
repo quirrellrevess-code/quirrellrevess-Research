@@ -33,3 +33,9 @@
 ## 安全停止条件
 
 遇到缺失 target、回合不一致、重复建议、未知建议格式、状态不就绪或执行后状态未变化，必须停止自动操作；不得猜测 command ID、重放未知协议请求或退回固定坐标盲点。
+
+## 2026-11-02 — Python fallback prefix guard
+
+- Static review found that the standalone Python stdout fallback accepted any line beginning with `AI建议` if a later colon appeared. Malformed text such as `AI建议debug:休息` could therefore be misclassified as a recommendation.
+- The parser now requires the exact `AI建议` prefix followed only by optional whitespace and an ASCII or full-width colon, matching the C# sink's prefix boundary. The recommendation body remains descriptive text only; it still creates no action ID and always records `verified=false` / `executable=false`.
+- Offline tests cover malformed prefix variants and accepted optional whitespace. This is a parser-quality fix only; it does not establish run/turn association, Taiwan-server behavior, or an action submission path.
