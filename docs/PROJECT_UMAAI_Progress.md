@@ -385,3 +385,30 @@
 - Updated only `.github/workflows/auto-training-tests.yml` to use these immutable commit pins with version comments. Test commands, permissions (`contents: read`), target .NET version, and research scope are unchanged.
 - Development branch: `analysis/actions-node24-maintenance-20261031`, based on `4ecdb37dd95a77cf25e0af6281395a0b7503954a`; implementation commit `95060513bf911dbe758be2ef8bd23f6fe2df57b4` passed exact-head Push CI [41111036205](https://github.com/quirrellrevess-code/quirrellrevess-Research/actions/runs/41111036205). All three jobs succeeded: Python **142/142**, AIRedirector patch check, and .NET 10 sink smoke test. Job logs contain no Node.js 20 deprecation warnings after the upgrade. This is workflow-maintenance validation, not game-runtime validation.
 - No game input, account operation, local configuration edit, deployment, or change to the Taiwan-first/Japan-reference/China-excluded research boundary.
+
+
+
+### 2026-11-01 — Public upstream action-channel boundary rechecked
+
+- Static source audit of `Akkarriin/UmaAi@e855d52e6bf7284269df84ab61aca4f687c19b26`, `URA-Plugins/AIRedirector@c18c17716fb9f94efd68e50d3c493e13c8693123`, and `UmamusumeResponseAnalyzer/UmamusumeResponseAnalyzer@af5f2a37372fa7ad5a7c30553b1c8443e35908fa` is recorded in `docs/ACTION_SUBMISSION_CHANNEL_INVESTIGATION.md`.
+- Verified: the public UmaAi README describes a structured-state simulator/decision engine that outputs recommendations while leaving game action execution to an external user/frontend; current AIRedirector reads UmaAI stdout and updates the Legend UI, with no external structured recommendation sink found in the inspected path; URA `/notify/request` and `/notify/response` receive already-forwarded packets and dispatch analyzers rather than originate game actions.
+- Additional source caveat: current upstream AIRedirector `Class1.Initialize` overwrites `thisTurn.json` files under `PluginData/SendGameStatusPlugin` with `{}`. The local DLL recorded in the existing project log is dated 2026-07-05; exact binary/source identity is not established, so this upstream side effect must not be attributed to the installed DLL without a read-only version/hash comparison.
+- Research boundary: this is generic upstream source evidence, not Taiwan-server runtime evidence. Taiwan remains first priority, Japan reference-only, China excluded. The user's actual LegendAI binary, current local stdout, same-run/turn recommendation correlation, and a supported action submission path remain `NOT_VERIFIED` / `BLOCKED` pending local read-only evidence.
+- Status: public source behavior `VERIFIED` at the cited commits; local runtime, installed DLL identity, Taiwan-specific behavior, and action execution `NOT_VERIFIED`. No local file/configuration change, game launch/input, account operation, request replay, build, or deployment occurred.
+- Documentation implementation commit: `a178068f15bc116951c316e86eb17895c00ab38c`; topic document blob `48aea1be84c3ba15b8ebcf44bd7f78bdfba84cc1`. This progress entry is a documentation archive only; exact-head CI is required before claiming the archive revision is CI-verified.
+- Next priority: obtain only sanitized local version/hash and natural-run output/state evidence through a read-only path; do not infer installed-binary behavior from upstream source and do not enable game actions.
+
+
+
+- Follow-up verification: exact-head Push CI [41254041358](https://github.com/quirrellrevess-code/quirrellrevess-Research/actions/runs/41254041358) completed successfully for candidate `3e9e1d3985c4f9b39e56809e879a76b1013e1eba`: Python compilation + 142 offline tests, pinned AIRedirector patch check, and .NET 10 recommendation-sink smoke test all passed. This follow-up progress commit records that evidence; its own exact-head CI must also pass before this final archive head is marked CI-verified.
+
+- Follow-up exact-head verification: Push CI [41254102250](https://github.com/quirrellrevess-code/quirrellrevess-Research/actions/runs/41254102250) passed on `7b21fb41cd91d4a6b19d870f97f2d3412b729557`: Python compilation and 142 offline tests, AIRedirector pinned-source patch check, and .NET 10 recommendation-sink smoke test all passed. The progress file at that tested head was remotely read back as blob `21e82b474b241d2b4e01973c39b902bc0a8fabe1`.
+
+- Additional source cross-check: this repository's `.github/workflows/auto-training-tests.yml` pins AIRedirector `Class1.cs` at `6e31c415e5774aaab3d5203432f5133c41e47b57`; that exact file resolves to blob `c5ee169c28e2f07c17b0a6c87ecd5c689fb4ca72`, identical to the current upstream master file. Therefore the observed `thisTurn.json` reset is present in the exact upstream source used by the project's patch-check workflow, but still cannot be attributed to the user's older local DLL without a local binary/source match.
+
+
+### 2026-11-02 — Final exact-head CI evidence archived
+
+- The final source-audit candidate HEAD 946c1e026a62bc5d14c6a47d40c2147a4b54ff02 passed Push CI [run 41254459552](https://github.com/quirrellrevess-code/quirrellrevess-Research/actions/runs/41254459552). GitHub job readback confirms all three jobs completed successfully: python-offline-tests, airredirector-patch-check, and recommendation-sink-dotnet-smoke.
+- The PR record and GitHub readback identify the tested progress-file blob as b7e895f5f564dbdb9ed9ad05102d88a01a681c66. This entry records that already-verified candidate head; the new documentation-only archive commit's own CI is not claimed until separately checked.
+- Scope remains Taiwan-first, Japan-reference-only, China-excluded. Installed local DLL identity, Taiwan runtime behavior, natural-run state/recommendation correlation, and any supported game-action submission path remain NOT_VERIFIED / BLOCKED. No local configuration, game input, account action, or upstream repository change was performed.
