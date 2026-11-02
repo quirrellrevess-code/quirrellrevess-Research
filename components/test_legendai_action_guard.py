@@ -1,4 +1,5 @@
 import unittest
+from collections import UserDict
 
 from legendai_action_guard import check_action
 
@@ -18,6 +19,16 @@ class GuardTests(unittest.TestCase):
 
     def test_valid_action(self):
         self.assertTrue(self.check().allowed)
+
+    def test_custom_mapping_inputs_are_rejected_before_field_access(self):
+        self.assertEqual(
+            self.check(rec=UserDict(self.rec)).reason,
+            "invalid_input",
+        )
+        self.assertEqual(
+            self.check(state=UserDict(self.state)).reason,
+            "invalid_input",
+        )
 
     def test_frozenset_allowlist_and_ledger_are_supported(self):
         result = self.check(actions=frozenset({"train_speed"}), done=frozenset())

@@ -17,6 +17,7 @@
 
 - components/legendai_action_guard.py validates a recommendation against caller-supplied state, an explicit action allowlist, and a caller-supplied completed-turn ledger. The helper does not persist that ledger; process-restart duplicate protection requires a separately verified durable store.
 - GuardResult.allowed == True means only that the supplied evidence is eligible for a separately verified executor. It does not submit input, prove that a supported game-action channel exists, or authorize game/account operations.
+- Recommendation and state records must be exact built-in dictionaries (the expected JSON-decoded shape); custom `Mapping` implementations are rejected before their accessors are invoked.
 - The helper fails closed unless the action allowlist and completion ledger are built-in set/frozenset containers with exact string/tuple/integer shapes. Boolean values are not accepted as turn integers.
 
 ## 执行器最小流程

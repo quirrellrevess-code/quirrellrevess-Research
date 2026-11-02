@@ -7,7 +7,7 @@ adapter must provide a verified turn and an explicit, supported action ID.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any, Mapping
+from typing import Any
 
 
 @dataclass(frozen=True)
@@ -43,8 +43,8 @@ def _valid_completion_ledger(value: Any) -> bool:
 
 
 def check_action(
-    recommendation: Mapping[str, Any],
-    state: Mapping[str, Any],
+    recommendation: dict[str, Any],
+    state: dict[str, Any],
     *,
     supported_actions: set[str] | frozenset[str],
     completed_turns: set[tuple[str, int]] | frozenset[tuple[str, int]],
@@ -56,7 +56,7 @@ def check_action(
     separately verified executor; it does not provide or prove an action
     submission channel.
     """
-    if not isinstance(recommendation, Mapping) or not isinstance(state, Mapping):
+    if type(recommendation) is not dict or type(state) is not dict:
         return GuardResult(False, "invalid_input")
     if not _valid_action_allowlist(supported_actions):
         return GuardResult(False, "invalid_action_allowlist")
