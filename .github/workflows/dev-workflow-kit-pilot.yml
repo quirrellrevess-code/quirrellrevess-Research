@@ -10,7 +10,7 @@ permissions:
 
 jobs:
   acceptance:
-    uses: wosafety0/dev-workflow-kit/.github/workflows/reusable-acceptance.yml@c44f77d6f2b0aae07689e6127b203e1df4e3d77b
+    uses: wosafety0/dev-workflow-kit/.github/workflows/reusable-acceptance.yml@3df51ca949872fdc75d18feb902220b95957ec37
     with:
       runtime: python
       python-version: "3.12"
