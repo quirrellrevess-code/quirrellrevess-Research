@@ -13,6 +13,13 @@
 - `Server.cs` 中 `/notify/request` 和 `/notify/response` 是游戏通信的通知入口：它们读取并分析已发生的请求/响应，然后返回空响应。它们不是已确认的游戏操作提交端点。
 - 目前已找到 `Gallop.SingleModeExecCommandRequest` 数据结构，含 `command_type`、`command_id`、`command_group_id`、`select_id`、`current_turn`、`current_vital`。它只能证明存在相应请求模型，不能单凭此模型推断可直接从插件发送该请求。
 
+## Guard helper contract
+
+- components/legendai_action_guard.py validates a recommendation against caller-supplied state, an explicit action allowlist, and a caller-supplied completed-turn ledger. The helper does not persist that ledger; process-restart duplicate protection requires a separately verified durable store.
+- GuardResult.allowed == True means only that the supplied evidence is eligible for a separately verified executor. It does not submit input, prove that a supported game-action channel exists, or authorize game/account operations.
+- Recommendation and state records must be exact built-in dictionaries (the expected JSON-decoded shape); custom `Mapping` implementations are rejected before their accessors are invoked.
+- The helper fails closed unless the action allowlist and completion ledger are built-in set/frozenset containers with exact string/tuple/integer shapes. Boolean values are not accepted as turn integers.
+
 ## 执行器最小流程
 
 1. 读取 LegendAI 当前建议及其原始输出，不自行推导建议。
