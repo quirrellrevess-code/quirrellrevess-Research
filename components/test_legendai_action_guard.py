@@ -30,6 +30,13 @@ class GuardTests(unittest.TestCase):
             "invalid_input",
         )
 
+        class AccessorDict(dict):
+            def get(self, *args, **kwargs):
+                raise AssertionError("custom dict accessor must not run")
+
+        self.assertEqual(self.check(rec=AccessorDict(self.rec)).reason, "invalid_input")
+        self.assertEqual(self.check(state=AccessorDict(self.state)).reason, "invalid_input")
+
     def test_frozenset_allowlist_and_ledger_are_supported(self):
         result = self.check(actions=frozenset({"train_speed"}), done=frozenset())
         self.assertTrue(result.allowed)
