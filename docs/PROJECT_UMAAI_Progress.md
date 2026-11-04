@@ -492,3 +492,11 @@
 - **EXPECTED VALIDATION:** `python -m py_compile components/legendai_stdout_bridge.py components/test_legendai_stdout_bridge.py`; from `components/`, `python -m unittest -v test_legendai_stdout_bridge`. The repository workflow additionally runs the full 19-module offline suite, the pinned AIRedirector patch check, and the .NET 10 passive-sink smoke test.
 - **VALIDATION STATUS:** IMPLEMENTED; test code and docs are pushed. The workflow is configured for push on `analysis/**`, but the available workflow-run query exposes PR-triggered runs only; this stacked PR targets an analysis branch, and the push-run ID/result was not retrievable in this session. No local test execution was available. Do not mark TESTED/VERIFIED until exact-head CI is read back.
 - **SAFETY / RESEARCH SCOPE:** Passive text observation only; no process launch, turn correlation, action-ID inference, game input, account operation, request replay, or action submission. Taiwan remains first priority, Japan reference-only, China excluded. No local DLL inspection or local configuration change.
+
+
+### 2026-11-05 — Apply the same line bound to the C# AIRedirector sink
+
+- **FOLLOW-UP FINDING:** The Python fallback was bounded, but the integrated C# `LegendAiRecommendationSink.TryRecord` still passed arbitrary-length lines to regex matching and JSONL serialization. Limiting only the fallback would leave the actual AIRedirector sink unbounded.
+- **IMPLEMENTED:** C# sink now rejects null/over-4,096-character lines before whitespace scanning and regex matching. The workflow patch check asserts the size-bound constant remains present. The .NET 10 smoke test now accepts exactly 4,096 characters, rejects 4,097, verifies only the accepted records are persisted, and confirms the bounded record remains non-executable/unverified.
+- **COMMITS:** C# sink `f5334bfcd4c5abffca531d726eb3260768f9ea00`; workflow smoke/contract check `2560b363eb31434c97608f6eb2b5906d837cf206`; integration documentation `734f4b0c5b02e44952eccef17be85779a4e4a0f6`.
+- **VALIDATION STATUS:** IMPLEMENTED; exact-head native push CI is expected from the `analysis/**` push trigger, but the available workflow-run query does not expose push-triggered runs. No .NET smoke result is claimed until the exact-head run is read back. This is not a live plugin build or Taiwan-server runtime validation.
