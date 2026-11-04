@@ -54,5 +54,25 @@ class LegendAiBridgeTests(unittest.TestCase):
             with self.subTest(line=line):
                 self.assertIsNotNone(parse_recommendation(line))
 
+    def test_rejects_non_string_and_overlong_lines(self):
+        self.assertIsNone(parse_recommendation(None))
+        self.assertIsNone(parse_recommendation(1))
+        prefix = "AI建议："
+        at_limit = prefix + "x" * (4096 - len(prefix))
+        self.assertIsNotNone(parse_recommendation(at_limit))
+        self.assertIsNone(parse_recommendation(at_limit + "x"))
+
+    def test_record_stream_skips_overlong_line_and_continues(self):
+        with tempfile.TemporaryDirectory() as directory:
+            target = Path(directory) / "out.jsonl"
+            overlong = "AI建议：" + "x" * 4096
+            count = record_stream(
+                io.StringIO(overlong + "\nAI建议：休息\n"),
+                target,
+            )
+            self.assertEqual(count, 1)
+            rows = [json.loads(line) for line in target.read_text(encoding="utf-8").splitlines()]
+            self.assertEqual([row["recommendation_text"] for row in rows], ["休息"])
+
 if __name__ == "__main__":
     unittest.main()
