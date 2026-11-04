@@ -15,8 +15,13 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 
+_MAX_RECOMMENDATION_LINE_CHARS = 4096
+
+
 def parse_recommendation(line: str) -> dict[str, str] | None:
-    """Extract a conservative human-readable candidate, never a game command ID."""
+    """Extract a bounded human-readable candidate, never a game command ID."""
+    if type(line) is not str or len(line) > _MAX_RECOMMENDATION_LINE_CHARS:
+        return None
     raw = line.rstrip("\r\n")
     normalized = raw.strip()
     prefix = "AI建议"
