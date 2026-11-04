@@ -39,3 +39,11 @@
 - Static review found that the standalone Python stdout fallback accepted any line beginning with `AI建议` if a later colon appeared. Malformed text such as `AI建议debug:休息` could therefore be misclassified as a recommendation.
 - The parser now requires the exact `AI建议` prefix followed only by optional whitespace and an ASCII or full-width colon, matching the C# sink's prefix boundary. The recommendation body remains descriptive text only; it still creates no action ID and always records `verified=false` / `executable=false`.
 - Offline tests cover malformed prefix variants and accepted optional whitespace. This is a parser-quality fix only; it does not establish run/turn association, Taiwan-server behavior, or an action submission path.
+
+
+## 2026-11-05 — Bound passive Python stdout records
+
+- The standalone Python fallback now accepts only exact built-in strings up to 4,096 characters. Non-string and overlong lines are ignored before normalization, classification, and JSONL persistence.
+- The boundary is tested at exactly 4,096 characters and one character over; a stream regression confirms that skipping an oversized line does not prevent a later valid recommendation from being recorded.
+- This caps the accepted/persisted record payload; it does not claim to cap memory already used by the upstream text stream to materialize a line.
+- The bridge remains passive: no process launch, turn correlation, action-ID inference, game input, or action submission.
