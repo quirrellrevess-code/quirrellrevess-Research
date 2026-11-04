@@ -479,3 +479,16 @@
 - **EXACT-HEAD CI:** Native Auto-training [run 41692964375](https://github.com/quirrellrevess-code/quirrellrevess-Research/actions/runs/41692964375) and reusable Python consumer [run 41692963032](https://github.com/quirrellrevess-code/quirrellrevess-Research/actions/runs/41692963032) both succeeded. Python suite **156 tests**; AIRedirector pinned-source patch check and .NET 10 passive sink smoke test passed.
 - **COMMIT:** test-only commit `b27c4894f9df275b25ecbb66b4f282c1e3bf6390`; no production guard code changed.
 - **SAFETY:** Offline CI only. No local DLL inspection, game launch/input, account operation, request replay, action submission, or local configuration change. Taiwan remains first priority, Japan reference-only, China excluded.
+
+
+### 2026-11-05 — Bound passive LegendAI stdout recommendation lines
+
+- **FINDING:** The standalone Python stdout bridge previously accepted any-length strings and copied the full raw line into its JSONL record. A malformed or unexpectedly large line could create an oversized record and unnecessary downstream processing/storage.
+- **IMPLEMENTED:** `components/legendai_stdout_bridge.py` now accepts only exact built-in strings up to **4,096 characters**. Non-string and over-limit lines are rejected before normalization, classification, or persistence. The exact prefix grammar and fail-closed metadata remain unchanged.
+- **TESTS ADDED:** Exact 4,096-character boundary accepted; 4,097-character input rejected; non-string inputs rejected; an overlong stream line is skipped while the following valid recommendation is still recorded.
+- **DOCUMENTED:** `docs/AIRedirector_RECOMMENDATION_BRIDGE_INTEGRATION.md` records the limit and explicitly states that this bounds accepted/persisted record size, not memory already used by the upstream text stream to materialize a line.
+- **COMMITS:** parser `c500efeaa560cfc1459293166f25aba1deb47b52`; tests `6f0665893f7d74834b72504e88499281c91b99d9`; integration note `4438d4f256898798d5c13e980fe0654f48a5058c`.
+- **BRANCH / PR:** `analysis/bound-legendai-stdout-line-20261105`, [Draft PR #7](https://github.com/quirrellrevess-code/quirrellrevess-Research/pull/7), stacked on PR #6 at base `3cdad5093e973e41e61bebfdd8005f35a5a824e3`.
+- **EXPECTED VALIDATION:** `python -m py_compile components/legendai_stdout_bridge.py components/test_legendai_stdout_bridge.py`; from `components/`, `python -m unittest -v test_legendai_stdout_bridge`. The repository workflow additionally runs the full 19-module offline suite, the pinned AIRedirector patch check, and the .NET 10 passive-sink smoke test.
+- **VALIDATION STATUS:** IMPLEMENTED; test code and docs are pushed. The workflow is configured for push on `analysis/**`, but the available workflow-run query exposes PR-triggered runs only; this stacked PR targets an analysis branch, and the push-run ID/result was not retrievable in this session. No local test execution was available. Do not mark TESTED/VERIFIED until exact-head CI is read back.
+- **SAFETY / RESEARCH SCOPE:** Passive text observation only; no process launch, turn correlation, action-ID inference, game input, account operation, request replay, or action submission. Taiwan remains first priority, Japan reference-only, China excluded. No local DLL inspection or local configuration change.
