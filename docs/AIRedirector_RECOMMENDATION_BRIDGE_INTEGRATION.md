@@ -47,3 +47,10 @@
 - The boundary is tested at exactly 4,096 characters and one character over; a stream regression confirms that skipping an oversized line does not prevent a later valid recommendation from being recorded.
 - This caps the accepted/persisted record payload; it does not claim to cap memory already used by the upstream text stream to materialize a line.
 - The bridge remains passive: no process launch, turn correlation, action-ID inference, game input, or action submission.
+
+
+### C# AIRedirector sink parity
+
+- The integrated `LegendAiRecommendationSink` now applies the same 4,096-character limit before regex matching or JSONL persistence.
+- The .NET 10 passive-sink smoke test covers an accepted record exactly at the limit and rejects one character over; it also checks that the accepted record remains `verified=false` and `executable=false`.
+- This is a source-level/.NET smoke check only. It does not establish that the AIRedirector fork was deployed or exercised in a live Taiwan-server session.
