@@ -62,6 +62,25 @@ class LegendAiBridgeTests(unittest.TestCase):
         self.assertIsNotNone(parse_recommendation(at_limit))
         self.assertIsNone(parse_recommendation(at_limit + "x"))
 
+    def test_limit_counts_utf16_code_units_like_dotnet_string_length(self):
+        prefix = "AI建议："
+        exact = prefix + "😀" * 2045 + "x"
+        over = prefix + "😀" * 2046
+        self.assertEqual(len(exact.encode("utf-16-le")) // 2, 4096)
+        self.assertEqual(len(over.encode("utf-16-le")) // 2, 4097)
+        self.assertIsNotNone(parse_recommendation(exact))
+        self.assertIsNone(parse_recommendation(over))
+
+    def test_record_stream_accepts_exact_limit_with_line_terminator(self):
+        with tempfile.TemporaryDirectory() as directory:
+            target = Path(directory) / "out.jsonl"
+            prefix = "AI建议："
+            at_limit = prefix + "x" * (4096 - len(prefix)) + "\n"
+            count = record_stream(io.StringIO(at_limit), target)
+            self.assertEqual(count, 1)
+            rows = [json.loads(line) for line in target.read_text(encoding="utf-8").splitlines()]
+            self.assertEqual(len(rows[0]["raw"]), 4096)
+
     def test_record_stream_skips_overlong_line_and_continues(self):
         with tempfile.TemporaryDirectory() as directory:
             target = Path(directory) / "out.jsonl"

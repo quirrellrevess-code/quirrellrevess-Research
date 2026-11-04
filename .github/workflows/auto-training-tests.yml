@@ -112,15 +112,23 @@ jobs:
                       throw new Exception("Exact-limit recommendation rejected");
                   if (sink.TryRecord(atLimit + "x"))
                       throw new Exception("Over-limit recommendation accepted");
+                  var emoji = char.ConvertFromUtf32(0x1F600);
+                  var unicodeAtLimit = prefix + string.Concat(Enumerable.Repeat(emoji, 2045)) + "x";
+                  if (unicodeAtLimit.Length != 4096 || !sink.TryRecord(unicodeAtLimit))
+                      throw new Exception("Exact UTF-16-unit-limit recommendation rejected");
+                  var unicodeOverLimit = prefix + string.Concat(Enumerable.Repeat(emoji, 2046));
+                  if (unicodeOverLimit.Length != 4097 || sink.TryRecord(unicodeOverLimit))
+                      throw new Exception("Over-limit UTF-16-unit recommendation accepted");
                   sink.SetTarget(null, null);
                   if (!sink.TryRecord("AI建议: 休息"))
                       throw new Exception("Recommendation rejected after clear");
               }
               var lines = File.ReadAllLines(Path.Combine(root, "legendai-recommendations.jsonl"));
-              if (lines.Length != 3) throw new Exception("Unexpected record count");
+              if (lines.Length != 4) throw new Exception("Unexpected record count");
               using var first = JsonDocument.Parse(lines[0]);
               using var second = JsonDocument.Parse(lines[1]);
               using var third = JsonDocument.Parse(lines[2]);
+              using var fourth = JsonDocument.Parse(lines[3]);
               if (first.RootElement.GetProperty("single_mode_chara_id").GetInt32() != 123 ||
                   first.RootElement.GetProperty("turn").GetInt32() != 17 ||
                   first.RootElement.GetProperty("turn_association_status").GetString() != "target_context_available_unverified" ||
@@ -132,10 +140,14 @@ jobs:
                   second.RootElement.GetProperty("verified").GetBoolean() ||
                   second.RootElement.GetProperty("executable").GetBoolean())
                   throw new Exception("Exact-limit record violated the passive sink contract");
-              if (third.RootElement.GetProperty("single_mode_chara_id").ValueKind != JsonValueKind.Null ||
-                  third.RootElement.GetProperty("turn").ValueKind != JsonValueKind.Null ||
-                  third.RootElement.GetProperty("turn_association_status").GetString() != "unavailable_in_airredirector_context" ||
-                  third.RootElement.GetProperty("category").GetString() != "named_action")
+              if (third.RootElement.GetProperty("raw_line").GetString()?.Length != 4096 ||
+                  third.RootElement.GetProperty("verified").GetBoolean() ||
+                  third.RootElement.GetProperty("executable").GetBoolean())
+                  throw new Exception("Unicode exact-limit record violated the passive sink contract");
+              if (fourth.RootElement.GetProperty("single_mode_chara_id").ValueKind != JsonValueKind.Null ||
+                  fourth.RootElement.GetProperty("turn").ValueKind != JsonValueKind.Null ||
+                  fourth.RootElement.GetProperty("turn_association_status").GetString() != "unavailable_in_airredirector_context" ||
+                  fourth.RootElement.GetProperty("category").GetString() != "named_action")
                   throw new Exception("Cleared target leaked stale context");
               var blockedRoot = Path.Combine(Path.GetTempPath(), "sink-blocked-" + Guid.NewGuid().ToString("N"));
           File.WriteAllText(blockedRoot, "not a directory");

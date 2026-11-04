@@ -18,11 +18,27 @@ from pathlib import Path
 _MAX_RECOMMENDATION_LINE_CHARS = 4096
 
 
+def _within_utf16_limit(value: str) -> bool:
+    """Match .NET string.Length by counting UTF-16 code units, not Python code points."""
+    if len(value) > _MAX_RECOMMENDATION_LINE_CHARS:
+        return False
+    units = 0
+    for character in value:
+        units += 2 if ord(character) > 0xFFFF else 1
+        if units > _MAX_RECOMMENDATION_LINE_CHARS:
+            return False
+    return True
+
+
 def parse_recommendation(line: str) -> dict[str, str] | None:
     """Extract a bounded human-readable candidate, never a game command ID."""
-    if type(line) is not str or len(line) > _MAX_RECOMMENDATION_LINE_CHARS:
+    if type(line) is not str or len(line) > _MAX_RECOMMENDATION_LINE_CHARS + 2:
         return None
+    # stdin lines include one LF or CRLF delimiter; exclude it from the payload
+    # bound so an exact-limit record is accepted consistently with AIRedirector.
     raw = line.rstrip("\r\n")
+    if not _within_utf16_limit(raw):
+        return None
     normalized = raw.strip()
     prefix = "AI建议"
     if not normalized.startswith(prefix):
