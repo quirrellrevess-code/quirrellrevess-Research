@@ -61,6 +61,7 @@ jobs:
           grep -Fq 'recommendationSink.SetTarget(null, null)' Class1.cs
           grep -Fq 'Capture(recommendationSink.Dispose)' Class1.cs
           test -s "$GITHUB_WORKSPACE/components/AIRedirectorIntegration/LegendAiRecommendationSink.cs"
+          grep -Fq 'MaxRecommendationLineChars' "$GITHUB_WORKSPACE/components/AIRedirectorIntegration/LegendAiRecommendationSink.cs"
 
   recommendation-sink-dotnet-smoke:
     runs-on: ubuntu-latest
@@ -105,14 +106,21 @@ jobs:
                       throw new Exception("Non-recommendation accepted");
                   if (!sink.TryRecord("AI建议：训练速度"))
                       throw new Exception("Recommendation rejected");
+                  const string prefix = "AI建议：";
+                  var atLimit = prefix + new string('x', 4096 - prefix.Length);
+                  if (!sink.TryRecord(atLimit))
+                      throw new Exception("Exact-limit recommendation rejected");
+                  if (sink.TryRecord(atLimit + "x"))
+                      throw new Exception("Over-limit recommendation accepted");
                   sink.SetTarget(null, null);
                   if (!sink.TryRecord("AI建议: 休息"))
                       throw new Exception("Recommendation rejected after clear");
               }
               var lines = File.ReadAllLines(Path.Combine(root, "legendai-recommendations.jsonl"));
-              if (lines.Length != 2) throw new Exception("Unexpected record count");
+              if (lines.Length != 3) throw new Exception("Unexpected record count");
               using var first = JsonDocument.Parse(lines[0]);
               using var second = JsonDocument.Parse(lines[1]);
+              using var third = JsonDocument.Parse(lines[2]);
               if (first.RootElement.GetProperty("single_mode_chara_id").GetInt32() != 123 ||
                   first.RootElement.GetProperty("turn").GetInt32() != 17 ||
                   first.RootElement.GetProperty("turn_association_status").GetString() != "target_context_available_unverified" ||
@@ -120,10 +128,14 @@ jobs:
                   first.RootElement.GetProperty("verified").GetBoolean() ||
                   first.RootElement.GetProperty("executable").GetBoolean())
                   throw new Exception("First record did not match fail-closed contract");
-              if (second.RootElement.GetProperty("single_mode_chara_id").ValueKind != JsonValueKind.Null ||
-                  second.RootElement.GetProperty("turn").ValueKind != JsonValueKind.Null ||
-                  second.RootElement.GetProperty("turn_association_status").GetString() != "unavailable_in_airredirector_context" ||
-                  second.RootElement.GetProperty("category").GetString() != "named_action")
+              if (second.RootElement.GetProperty("raw_line").GetString()?.Length != 4096 ||
+                  second.RootElement.GetProperty("verified").GetBoolean() ||
+                  second.RootElement.GetProperty("executable").GetBoolean())
+                  throw new Exception("Exact-limit record violated the passive sink contract");
+              if (third.RootElement.GetProperty("single_mode_chara_id").ValueKind != JsonValueKind.Null ||
+                  third.RootElement.GetProperty("turn").ValueKind != JsonValueKind.Null ||
+                  third.RootElement.GetProperty("turn_association_status").GetString() != "unavailable_in_airredirector_context" ||
+                  third.RootElement.GetProperty("category").GetString() != "named_action")
                   throw new Exception("Cleared target leaked stale context");
               var blockedRoot = Path.Combine(Path.GetTempPath(), "sink-blocked-" + Guid.NewGuid().ToString("N"));
           File.WriteAllText(blockedRoot, "not a directory");
