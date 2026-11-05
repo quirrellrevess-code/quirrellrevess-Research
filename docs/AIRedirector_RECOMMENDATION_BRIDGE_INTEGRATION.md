@@ -64,6 +64,6 @@
 
 ## 2026-11-06 — Single-physical-line input boundary
 
-- The Python fallback removes at most one terminal LF, CRLF, or CR delimiter before applying the 4,096 UTF-16-code-unit payload bound. Any remaining CR/LF inside the payload, including a newline after the recommendation prefix or a second recommendation on the same input string, is rejected.
-- The C# AIRedirector sink rejects CR/LF before regex matching. `DataReceivedEventArgs.Data` is already a single line without its delimiter, so this prevents the regex's whitespace handling from spanning line breaks.
-- Both runtimes therefore classify only one physical recommendation line per record. This is input-shape validation only; it does not associate the recommendation with a verified turn or create an executable action.
+- The Python fallback removes at most one terminal LF, CRLF, or CR delimiter before applying the 4,096 UTF-16-code-unit payload bound. It rejects every remaining line separator recognized by Python `str.splitlines()` (including VT, FF, FS/GS/RS, NEL, U+2028, and U+2029), not just CR/LF.
+- The C# AIRedirector sink rejects the same separator set before regex matching. `DataReceivedEventArgs.Data` is already a single line without its CR/LF delimiter; the explicit Unicode separator guard prevents `\\s*` from treating an embedded Unicode line boundary as ordinary whitespace.
+- Both runtimes therefore classify only one physical recommendation line per record under their shared separator contract. This is input-shape validation only; it does not associate the recommendation with a verified turn or create an executable action.

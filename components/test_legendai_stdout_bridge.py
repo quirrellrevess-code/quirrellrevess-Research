@@ -90,6 +90,18 @@ class LegendAiBridgeTests(unittest.TestCase):
             with self.subTest(line=repr(line)):
                 self.assertIsNone(parse_recommendation(line))
 
+    def test_rejects_unicode_line_separators_as_non_physical_lines(self):
+        separators = ("\v", "\f", "\x1c", "\x1d", "\x1e", "\x85", "\u2028", "\u2029")
+        for separator in separators:
+            invalid_lines = (
+                f"AI建议{separator}:休息",
+                f"AI建议：速{separator}休息",
+                f"AI建议：休息{separator}",
+            )
+            for line in invalid_lines:
+                with self.subTest(separator=repr(separator), line=repr(line)):
+                    self.assertIsNone(parse_recommendation(line))
+
     def test_record_stream_accepts_exact_limit_with_line_terminator(self):
         with tempfile.TemporaryDirectory() as directory:
             target = Path(directory) / "out.jsonl"

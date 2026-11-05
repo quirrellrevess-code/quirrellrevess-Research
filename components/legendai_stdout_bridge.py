@@ -16,6 +16,7 @@ from pathlib import Path
 
 
 _MAX_RECOMMENDATION_LINE_CHARS = 4096
+_LINE_BREAK_CHARACTERS = "\r\n\v\f\x1c\x1d\x1e\x85\u2028\u2029"
 
 
 def _within_utf16_limit(value: str) -> bool:
@@ -43,7 +44,7 @@ def parse_recommendation(line: str) -> dict[str, str] | None:
         raw = line[:-1]
     else:
         raw = line
-    if "\r" in raw or "\n" in raw:
+    if any(character in _LINE_BREAK_CHARACTERS for character in raw):
         return None
     if not _within_utf16_limit(raw):
         return None
