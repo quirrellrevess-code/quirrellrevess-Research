@@ -15,9 +15,38 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 
+_MAX_RECOMMENDATION_LINE_CHARS = 4096
+
+
+def _within_utf16_limit(value: str) -> bool:
+    """Match .NET string.Length by counting UTF-16 code units, not Python code points."""
+    if len(value) > _MAX_RECOMMENDATION_LINE_CHARS:
+        return False
+    units = 0
+    for character in value:
+        units += 2 if ord(character) > 0xFFFF else 1
+        if units > _MAX_RECOMMENDATION_LINE_CHARS:
+            return False
+    return True
+
+
 def parse_recommendation(line: str) -> dict[str, str] | None:
-    """Extract a conservative human-readable candidate, never a game command ID."""
-    raw = line.rstrip("\r\n")
+    """Extract a bounded human-readable candidate, never a game command ID."""
+    if type(line) is not str or len(line) > _MAX_RECOMMENDATION_LINE_CHARS + 2:
+        return None
+    # stdin lines include at most one terminal LF, CRLF, or CR delimiter.
+    # Remove only that delimiter; embedded or repeated line breaks are malformed
+    # and must not be folded into one recommendation record.
+    if line.endswith("\r\n"):
+        raw = line[:-2]
+    elif line.endswith("\n") or line.endswith("\r"):
+        raw = line[:-1]
+    else:
+        raw = line
+    if "\r" in raw or "\n" in raw:
+        return None
+    if not _within_utf16_limit(raw):
+        return None
     normalized = raw.strip()
     prefix = "AI建议"
     if not normalized.startswith(prefix):

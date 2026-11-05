@@ -9,6 +9,8 @@ namespace UmaAutoTraining.AIRedirectorIntegration;
 
 public sealed class LegendAiRecommendationSink : IDisposable
 {
+    private const int MaxRecommendationLineChars = 4096;
+
     private static readonly Regex RecommendationPrefix = new(
         @"^\s*AI建议\s*[:：]\s*(?<body>\S.*)$",
         RegexOptions.Compiled | RegexOptions.CultureInvariant);
@@ -38,7 +40,11 @@ public sealed class LegendAiRecommendationSink : IDisposable
 
     public bool TryRecord(string? rawLine, string source = "AIRedirector.Legend.stdout")
     {
-        if (string.IsNullOrWhiteSpace(rawLine))
+        if (rawLine is null ||
+            rawLine.Length > MaxRecommendationLineChars ||
+            rawLine.Contains('\r') ||
+            rawLine.Contains('\n') ||
+            string.IsNullOrWhiteSpace(rawLine))
             return false;
         var match = RecommendationPrefix.Match(rawLine);
         if (!match.Success)

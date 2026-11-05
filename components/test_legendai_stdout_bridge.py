@@ -54,5 +54,63 @@ class LegendAiBridgeTests(unittest.TestCase):
             with self.subTest(line=line):
                 self.assertIsNotNone(parse_recommendation(line))
 
+    def test_rejects_non_string_and_overlong_lines(self):
+        self.assertIsNone(parse_recommendation(None))
+        self.assertIsNone(parse_recommendation(1))
+        prefix = "AI建议："
+        at_limit = prefix + "x" * (4096 - len(prefix))
+        self.assertIsNotNone(parse_recommendation(at_limit))
+        self.assertIsNone(parse_recommendation(at_limit + "x"))
+
+    def test_limit_counts_utf16_code_units_like_dotnet_string_length(self):
+        prefix = "AI建议："
+        exact = prefix + "😀" * 2045 + "x"
+        over = prefix + "😀" * 2046
+        self.assertEqual(len(exact.encode("utf-16-le")) // 2, 4096)
+        self.assertEqual(len(over.encode("utf-16-le")) // 2, 4097)
+        self.assertIsNotNone(parse_recommendation(exact))
+        self.assertIsNone(parse_recommendation(over))
+
+    def test_strips_only_one_terminal_line_delimiter(self):
+        for line in ("AI建议：速\n", "AI建议：速\r\n", "AI建议：速\r"):
+            with self.subTest(line=repr(line)):
+                parsed = parse_recommendation(line)
+                self.assertIsNotNone(parsed)
+                self.assertEqual(parsed["raw"], "AI建议：速")
+        self.assertIsNone(parse_recommendation("AI建议：速\n\n"))
+
+    def test_rejects_embedded_line_breaks_before_classification(self):
+        invalid_lines = (
+            "AI建议：\n速",
+            "AI建议：速\nAI建议：休息",
+            "AI建议：速\r\nAI建议：休息",
+            "AI建议：速\r休息",
+        )
+        for line in invalid_lines:
+            with self.subTest(line=repr(line)):
+                self.assertIsNone(parse_recommendation(line))
+
+    def test_record_stream_accepts_exact_limit_with_line_terminator(self):
+        with tempfile.TemporaryDirectory() as directory:
+            target = Path(directory) / "out.jsonl"
+            prefix = "AI建议："
+            at_limit = prefix + "x" * (4096 - len(prefix)) + "\n"
+            count = record_stream(io.StringIO(at_limit), target)
+            self.assertEqual(count, 1)
+            rows = [json.loads(line) for line in target.read_text(encoding="utf-8").splitlines()]
+            self.assertEqual(len(rows[0]["raw"]), 4096)
+
+    def test_record_stream_skips_overlong_line_and_continues(self):
+        with tempfile.TemporaryDirectory() as directory:
+            target = Path(directory) / "out.jsonl"
+            overlong = "AI建议：" + "x" * 4096
+            count = record_stream(
+                io.StringIO(overlong + "\nAI建议：休息\n"),
+                target,
+            )
+            self.assertEqual(count, 1)
+            rows = [json.loads(line) for line in target.read_text(encoding="utf-8").splitlines()]
+            self.assertEqual([row["recommendation_text"] for row in rows], ["休息"])
+
 if __name__ == "__main__":
     unittest.main()

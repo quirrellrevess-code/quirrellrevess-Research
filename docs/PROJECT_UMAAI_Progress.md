@@ -479,3 +479,45 @@
 - **EXACT-HEAD CI:** Native Auto-training [run 41692964375](https://github.com/quirrellrevess-code/quirrellrevess-Research/actions/runs/41692964375) and reusable Python consumer [run 41692963032](https://github.com/quirrellrevess-code/quirrellrevess-Research/actions/runs/41692963032) both succeeded. Python suite **156 tests**; AIRedirector pinned-source patch check and .NET 10 passive sink smoke test passed.
 - **COMMIT:** test-only commit `b27c4894f9df275b25ecbb66b4f282c1e3bf6390`; no production guard code changed.
 - **SAFETY:** Offline CI only. No local DLL inspection, game launch/input, account operation, request replay, action submission, or local configuration change. Taiwan remains first priority, Japan reference-only, China excluded.
+
+
+### 2026-11-05 — Bound passive LegendAI stdout recommendation lines
+
+- **FINDING:** The standalone Python stdout bridge previously accepted any-length strings and copied the full raw line into its JSONL record. A malformed or unexpectedly large line could create an oversized record and unnecessary downstream processing/storage.
+- **IMPLEMENTED:** `components/legendai_stdout_bridge.py` now accepts only exact built-in strings up to **4,096 characters**. Non-string and over-limit lines are rejected before normalization, classification, or persistence. The exact prefix grammar and fail-closed metadata remain unchanged.
+- **TESTS ADDED:** Exact 4,096-character boundary accepted; 4,097-character input rejected; non-string inputs rejected; an overlong stream line is skipped while the following valid recommendation is still recorded.
+- **DOCUMENTED:** `docs/AIRedirector_RECOMMENDATION_BRIDGE_INTEGRATION.md` records the limit and explicitly states that this bounds accepted/persisted record size, not memory already used by the upstream text stream to materialize a line.
+- **COMMITS:** parser `c500efeaa560cfc1459293166f25aba1deb47b52`; tests `6f0665893f7d74834b72504e88499281c91b99d9`; integration note `4438d4f256898798d5c13e980fe0654f48a5058c`.
+- **BRANCH / PR:** `analysis/bound-legendai-stdout-line-20261105`, [Draft PR #7](https://github.com/quirrellrevess-code/quirrellrevess-Research/pull/7), stacked on PR #6 at base `3cdad5093e973e41e61bebfdd8005f35a5a824e3`.
+- **EXPECTED VALIDATION:** `python -m py_compile components/legendai_stdout_bridge.py components/test_legendai_stdout_bridge.py`; from `components/`, `python -m unittest -v test_legendai_stdout_bridge`. The repository workflow additionally runs the full 19-module offline suite, the pinned AIRedirector patch check, and the .NET 10 passive-sink smoke test.
+- **VALIDATION STATUS:** IMPLEMENTED; test code and docs are pushed. The workflow is configured for push on `analysis/**`, but the available workflow-run query exposes PR-triggered runs only; this stacked PR targets an analysis branch, and the push-run ID/result was not retrievable in this session. No local test execution was available. Do not mark TESTED/VERIFIED until exact-head CI is read back.
+- **SAFETY / RESEARCH SCOPE:** Passive text observation only; no process launch, turn correlation, action-ID inference, game input, account operation, request replay, or action submission. Taiwan remains first priority, Japan reference-only, China excluded. No local DLL inspection or local configuration change.
+
+
+### 2026-11-05 — Apply the same line bound to the C# AIRedirector sink
+
+- **FOLLOW-UP FINDING:** The Python fallback was bounded, but the integrated C# `LegendAiRecommendationSink.TryRecord` still passed arbitrary-length lines to regex matching and JSONL serialization. Limiting only the fallback would leave the actual AIRedirector sink unbounded.
+- **IMPLEMENTED:** C# sink now rejects null/over-4,096-character lines before whitespace scanning and regex matching. The workflow patch check asserts the size-bound constant remains present. The .NET 10 smoke test now accepts exactly 4,096 characters, rejects 4,097, verifies only the accepted records are persisted, and confirms the bounded record remains non-executable/unverified.
+- **COMMITS:** C# sink `f5334bfcd4c5abffca531d726eb3260768f9ea00`; workflow smoke/contract check `2560b363eb31434c97608f6eb2b5906d837cf206`; integration documentation `734f4b0c5b02e44952eccef17be85779a4e4a0f6`.
+- **VALIDATION STATUS:** IMPLEMENTED; exact-head native push CI is expected from the `analysis/**` push trigger, but the available workflow-run query does not expose push-triggered runs. No .NET smoke result is claimed until the exact-head run is read back. This is not a live plugin build or Taiwan-server runtime validation.
+
+
+### 2026-11-05 — Align Python and C# passive recommendation line boundaries
+
+- **FOLLOW-UP FINDING:** Python `len(str)` counts Unicode code points while .NET `string.Length` counts UTF-16 code units. The Python stdin path also receives a terminal LF/CRLF delimiter, so checking before removing that delimiter could reject an exact 4,096-unit payload that the C# sink accepts.
+- **IMPLEMENTED:** The Python bridge now removes the terminal line delimiter before checking the payload and counts UTF-16 code units to match .NET. The C# sink's existing `string.Length` check remains unchanged. The 4,096-unit limit is a record/persistence bound; it does not claim to cap memory already used by an upstream producer to materialize a line.
+- **TESTS:** Added Python regressions for supplementary Unicode at exactly 4,096 and 4,097 UTF-16 units, plus exact-limit stdin input with a line terminator. Extended the .NET 10 smoke test with the same supplementary-Unicode boundary.
+- **COMMIT:** `73d7613ebd04b1a515750a7778dde722d1f45c53` on `analysis/bound-legendai-stdout-line-20261105`, parent `04d9b41e5ed62e0fbfbbc6a13e326f5982c23e7f`.
+- **EXACT-HEAD CI:** Native Push [run 41936529150](https://github.com/quirrellrevess-code/quirrellrevess-Research/actions/runs/41936529150) passed all three jobs: Python **160 tests**, AIRedirector pinned-source patch check, and .NET 10 passive-sink smoke (including the UTF-16 boundary). Reusable Python consumer Push [run 41936529913](https://github.com/quirrellrevess-code/quirrellrevess-Research/actions/runs/41936529913) also passed its acceptance job and the same **160-test** command.
+- **REMOTE:** The exact branch HEAD and all four changed files (Python bridge, tests, workflow smoke test, and integration note) were pushed. Progress archive and readback follow in this commit.
+- **SAFETY / SCOPE:** Passive text observation only. No process launch, turn correlation, action-ID inference, game input, account operation, request replay, action submission, local DLL inspection, or local configuration change. Taiwan remains first priority, Japan reference-only, China excluded.
+
+
+### 2026-11-06 — Reject embedded/repeated line breaks in passive recommendation records
+
+- **FINDING:** The Python parser used `rstrip("\r\n")`, which removed any number of trailing line breaks and accepted a newline after the recommendation prefix. The C# regex also used `\\s*`, which can consume line breaks if a caller passes a multi-line string. Actual stdin/DataReceivedEventArgs normally supplies individual lines, but the public parser/sink contract did not enforce that boundary.
+- **IMPLEMENTED:** Python now strips at most one terminal LF/CRLF/CR delimiter and rejects any remaining CR/LF before classification. The C# sink rejects CR/LF before regex matching. The 4,096 UTF-16-code-unit limit and non-executable metadata are unchanged.
+- **TESTS:** Python tests cover one terminal delimiter, repeated delimiters, newline after the prefix, embedded second recommendation, and embedded CR. The .NET 10 smoke test asserts both runtimes reject multi-line input.
+- **VERIFIED (exact code HEAD `2742692c8aac4007e56806d32711f1b6eb6d5cd9`):** Native Auto-training [run 42084343596](https://github.com/quirrellrevess-code/quirrellrevess-Research/actions/runs/42084343596) passed all three jobs: Python 162 tests, pinned AIRedirector source patch check, and .NET 10 passive-sink smoke (including multiline rejection). Reusable Python consumer [run 42084344173](https://github.com/quirrellrevess-code/quirrellrevess-Research/actions/runs/42084344173) passed its 162-test acceptance command.
+- **REMOTE / PR:** `analysis/bound-legendai-stdout-line-20261105` code HEAD is `2742692c8aac4007e56806d32711f1b6eb6d5cd9`; Draft PR [#7](https://github.com/quirrellrevess-code/quirrellrevess-Research/pull/7) remains open/unmerged and stacked on PR #6. Final archive-head CI is checked separately. No local DLL or game runtime validation is claimed.
+- **SAFETY / SCOPE:** Passive parsing only. No process launch, game input, account operation, request replay, action submission, local DLL inspection, or local configuration change. Taiwan remains first priority, Japan reference-only, China excluded.
