@@ -511,3 +511,12 @@
 - **EXACT-HEAD CI:** Native Push [run 41936529150](https://github.com/quirrellrevess-code/quirrellrevess-Research/actions/runs/41936529150) passed all three jobs: Python **160 tests**, AIRedirector pinned-source patch check, and .NET 10 passive-sink smoke (including the UTF-16 boundary). Reusable Python consumer Push [run 41936529913](https://github.com/quirrellrevess-code/quirrellrevess-Research/actions/runs/41936529913) also passed its acceptance job and the same **160-test** command.
 - **REMOTE:** The exact branch HEAD and all four changed files (Python bridge, tests, workflow smoke test, and integration note) were pushed. Progress archive and readback follow in this commit.
 - **SAFETY / SCOPE:** Passive text observation only. No process launch, turn correlation, action-ID inference, game input, account operation, request replay, action submission, local DLL inspection, or local configuration change. Taiwan remains first priority, Japan reference-only, China excluded.
+
+
+### 2026-11-06 — Reject embedded/repeated line breaks in passive recommendation records
+
+- **FINDING:** The Python parser used `rstrip("\\r\\n")`, which removed any number of trailing line breaks and accepted a newline after the recommendation prefix. The C# regex also used `\\s*`, which can consume line breaks if a caller passes a multi-line string. Actual stdin/DataReceivedEventArgs normally supplies individual lines, but the public parser/sink contract did not enforce that boundary.
+- **IMPLEMENTED:** Python now strips at most one terminal LF/CRLF/CR delimiter and rejects any remaining CR/LF before classification. The C# sink rejects CR/LF before regex matching. The 4,096 UTF-16-code-unit limit and non-executable metadata are unchanged.
+- **TESTS:** Python tests cover one terminal delimiter, repeated delimiters, newline after the prefix, embedded second recommendation, and embedded CR. The .NET 10 smoke test asserts both runtimes reject multi-line input.
+- **VALIDATION:** exact-head native CI pending; no local DLL or game runtime validation is claimed.
+- **SAFETY / SCOPE:** Passive parsing only. No process launch, game input, account operation, request replay, action submission, local DLL inspection, or local configuration change. Taiwan remains first priority, Japan reference-only, China excluded.

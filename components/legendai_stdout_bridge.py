@@ -34,9 +34,17 @@ def parse_recommendation(line: str) -> dict[str, str] | None:
     """Extract a bounded human-readable candidate, never a game command ID."""
     if type(line) is not str or len(line) > _MAX_RECOMMENDATION_LINE_CHARS + 2:
         return None
-    # stdin lines include one LF or CRLF delimiter; exclude it from the payload
-    # bound so an exact-limit record is accepted consistently with AIRedirector.
-    raw = line.rstrip("\r\n")
+    # stdin lines include at most one terminal LF, CRLF, or CR delimiter.
+    # Remove only that delimiter; embedded or repeated line breaks are malformed
+    # and must not be folded into one recommendation record.
+    if line.endswith("\r\n"):
+        raw = line[:-2]
+    elif line.endswith("\n") or line.endswith("\r"):
+        raw = line[:-1]
+    else:
+        raw = line
+    if "\r" in raw or "\n" in raw:
+        return None
     if not _within_utf16_limit(raw):
         return None
     normalized = raw.strip()

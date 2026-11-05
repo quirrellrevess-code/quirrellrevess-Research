@@ -60,3 +60,10 @@
 
 - Python excludes the terminal stdin line delimiter before applying the limit and counts UTF-16 code units, matching .NET `string.Length`. This avoids rejecting an exact-limit record merely because `sys.stdin` supplied its newline and avoids disagreement for supplementary Unicode characters.
 - Python unit tests cover the exact/over UTF-16-unit boundary and an exact-limit stdin line. The .NET 10 smoke test covers the same boundary with supplementary Unicode input.
+
+
+## 2026-11-06 — Single-physical-line input boundary
+
+- The Python fallback removes at most one terminal LF, CRLF, or CR delimiter before applying the 4,096 UTF-16-code-unit payload bound. Any remaining CR/LF inside the payload, including a newline after the recommendation prefix or a second recommendation on the same input string, is rejected.
+- The C# AIRedirector sink rejects CR/LF before regex matching. `DataReceivedEventArgs.Data` is already a single line without its delimiter, so this prevents the regex's whitespace handling from spanning line breaks.
+- Both runtimes therefore classify only one physical recommendation line per record. This is input-shape validation only; it does not associate the recommendation with a verified turn or create an executable action.

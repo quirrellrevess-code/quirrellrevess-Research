@@ -106,6 +106,10 @@ jobs:
                       throw new Exception("Non-recommendation accepted");
                   if (!sink.TryRecord("AI建议：训练速度"))
                       throw new Exception("Recommendation rejected");
+                  if (sink.TryRecord("AI建议：\n训练速度") ||
+                      sink.TryRecord("AI建议：训练速度\nAI建议：休息") ||
+                      sink.TryRecord("AI建议：训练速度\r\n"))
+                      throw new Exception("Multi-line recommendation accepted");
                   const string prefix = "AI建议：";
                   var atLimit = prefix + new string('x', 4096 - prefix.Length);
                   if (!sink.TryRecord(atLimit))

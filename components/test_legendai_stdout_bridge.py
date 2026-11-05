@@ -71,6 +71,25 @@ class LegendAiBridgeTests(unittest.TestCase):
         self.assertIsNotNone(parse_recommendation(exact))
         self.assertIsNone(parse_recommendation(over))
 
+    def test_strips_only_one_terminal_line_delimiter(self):
+        for line in ("AI建议：速\n", "AI建议：速\r\n", "AI建议：速\r"):
+            with self.subTest(line=repr(line)):
+                parsed = parse_recommendation(line)
+                self.assertIsNotNone(parsed)
+                self.assertEqual(parsed["raw"], "AI建议：速")
+        self.assertIsNone(parse_recommendation("AI建议：速\n\n"))
+
+    def test_rejects_embedded_line_breaks_before_classification(self):
+        invalid_lines = (
+            "AI建议：\n速",
+            "AI建议：速\nAI建议：休息",
+            "AI建议：速\r\nAI建议：休息",
+            "AI建议：速\r休息",
+        )
+        for line in invalid_lines:
+            with self.subTest(line=repr(line)):
+                self.assertIsNone(parse_recommendation(line))
+
     def test_record_stream_accepts_exact_limit_with_line_terminator(self):
         with tempfile.TemporaryDirectory() as directory:
             target = Path(directory) / "out.jsonl"

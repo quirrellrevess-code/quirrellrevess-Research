@@ -42,6 +42,8 @@ public sealed class LegendAiRecommendationSink : IDisposable
     {
         if (rawLine is null ||
             rawLine.Length > MaxRecommendationLineChars ||
+            rawLine.Contains('\r') ||
+            rawLine.Contains('\n') ||
             string.IsNullOrWhiteSpace(rawLine))
             return false;
         var match = RecommendationPrefix.Match(rawLine);
