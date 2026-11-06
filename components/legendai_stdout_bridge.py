@@ -79,6 +79,42 @@ def extract_recommendation(line: str) -> str | None:
     return parsed["raw"] if parsed else None
 
 
+def iter_bounded_lines(stream, *, max_line_chars: int = _MAX_RECOMMENDATION_LINE_CHARS):
+    """Yield bounded stdin lines; oversized physical lines are discarded in chunks.
+
+    The first read is capped at max_line_chars + 3 to allow a maximum-size
+    payload plus CRLF and one overflow character. If that cap is reached without
+    LF, the rest of that physical line is discarded with 1,024-character reads.
+    None marks an oversized line and is ignored by parse_recommendation.
+    """
+    if type(max_line_chars) is not int or max_line_chars < 1:
+        raise ValueError("max_line_chars must be a positive built-in int")
+    readline = getattr(stream, "readline", None)
+    if not callable(readline):
+        raise TypeError("stream must provide readline(size)")
+
+    first_read_size = max_line_chars + 3
+    while True:
+        line = readline(first_read_size)
+        if line == "":
+            return
+        if len(line) < first_read_size or line.endswith("\n"):
+            yield line
+            if not line.endswith("\n"):
+                return
+            continue
+
+        # The physical line exceeded the bounded first read. Never accumulate
+        # the remainder: consume it in fixed-size chunks through the next LF.
+        yield None
+        while True:
+            remainder = readline(1024)
+            if remainder == "":
+                return
+            if remainder.endswith("\n"):
+                break
+
+
 def record_stream(lines, destination: Path) -> int:
     destination.parent.mkdir(parents=True, exist_ok=True)
     count = 0
@@ -114,7 +150,7 @@ def main() -> int:
     )
     args = parser.parse_args()
     try:
-        record_stream(sys.stdin, args.output)
+        record_stream(iter_bounded_lines(sys.stdin), args.output)
     except (OSError, UnicodeError) as exc:
         print(f"LegendAI bridge failed: {exc}", file=sys.stderr)
         return 1
