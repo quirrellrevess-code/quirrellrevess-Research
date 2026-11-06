@@ -10,6 +10,10 @@ namespace UmaAutoTraining.AIRedirectorIntegration;
 public sealed class LegendAiRecommendationSink : IDisposable
 {
     private const int MaxRecommendationLineChars = 4096;
+    private static readonly char[] LineBreakCharacters =
+    {
+        '\r', '\n', '\v', '\f', '\u001c', '\u001d', '\u001e', '\u0085', '\u2028', '\u2029'
+    };
 
     private static readonly Regex RecommendationPrefix = new(
         @"^\s*AI建议\s*[:：]\s*(?<body>\S.*)$",
@@ -42,8 +46,7 @@ public sealed class LegendAiRecommendationSink : IDisposable
     {
         if (rawLine is null ||
             rawLine.Length > MaxRecommendationLineChars ||
-            rawLine.Contains('\r') ||
-            rawLine.Contains('\n') ||
+            rawLine.IndexOfAny(LineBreakCharacters) >= 0 ||
             string.IsNullOrWhiteSpace(rawLine))
             return false;
         var match = RecommendationPrefix.Match(rawLine);

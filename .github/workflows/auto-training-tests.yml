@@ -110,6 +110,13 @@ jobs:
                       sink.TryRecord("AI建议：训练速度\nAI建议：休息") ||
                       sink.TryRecord("AI建议：训练速度\r\n"))
                       throw new Exception("Multi-line recommendation accepted");
+                  foreach (var separator in new[] { '\v', '\f', '\u001c', '\u001d', '\u001e', '\u0085', '\u2028', '\u2029' })
+                  {
+                      if (sink.TryRecord("AI建议" + separator + "：休息") ||
+                          sink.TryRecord("AI建议：速" + separator + "休息") ||
+                          sink.TryRecord("AI建议：休息" + separator))
+                          throw new Exception("Unicode line separator accepted");
+                  }
                   const string prefix = "AI建议：";
                   var atLimit = prefix + new string('x', 4096 - prefix.Length);
                   if (!sink.TryRecord(atLimit))
