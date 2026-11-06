@@ -127,6 +127,14 @@ class LegendAiBridgeTests(unittest.TestCase):
             rows = [json.loads(line) for line in target.read_text(encoding="utf-8").splitlines()]
             self.assertEqual(len(rows[0]["raw"]), 4096)
 
+    def test_bounded_reader_rejects_invalid_or_unbounded_limits(self):
+        for value in (True, 0, -1, 4097, 10**12, "4096"):
+            with self.subTest(max_line_chars=value):
+                stream = RecordingStringIO("AI建议：休息\n")
+                with self.assertRaisesRegex(ValueError, "max_line_chars"):
+                    list(iter_bounded_lines(stream, max_line_chars=value))
+                self.assertEqual(stream.requested_sizes, [])
+
     def test_bounded_reader_discards_large_line_in_fixed_chunks(self):
         valid = "AI建议：休息\n"
         stream = RecordingStringIO("x" * 50000 + "\n" + valid)

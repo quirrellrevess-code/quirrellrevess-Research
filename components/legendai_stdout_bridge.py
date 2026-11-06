@@ -87,8 +87,14 @@ def iter_bounded_lines(stream, *, max_line_chars: int = _MAX_RECOMMENDATION_LINE
     LF, the rest of that physical line is discarded with 1,024-character reads.
     None marks an oversized line and is ignored by parse_recommendation.
     """
-    if type(max_line_chars) is not int or max_line_chars < 1:
-        raise ValueError("max_line_chars must be a positive built-in int")
+    if (
+        type(max_line_chars) is not int
+        or not 1 <= max_line_chars <= _MAX_RECOMMENDATION_LINE_CHARS
+    ):
+        raise ValueError(
+            "max_line_chars must be a built-in int between 1 and "
+            f"{_MAX_RECOMMENDATION_LINE_CHARS}"
+        )
     readline = getattr(stream, "readline", None)
     if not callable(readline):
         raise TypeError("stream must provide readline(size)")
