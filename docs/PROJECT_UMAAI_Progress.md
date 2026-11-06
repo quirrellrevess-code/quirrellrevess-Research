@@ -554,3 +554,13 @@
 - **PR：** 计划以 Draft PR #9 堆叠在 PR #8 当前 head `b49983b748309c0126425f9d93a2d3333b9eb3e5`；保持未合并，PR #8 本身不改动。
 - **下一步：** 对最终归档 head 重新读取 push CI；随后继续审查 stdin bridge 的 EOF/CRLF 行边界与调用方契约，不把被动 stdout 推荐解释为可执行游戏动作。
 
+
+
+## 2026-11-07 — Enforce the configured passive stdin payload limit
+
+- **FINDING:** `iter_bounded_lines(stream, max_line_chars=...)` used the configured value to cap the first `readline`, but did not enforce that value against a complete line returned within the delimiter allowance. With a limit of 100, a 101-character payload plus LF/CRLF could be yielded and then accepted by the parser's global 4,096-UTF-16-unit ceiling.
+- **IMPLEMENTED:** The reader now removes at most one terminal LF, CRLF, or CR delimiter for the configured payload-length check and yields the oversized-line sentinel when the payload exceeds the caller's limit. The 4,096 hard ceiling, bounded first read, fixed-size discard, and later-line continuation remain intact.
+- **TESTED:** Added exact 100-character CRLF acceptance and 101-character LF, CRLF, and unterminated-EOF rejection. A targeted isolated boundary run also passed exact-limit CRLF, all three over-limit endings, and oversized-line discard followed by a valid next line.
+- **EXACT-HEAD PR CI:** Native Auto-training [run 42278909841](https://github.com/quirrellrevess-code/quirrellrevess-Research/actions/runs/42278909841) passed all three jobs: AIRedirector pinned-source patch check, Python offline suite (**169 tests, OK**), and .NET 10 passive sink smoke. Reusable Python consumer [run 42278910226](https://github.com/quirrellrevess-code/quirrellrevess-Research/actions/runs/42278910226) passed. Tested code/test head: `108dbc57f05dc6caa94bdc590da9db29ddcfe367`.
+- **SAFETY:** This is a passive Python parser-boundary correction only. It does not launch AIRedirector/UmaAi, inspect local DLLs, submit game actions, replay requests, or operate an account. Taiwan remains first priority, Japan reference-only, China excluded.
+- **STATUS:** Draft PR #10 remains open/unmerged and is stacked on PR #9. This entry records the verified code/test head; the documentation-only archive commit and its exact-head CI are pending.
