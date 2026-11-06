@@ -4,6 +4,9 @@ on:
   push:
     branches:
       - "analysis/**"
+  pull_request:
+    branches:
+      - analysis/bounded-legendai-stdin-reader-20261107
 
 permissions:
   contents: read
