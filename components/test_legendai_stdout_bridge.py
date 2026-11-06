@@ -4,7 +4,22 @@ import json
 import tempfile
 import unittest
 from pathlib import Path
-from legendai_stdout_bridge import extract_recommendation, parse_recommendation, record_stream
+from legendai_stdout_bridge import (
+    extract_recommendation,
+    iter_bounded_lines,
+    parse_recommendation,
+    record_stream,
+)
+
+
+class RecordingStringIO(io.StringIO):
+    def __init__(self, value):
+        super().__init__(value)
+        self.requested_sizes = []
+
+    def readline(self, size=-1):
+        self.requested_sizes.append(size)
+        return super().readline(size)
 
 
 class LegendAiBridgeTests(unittest.TestCase):
@@ -111,6 +126,45 @@ class LegendAiBridgeTests(unittest.TestCase):
             self.assertEqual(count, 1)
             rows = [json.loads(line) for line in target.read_text(encoding="utf-8").splitlines()]
             self.assertEqual(len(rows[0]["raw"]), 4096)
+
+    def test_bounded_reader_discards_large_line_in_fixed_chunks(self):
+        valid = "AI建议：休息\n"
+        stream = RecordingStringIO("x" * 50000 + "\n" + valid)
+
+        lines = list(iter_bounded_lines(stream))
+
+        self.assertEqual(lines, [None, valid])
+        self.assertEqual(stream.requested_sizes[0], 4099)
+        self.assertIn(1024, stream.requested_sizes)
+        self.assertLessEqual(max(stream.requested_sizes), 4099)
+
+    def test_bounded_reader_keeps_exact_limit_crlf_line(self):
+        prefix = "AI建议："
+        exact = prefix + "x" * (4096 - len(prefix)) + "\r\n"
+        stream = RecordingStringIO(exact)
+
+        lines = list(iter_bounded_lines(stream))
+
+        self.assertEqual(lines, [exact])
+        self.assertIsNotNone(parse_recommendation(lines[0]))
+
+    def test_bounded_reader_discards_overlong_final_line_without_newline(self):
+        stream = RecordingStringIO("x" * 50000)
+
+        self.assertEqual(list(iter_bounded_lines(stream)), [None])
+        self.assertLessEqual(max(stream.requested_sizes), 4099)
+
+    def test_record_stream_uses_bounded_reader_and_preserves_next_line(self):
+        with tempfile.TemporaryDirectory() as directory:
+            target = Path(directory) / "out.jsonl"
+            stream = RecordingStringIO("x" * 50000 + "\nAI建议：休息\n")
+
+            count = record_stream(iter_bounded_lines(stream), target)
+
+            self.assertEqual(count, 1)
+            rows = [json.loads(line) for line in target.read_text(encoding="utf-8").splitlines()]
+            self.assertEqual([row["recommendation_text"] for row in rows], ["休息"])
+            self.assertLessEqual(max(stream.requested_sizes), 4099)
 
     def test_record_stream_skips_overlong_line_and_continues(self):
         with tempfile.TemporaryDirectory() as directory:
