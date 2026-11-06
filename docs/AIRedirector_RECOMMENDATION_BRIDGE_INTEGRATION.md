@@ -67,3 +67,11 @@
 - The Python fallback removes at most one terminal LF, CRLF, or CR delimiter before applying the 4,096 UTF-16-code-unit payload bound. It rejects every remaining line separator recognized by Python `str.splitlines()` (including VT, FF, FS/GS/RS, NEL, U+2028, and U+2029), not just CR/LF.
 - The C# AIRedirector sink rejects the same separator set before regex matching. `DataReceivedEventArgs.Data` is already a single line without its CR/LF delimiter; the explicit Unicode separator guard prevents `\\s*` from treating an embedded Unicode line boundary as ordinary whitespace.
 - Both runtimes therefore classify only one physical recommendation line per record under their shared separator contract. This is input-shape validation only; it does not associate the recommendation with a verified turn or create an executable action.
+
+
+## 2026-11-07 — Bound standalone Python stdin reads
+
+- The standalone Python fallback now reads at most 4,099 characters for its first line chunk, then discards an oversized physical line in 1,024-character chunks. A very long line is not materialized as one unbounded Python string, and the next valid recommendation remains readable.
+- Offline tests cover a 50,000-character line, an exact-limit CRLF line, an oversized unterminated final line, and continued processing after an oversized line.
+- Scope limit: this bounds only the standalone Python stdin fallback. The C# sink receives DataReceivedEventArgs.Data after the external AIRedirector process reader has already materialized a line; this repository does not own that upstream reader, so no C# upstream-memory bound is claimed.
+- The bridge remains passive: no process launch, game input, action ID inference, turn association, or action submission.
