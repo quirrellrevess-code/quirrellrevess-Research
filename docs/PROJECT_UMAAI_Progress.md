@@ -533,3 +533,12 @@
 - **EXACT-HEAD CI:** Native Auto-training [run 42131593970](https://github.com/quirrellrevess-code/quirrellrevess-Research/actions/runs/42131593970) passed all three jobs: Python compile/offline suite, pinned AIRedirector source patch check, and .NET 10 passive-sink smoke. Reusable Python consumer [run 42131594569](https://github.com/quirrellrevess-code/quirrellrevess-Research/actions/runs/42131594569) passed the consumer acceptance job.
 - **REMOTE READBACK:** Python bridge 78986eba55fa8e0eeeec73690073ff42a4420b2d; Python tests 2b887d7e02a41022ef40b6eb5a3eaacf7e5f72e7; C# sink b8448687522ad6d1d7db561b9186d3027d50093e; workflow 6fda98cc44afed17f36a41dfa172793ea0cc10b5; integration note 55b739f231f445eb95e7f8a5370e4c2870d46465.
 - **SAFETY / LIMITS:** Passive parsing only. No process launch, game input, account operation, request replay, action submission, local DLL inspection, or local configuration change. Taiwan remains first priority, Japan reference-only, China excluded. This does not establish live Taiwan-server behavior or an executable action channel.
+
+
+### 2026-11-06 — Verify the exact PR #8 archive head
+
+- **CURRENT PR HEAD:** `077db348bf73ef0acffd62d664b574c7da022a90` on `analysis/reject-unicode-line-separators-20261106`, Draft PR [#8](https://github.com/quirrellrevess-code/quirrellrevess-Research/pull/8), stacked on PR #7. This is a documentation-only follow-up after the Unicode-separator implementation commit `2cd9a51939bb5c9c4a60d9e7ae1b9ba1076d19b2`.
+- **EXACT-HEAD NATIVE CI:** Push [run 42133636539](https://github.com/quirrellrevess-code/quirrellrevess-Research/actions/runs/42133636539) completed successfully: Python offline suite **163 tests, OK**; AIRedirector pinned-source patch check passed; .NET 10 passive recommendation-sink smoke passed.
+- **EXACT-HEAD HARNESS CONSUMER:** Push [run 42133637525](https://github.com/quirrellrevess-code/quirrellrevess-Research/actions/runs/42133637525) completed successfully: reusable Python acceptance **163 tests, OK**.
+- **READBACK:** The current progress file is being updated to retain the exact final-head run IDs; the next documentation commit is not the same SHA as the verified source head above.
+- **LIMITS:** These are offline/parser and passive-sink CI results only. No local DLL inspection, Taiwan-server runtime, game input, account operation, request replay or action submission is established. Taiwan remains first priority, Japan reference-only, China excluded.
