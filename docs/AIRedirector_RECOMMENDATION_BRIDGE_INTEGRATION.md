@@ -75,3 +75,10 @@
 - Offline tests cover a 50,000-character line, an exact-limit CRLF line, an oversized unterminated final line, and continued processing after an oversized line.
 - Scope limit: this bounds only the standalone Python stdin fallback. The C# sink receives DataReceivedEventArgs.Data after the external AIRedirector process reader has already materialized a line; this repository does not own that upstream reader, so no C# upstream-memory bound is claimed.
 - The bridge remains passive: no process launch, game input, action ID inference, turn association, or action submission.
+
+
+### 2026-11-07 — Keep the configurable reader bound within the parser contract
+
+- `iter_bounded_lines(max_line_chars=...)` now accepts only an exact built-in integer from 1 through the parser's fixed 4,096-character ceiling. Callers cannot widen the initial read to an arbitrary size and defeat the memory bound.
+- Invalid values (bool, zero, negative, 4,097, a very large integer, and string input) are rejected before the stream is read.
+- Exact code/test head `4b44486f48fa83039ff5a1fbca8d038a7513dafd` passed Native Auto-training [run 42275514793](https://github.com/quirrellrevess-code/quirrellrevess-Research/actions/runs/42275514793) and reusable Python consumer [run 42275515415](https://github.com/quirrellrevess-code/quirrellrevess-Research/actions/runs/42275515415), each with 168 Python tests passing; the native workflow also passed the pinned-source patch check and .NET 10 passive-sink smoke.

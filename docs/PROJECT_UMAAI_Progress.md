@@ -542,3 +542,15 @@
 - **EXACT-HEAD HARNESS CONSUMER:** Push [run 42133637525](https://github.com/quirrellrevess-code/quirrellrevess-Research/actions/runs/42133637525) completed successfully: reusable Python acceptance **163 tests, OK**.
 - **READBACK:** The current progress file is being updated to retain the exact final-head run IDs; the next documentation commit is not the same SHA as the verified source head above.
 - **LIMITS:** These are offline/parser and passive-sink CI results only. No local DLL inspection, Taiwan-server runtime, game input, account operation, request replay or action submission is established. Taiwan remains first priority, Japan reference-only, China excluded.
+
+## 2026-11-07 - Bounded stdin hard ceiling and exact-head CI
+
+- **起点：** 接续分支 `analysis/bounded-legendai-stdin-reader-20261107`，其父线为 PR #8 的 Unicode physical-line guard（PR #8 仍 Draft/open）。本轮先审查已提交的 `iter_bounded_lines()`：首次 `readline` 限制为 4,099 个 Python 字符，超长物理行剩余部分按 1,024 字符分块丢弃，不累积整行，并继续读取下一条记录。
+- **发现并修正的边界：** `max_line_chars` 是公开参数，旧实现只要求正整数；调用方可传入任意大值，从而把首次读取上限扩大到不再有意义。现在要求精确内置 `int` 且范围为 **1..4096**，拒绝 bool、0、负数、4097、极大整数和字符串；无效参数在任何 stream read 之前被拒绝。
+- **测试覆盖：** 50,000 字符超长行分块丢弃；精确 4,096 字符 CRLF 行接受；无换行的超长末行拒绝；超长行后下一条合法推荐仍被记录；可配置上限不能被扩大且拒绝前不读取 stream。
+- **提交：** 初始实现 `3c8955157af18127a57b54acb369361d6e70f472`、测试 `7cd5027049d09b651940e0225ce379840eaec045`、初始接入文档 `0e67258d637ee34bd23e83fcf765165ac3ff2259`；本轮硬上限实现/测试提交 `4b44486f48fa83039ff5a1fbca8d038a7513dafd`。
+- **EXACT-HEAD CI（`4b44486f48fa83039ff5a1fbca8d038a7513dafd`）：** Native Auto-training Push [run 42275514793](https://github.com/quirrellrevess-code/quirrellrevess-Research/actions/runs/42275514793) 三个 job 全部通过：Python **168 tests, OK**；AIRedirector pinned-source patch check 通过；.NET 10 passive sink smoke 通过。Reusable Python consumer Push [run 42275515415](https://github.com/quirrellrevess-code/quirrellrevess-Research/actions/runs/42275515415) 的 **168 tests, OK**；Dev Workflow Kit Python consumer pilot 也通过。
+- **安全范围：** 仅限制 standalone Python stdin 的内存读取；没有启动 AIRedirector 或游戏、没有读取本机 DLL、没有 turn/action 关联、没有游戏输入、账号操作、请求重放或动作提交。C# sink 接收的是上游已物化的 `DataReceivedEventArgs.Data`；本仓库不拥有该上游 reader，因此不声称限制其内存。台湾服优先、日本服参考、中国服排除。
+- **PR：** 计划以 Draft PR #9 堆叠在 PR #8 当前 head `b49983b748309c0126425f9d93a2d3333b9eb3e5`；保持未合并，PR #8 本身不改动。
+- **下一步：** 对最终归档 head 重新读取 push CI；随后继续审查 stdin bridge 的 EOF/CRLF 行边界与调用方契约，不把被动 stdout 推荐解释为可执行游戏动作。
+
