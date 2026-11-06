@@ -8,6 +8,7 @@ on:
   pull_request:
     branches:
       - main
+      - analysis/bounded-legendai-stdin-reader-20261107
   workflow_dispatch:
 
 permissions:
