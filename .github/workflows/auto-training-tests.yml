@@ -134,13 +134,16 @@ jobs:
                   sink.SetTarget(null, null);
                   if (!sink.TryRecord("AI建议: 休息"))
                       throw new Exception("Recommendation rejected after clear");
+                  if (!sink.TryRecord("AI建议：選藍色第2個"))
+                      throw new Exception("Traditional Chinese selection recommendation rejected");
               }
               var lines = File.ReadAllLines(Path.Combine(root, "legendai-recommendations.jsonl"));
-              if (lines.Length != 4) throw new Exception("Unexpected record count");
+              if (lines.Length != 5) throw new Exception("Unexpected record count");
               using var first = JsonDocument.Parse(lines[0]);
               using var second = JsonDocument.Parse(lines[1]);
               using var third = JsonDocument.Parse(lines[2]);
               using var fourth = JsonDocument.Parse(lines[3]);
+              using var fifth = JsonDocument.Parse(lines[4]);
               if (first.RootElement.GetProperty("single_mode_chara_id").GetInt32() != 123 ||
                   first.RootElement.GetProperty("turn").GetInt32() != 17 ||
                   first.RootElement.GetProperty("turn_association_status").GetString() != "target_context_available_unverified" ||
@@ -161,6 +164,11 @@ jobs:
                   fourth.RootElement.GetProperty("turn_association_status").GetString() != "unavailable_in_airredirector_context" ||
                   fourth.RootElement.GetProperty("category").GetString() != "named_action")
                   throw new Exception("Cleared target leaked stale context");
+              if (fifth.RootElement.GetProperty("category").GetString() != "selection_text" ||
+                  fifth.RootElement.GetProperty("recommendation").GetString() != "選藍色第2個" ||
+                  fifth.RootElement.GetProperty("verified").GetBoolean() ||
+                  fifth.RootElement.GetProperty("executable").GetBoolean())
+                  throw new Exception("Traditional Chinese selection text violated the passive sink contract");
               var blockedRoot = Path.Combine(Path.GetTempPath(), "sink-blocked-" + Guid.NewGuid().ToString("N"));
           File.WriteAllText(blockedRoot, "not a directory");
           try

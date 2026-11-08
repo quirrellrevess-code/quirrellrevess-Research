@@ -40,6 +40,14 @@ class LegendAiBridgeTests(unittest.TestCase):
         self.assertEqual(parsed["candidate_kind"], "selection_text")
         self.assertIsNone(parse_recommendation("AI建议："))
 
+    def test_classifies_traditional_chinese_and_japanese_selection_text(self):
+        for body in ("選藍色第2個", "選綠色第1個", "第2番"):
+            with self.subTest(body=body):
+                parsed = parse_recommendation("AI建议：" + body)
+                self.assertEqual(parsed["candidate_kind"], "selection_text")
+                self.assertEqual(parsed["candidate_value"], body)
+                self.assertNotIn("action_id", parsed)
+
     def test_writes_only_recommendations_and_never_marks_executable(self):
         with tempfile.TemporaryDirectory() as directory:
             target = Path(directory) / "out.jsonl"

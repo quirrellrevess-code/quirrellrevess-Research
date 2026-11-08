@@ -65,7 +65,7 @@ def parse_recommendation(line: str) -> dict[str, str] | None:
         kind, value = "training", first
     elif body in {"休息", "外出", "普通外出", "比赛", "不选"}:
         kind, value = "named_action", body
-    elif body.startswith("选") and any(color in body for color in ("蓝色", "绿色", "红色")):
+    elif any(marker in body for marker in ("第", "选", "選", "个", "番")):
         kind, value = "selection_text", body
     else:
         kind, value = "unknown", body

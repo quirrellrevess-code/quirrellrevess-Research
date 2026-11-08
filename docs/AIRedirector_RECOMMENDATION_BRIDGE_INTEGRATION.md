@@ -82,3 +82,12 @@
 - `iter_bounded_lines(max_line_chars=...)` now accepts only an exact built-in integer from 1 through the parser's fixed 4,096-character ceiling. Callers cannot widen the initial read to an arbitrary size and defeat the memory bound.
 - Invalid values (bool, zero, negative, 4,097, a very large integer, and string input) are rejected before the stream is read.
 - Exact code/test head `4b44486f48fa83039ff5a1fbca8d038a7513dafd` passed Native Auto-training [run 42275514793](https://github.com/quirrellrevess-code/quirrellrevess-Research/actions/runs/42275514793) and reusable Python consumer [run 42275515415](https://github.com/quirrellrevess-code/quirrellrevess-Research/actions/runs/42275515415), each with 168 Python tests passing; the native workflow also passed the pinned-source patch check and .NET 10 passive-sink smoke.
+
+
+## 2026-11-09 — Align passive selection labels for Taiwan Traditional Chinese
+
+- Static comparison found that the Python fallback classified selection text only when it began with Simplified Chinese `选` and contained one of three Simplified color names. The existing C# sink also recognizes the ordinal/selection markers `第`, `选`, `選`, `个`, and `番`. A Traditional Chinese line such as `選藍色第2個` was therefore `unknown` in Python but `selection_text` in C#.
+- The Python fallback now uses the same selection/ordinal markers as the C# sink. It preserves the original text and does not infer an action ID.
+- Python offline regressions cover Traditional Chinese `選藍色第2個` / `選綠色第1個` and Japanese `第2番`. The .NET 10 smoke test records the Traditional Chinese example and verifies the same `selection_text` category.
+- The record remains passive: `verified=false`, `executable=false`; this change does not create or submit a game action.
+- This is source-level cross-runtime classification parity, not Taiwan-server runtime evidence. Taiwan remains first priority, Japan reference-only, China excluded.
