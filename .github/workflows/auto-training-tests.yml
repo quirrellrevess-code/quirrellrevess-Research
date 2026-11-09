@@ -138,9 +138,29 @@ jobs:
                       throw new Exception("Recommendation rejected after clear");
                   if (!sink.TryRecord("AI建议：選藍色第2個"))
                       throw new Exception("Traditional Chinese selection recommendation rejected");
+                  foreach (var line in new[]
+                  {
+                      "AI建议：訓練速度",
+                      "AI建议：トレーニング速度",
+                      "AI建议：保健室",
+                      "AI建议：休む",
+                      "AI建议：比赛",
+                      "AI建议：比賽",
+                      "AI建议：不选",
+                      "AI建议：不選",
+                      "AI建议：普通外出",
+                      "AI建议：第2個休息",
+                      "AI建议：第2個訓練速度",
+                      "AI建议：個",
+                      "AI建议：第2番",
+                  })
+                  {
+                      if (!sink.TryRecord(line))
+                          throw new Exception("Passive category parity recommendation rejected: " + line);
+                  }
               }
               var lines = File.ReadAllLines(Path.Combine(root, "legendai-recommendations.jsonl"));
-              if (lines.Length != 5) throw new Exception("Unexpected record count");
+              if (lines.Length != 18) throw new Exception("Unexpected record count");
               using var first = JsonDocument.Parse(lines[0]);
               using var second = JsonDocument.Parse(lines[1]);
               using var third = JsonDocument.Parse(lines[2]);
