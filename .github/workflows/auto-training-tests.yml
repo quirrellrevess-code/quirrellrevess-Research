@@ -153,6 +153,7 @@ jobs:
                       "AI建议：第2個訓練速度",
                       "AI建议：個",
                       "AI建议：第2番",
+                      "AI建议：速率",
                   })
                   {
                       if (!sink.TryRecord(line))
@@ -160,7 +161,7 @@ jobs:
                   }
               }
               var lines = File.ReadAllLines(Path.Combine(root, "legendai-recommendations.jsonl"));
-              if (lines.Length != 18) throw new Exception("Unexpected record count");
+              if (lines.Length != 19) throw new Exception("Unexpected record count");
               using var first = JsonDocument.Parse(lines[0]);
               using var second = JsonDocument.Parse(lines[1]);
               using var third = JsonDocument.Parse(lines[2]);
@@ -195,7 +196,7 @@ jobs:
               {
                   "training", "training", "named_action", "named_action", "named_action",
                   "named_action", "named_action", "named_action", "named_action", "named_action",
-                  "training", "selection_text", "selection_text",
+                  "training", "selection_text", "selection_text", "unknown",
               };
               for (var index = 0; index < expectedCategories.Length; index++)
               {
