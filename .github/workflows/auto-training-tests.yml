@@ -171,6 +171,20 @@ jobs:
                   fifth.RootElement.GetProperty("verified").GetBoolean() ||
                   fifth.RootElement.GetProperty("executable").GetBoolean())
                   throw new Exception("Traditional Chinese selection text violated the passive sink contract");
+              var expectedCategories = new[]
+              {
+                  "training", "training", "named_action", "named_action", "named_action",
+                  "named_action", "named_action", "named_action", "named_action", "named_action",
+                  "training", "selection_text", "selection_text",
+              };
+              for (var index = 0; index < expectedCategories.Length; index++)
+              {
+                  using var categoryRecord = JsonDocument.Parse(lines[index + 5]);
+                  if (categoryRecord.RootElement.GetProperty("category").GetString() != expectedCategories[index] ||
+                      categoryRecord.RootElement.GetProperty("verified").GetBoolean() ||
+                      categoryRecord.RootElement.GetProperty("executable").GetBoolean())
+                      throw new Exception("Cross-runtime passive category mismatch at record " + (index + 6));
+              }
               var blockedRoot = Path.Combine(Path.GetTempPath(), "sink-blocked-" + Guid.NewGuid().ToString("N"));
           File.WriteAllText(blockedRoot, "not a directory");
           try

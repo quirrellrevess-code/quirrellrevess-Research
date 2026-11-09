@@ -91,3 +91,11 @@
 - Python offline regressions cover Traditional Chinese `選藍色第2個` / `選綠色第1個` and Japanese `第2番`. The .NET 10 smoke test records the Traditional Chinese example and verifies the same `selection_text` category.
 - The record remains passive: `verified=false`, `executable=false`; this change does not create or submit a game action.
 - This is source-level cross-runtime classification parity, not Taiwan-server runtime evidence. Taiwan remains first priority, Japan reference-only, China excluded.
+
+
+## 2026-11-10 — Align passive category markers across Python and C#
+
+- Python fallback and the C# sink now use the same category precedence: `training` → `named_action` → `selection_text` → `unknown`.
+- Training aliases include the existing short labels plus Simplified Chinese `训练`, Traditional Chinese `訓練`, and Japanese `トレーニング`. Named-action markers cover the existing Chinese/Japanese terms and their Traditional Chinese aliases `比賽` / `不選`. Selection markers include both `个` and `個`.
+- Python offline cases and the .NET 10 passive smoke test cover the same language variants and precedence collisions (for example, a training/action phrase that also contains an ordinal marker).
+- These remain descriptive text categories only. No action ID is inferred, and every record remains `verified=false` and `executable=false`; Taiwan is first priority, Japan is reference-only, and China-server behavior is excluded.

@@ -61,11 +61,17 @@ def parse_recommendation(line: str) -> dict[str, str] | None:
 
     # These are labels for later mapping, not executable game action identifiers.
     first = body[0]
-    if first in "速耐力根智":
-        kind, value = "training", first
-    elif body in {"休息", "外出", "普通外出", "比赛", "不选"}:
+    if first in "速耐力根智" or any(
+        marker in body for marker in ("训练", "訓練", "トレーニング")
+    ):
+        kind = "training"
+        value = first if first in "速耐力根智" else body
+    elif any(
+        marker in body
+        for marker in ("休息", "外出", "保健室", "休む", "比赛", "比賽", "不选", "不選")
+    ):
         kind, value = "named_action", body
-    elif any(marker in body for marker in ("第", "选", "選", "个", "番")):
+    elif any(marker in body for marker in ("第", "选", "選", "个", "個", "番")):
         kind, value = "selection_text", body
     else:
         kind, value = "unknown", body

@@ -104,12 +104,17 @@ public sealed class LegendAiRecommendationSink : IDisposable
         if (body.Contains("休息", StringComparison.Ordinal) ||
             body.Contains("外出", StringComparison.Ordinal) ||
             body.Contains("保健室", StringComparison.Ordinal) ||
-            body.Contains("休む", StringComparison.Ordinal))
+            body.Contains("休む", StringComparison.Ordinal) ||
+            body.Contains("比赛", StringComparison.Ordinal) ||
+            body.Contains("比賽", StringComparison.Ordinal) ||
+            body.Contains("不选", StringComparison.Ordinal) ||
+            body.Contains("不選", StringComparison.Ordinal))
             return "named_action";
         if (body.Contains("第", StringComparison.Ordinal) ||
             body.Contains("选", StringComparison.Ordinal) ||
             body.Contains("選", StringComparison.Ordinal) ||
             body.Contains("个", StringComparison.Ordinal) ||
+            body.Contains("個", StringComparison.Ordinal) ||
             body.Contains("番", StringComparison.Ordinal))
             return "selection_text";
         return "unknown";
