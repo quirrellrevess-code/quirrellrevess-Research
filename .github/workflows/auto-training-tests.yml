@@ -9,6 +9,7 @@ on:
     branches:
       - main
       - analysis/bounded-legendai-stdin-reader-20261107
+      - analysis/align-passive-selection-labels-20261109
   workflow_dispatch:
 
 permissions:
@@ -136,9 +137,16 @@ jobs:
                       throw new Exception("Recommendation rejected after clear");
                   if (!sink.TryRecord("AI建议：選藍色第2個"))
                       throw new Exception("Traditional Chinese selection recommendation rejected");
+                  if (!sink.TryRecord("AI建议：比赛") ||
+                      !sink.TryRecord("AI建议：不选") ||
+                      !sink.TryRecord("AI建议：保健室") ||
+                      !sink.TryRecord("AI建议：休む") ||
+                      !sink.TryRecord("AI建议：普通外出") ||
+                      !sink.TryRecord("AI建议：速率"))
+                      throw new Exception("Named-action/training classification sample rejected");
               }
               var lines = File.ReadAllLines(Path.Combine(root, "legendai-recommendations.jsonl"));
-              if (lines.Length != 5) throw new Exception("Unexpected record count");
+              if (lines.Length != 11) throw new Exception("Unexpected record count");
               using var first = JsonDocument.Parse(lines[0]);
               using var second = JsonDocument.Parse(lines[1]);
               using var third = JsonDocument.Parse(lines[2]);
@@ -169,6 +177,20 @@ jobs:
                   fifth.RootElement.GetProperty("verified").GetBoolean() ||
                   fifth.RootElement.GetProperty("executable").GetBoolean())
                   throw new Exception("Traditional Chinese selection text violated the passive sink contract");
+              var expectedExtraCategories = new[]
+              {
+                  "named_action", "named_action", "named_action",
+                  "named_action", "named_action", "unknown"
+              };
+              for (var i = 0; i < expectedExtraCategories.Length; i++)
+              {
+                  using var extra = JsonDocument.Parse(lines[i + 5]);
+                  var element = extra.RootElement;
+                  if (element.GetProperty("category").GetString() != expectedExtraCategories[i] ||
+                      element.GetProperty("verified").GetBoolean() ||
+                      element.GetProperty("executable").GetBoolean())
+                      throw new Exception($"Passive category mismatch for extra sample {i}");
+              }
               var blockedRoot = Path.Combine(Path.GetTempPath(), "sink-blocked-" + Guid.NewGuid().ToString("N"));
           File.WriteAllText(blockedRoot, "not a directory");
           try
