@@ -13,8 +13,8 @@ from legendai_stdout_bridge import (
 
 
 class RecordingStringIO(io.StringIO):
-    def __init__(self, value):
-        super().__init__(value)
+    def __init__(self, value, *, newline="\n"):
+        super().__init__(value, newline=newline)
         self.requested_sizes = []
 
     def readline(self, size=-1):
@@ -155,6 +155,57 @@ class LegendAiBridgeTests(unittest.TestCase):
 
         self.assertEqual(lines, [exact])
         self.assertIsNotNone(parse_recommendation(lines[0]))
+
+    def test_bounded_reader_continues_after_cr_only_delimiters(self):
+        limit = 100
+        prefix = "AI建议："
+        exact = prefix + "x" * (limit - len(prefix))
+        over = prefix + "x" * (limit + 1 - len(prefix))
+        valid = "AI建议：休息"
+
+        exact_stream = RecordingStringIO(exact + "\r", newline="")
+        self.assertEqual(
+            list(iter_bounded_lines(exact_stream, max_line_chars=limit)),
+            [exact + "\r"],
+        )
+
+        over_stream = RecordingStringIO(over + "\r" + valid + "\r", newline="")
+        self.assertEqual(
+            list(iter_bounded_lines(over_stream, max_line_chars=limit)),
+            [None, valid + "\r"],
+        )
+        self.assertIsNotNone(parse_recommendation(valid + "\r"))
+
+    def test_bounded_reader_discards_overlong_cr_only_line_and_continues(self):
+        valid = "AI建议：休息"
+        stream = RecordingStringIO("x" * 50000 + "\r" + valid + "\r", newline="")
+
+        lines = list(iter_bounded_lines(stream))
+
+        self.assertEqual(lines, [None, valid + "\r"])
+        self.assertIn(1024, stream.requested_sizes)
+        self.assertLessEqual(max(stream.requested_sizes), 4099)
+
+    def test_bounded_reader_enforces_smaller_configured_payload_limit(self):
+        limit = 100
+        prefix = "AI建议："
+        exact = prefix + "x" * (limit - len(prefix))
+        over = prefix + "x" * (limit + 1 - len(prefix))
+
+        exact_stream = RecordingStringIO(exact + "\r\n")
+        self.assertEqual(
+            list(iter_bounded_lines(exact_stream, max_line_chars=limit)),
+            [exact + "\r\n"],
+        )
+
+        for physical_line in (over + "\n", over + "\r\n", over):
+            with self.subTest(physical_line_ending=repr(physical_line[-2:])):
+                stream = RecordingStringIO(physical_line)
+                self.assertEqual(
+                    list(iter_bounded_lines(stream, max_line_chars=limit)),
+                    [None],
+                )
+                self.assertLessEqual(max(stream.requested_sizes), limit + 3)
 
     def test_bounded_reader_discards_overlong_final_line_without_newline(self):
         stream = RecordingStringIO("x" * 50000)

@@ -554,3 +554,24 @@
 - **PR：** 计划以 Draft PR #9 堆叠在 PR #8 当前 head `b49983b748309c0126425f9d93a2d3333b9eb3e5`；保持未合并，PR #8 本身不改动。
 - **下一步：** 对最终归档 head 重新读取 push CI；随后继续审查 stdin bridge 的 EOF/CRLF 行边界与调用方契约，不把被动 stdout 推荐解释为可执行游戏动作。
 
+
+
+## 2026-11-07 — Enforce the configured passive stdin payload limit
+
+- **FINDING:** `iter_bounded_lines(stream, max_line_chars=...)` used the configured value to cap the first `readline`, but did not enforce that value against a complete line returned within the delimiter allowance. With a limit of 100, a 101-character payload plus LF/CRLF could be yielded and then accepted by the parser's global 4,096-UTF-16-unit ceiling.
+- **IMPLEMENTED:** The reader now removes at most one terminal LF, CRLF, or CR delimiter for the configured payload-length check and yields the oversized-line sentinel when the payload exceeds the caller's limit. The 4,096 hard ceiling, bounded first read, fixed-size discard, and later-line continuation remain intact.
+- **TESTED:** Added exact 100-character CRLF acceptance and 101-character LF, CRLF, and unterminated-EOF rejection. A targeted isolated boundary run also passed exact-limit CRLF, all three over-limit endings, and oversized-line discard followed by a valid next line.
+- **EXACT-HEAD PR CI:** Native Auto-training [run 42278909841](https://github.com/quirrellrevess-code/quirrellrevess-Research/actions/runs/42278909841) passed all three jobs: AIRedirector pinned-source patch check, Python offline suite (**169 tests, OK**), and .NET 10 passive sink smoke. Reusable Python consumer [run 42278910226](https://github.com/quirrellrevess-code/quirrellrevess-Research/actions/runs/42278910226) passed. Tested code/test head: `108dbc57f05dc6caa94bdc590da9db29ddcfe367`.
+- **SAFETY:** This is a passive Python parser-boundary correction only. It does not launch AIRedirector/UmaAi, inspect local DLLs, submit game actions, replay requests, or operate an account. Taiwan remains first priority, Japan reference-only, China excluded.
+- **STATUS:** Draft PR #10 remains open/unmerged and stacked on PR #9. Progress archive commit `a7cb32165d32d82a1057dfd1a63aaaccfa777a26` was read back; native Auto-training [run 42279930853](https://github.com/quirrellrevess-code/quirrellrevess-Research/actions/runs/42279930853) and reusable consumer [run 42279931828](https://github.com/quirrellrevess-code/quirrellrevess-Research/actions/runs/42279931828) both passed on that exact archive head (169 Python tests, pinned-source patch check, and .NET 10 passive sink smoke). This status correction is documentation-only; tested code/test head remains `108dbc57f05dc6caa94bdc590da9db29ddcfe367`.
+
+
+## 2026-11-08 — Continue bounded stdin reading after CR-only physical lines
+
+- **FINDING:** `iter_bounded_lines()` already removed a terminal CR when checking payload length, but its continuation and oversized-line discard loops only recognized LF. For a text stream configured with `newline=""`, a CR-terminated physical line was returned by `readline()` as a complete line; the iterator then stopped, and an oversized CR-only line could consume the next valid record while searching only for LF.
+- **IMPLEMENTED:** Treat terminal CR as a physical delimiter alongside LF in the bounded first-read path, the continuation decision, and the fixed-size oversized-line discard loop. CRLF behavior and the configured payload limit remain unchanged.
+- **TESTED:** Added CR-preserving `StringIO(newline="")` regressions for an exact 100-character payload terminated by CR, an over-limit CR line followed by a valid record, and a 50,000-character CR-only oversized line followed by a valid record. The oversized path remains chunked at 1,024 characters.
+- **COMMITS:** implementation `751567245da755742e59aadb314fb69db2c97805`; regression tests `880d5e6df2fabc732967993487d2692a82e716f2`.
+- **EXACT-HEAD CI:** Native Auto-training [run 42427340665](https://github.com/quirrellrevess-code/quirrellrevess-Research/actions/runs/42427340665) passed all three jobs: Python offline suite **171 tests, OK**, AIRedirector pinned-source patch check, and .NET 10 passive-sink smoke. Reusable Python consumer [run 42427340909](https://github.com/quirrellrevess-code/quirrellrevess-Research/actions/runs/42427340909) also passed **171 tests, OK**.
+- **REMOTE READBACK:** `components/legendai_stdout_bridge.py` Blob `2b51c6605ef634058ed580fabc6f87a9a10bffa9`; `components/test_legendai_stdout_bridge.py` Blob `aef8b3b4727aa9a14d68f176af1c2db16280bbe1`. Both files were fetched from the PR branch after the commits.
+- **PR / SAFETY:** Draft PR [#10](https://github.com/quirrellrevess-code/quirrellrevess-Research/pull/10) remains open/unmerged, stacked on PR #9. This is passive input framing only: no AIRedirector/game launch, local DLL inspection, game input, account operation, request replay or action submission. Taiwan remains first priority, Japan reference-only, China excluded.

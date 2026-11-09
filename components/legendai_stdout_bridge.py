@@ -82,10 +82,12 @@ def extract_recommendation(line: str) -> str | None:
 def iter_bounded_lines(stream, *, max_line_chars: int = _MAX_RECOMMENDATION_LINE_CHARS):
     """Yield bounded stdin lines; oversized physical lines are discarded in chunks.
 
-    The first read is capped at max_line_chars + 3 to allow a maximum-size
-    payload plus CRLF and one overflow character. If that cap is reached without
-    LF, the rest of that physical line is discarded with 1,024-character reads.
-    None marks an oversized line and is ignored by parse_recommendation.
+    The payload limit is enforced after removing at most one terminal LF,
+    CRLF, or CR delimiter. The first read is capped at max_line_chars + 3 to
+    allow a maximum-size payload plus CRLF and one overflow character. If that
+    cap is reached without LF, the rest of that physical line is discarded in
+    1,024-character chunks. None marks an oversized line and is ignored by
+    parse_recommendation.
     """
     if (
         type(max_line_chars) is not int
@@ -104,9 +106,15 @@ def iter_bounded_lines(stream, *, max_line_chars: int = _MAX_RECOMMENDATION_LINE
         line = readline(first_read_size)
         if line == "":
             return
-        if len(line) < first_read_size or line.endswith("\n"):
-            yield line
-            if not line.endswith("\n"):
+        if len(line) < first_read_size or line.endswith(("\n", "\r")):
+            if line.endswith("\r\n"):
+                payload = line[:-2]
+            elif line.endswith("\n") or line.endswith("\r"):
+                payload = line[:-1]
+            else:
+                payload = line
+            yield line if len(payload) <= max_line_chars else None
+            if not line.endswith(("\n", "\r")):
                 return
             continue
 
@@ -117,7 +125,7 @@ def iter_bounded_lines(stream, *, max_line_chars: int = _MAX_RECOMMENDATION_LINE
             remainder = readline(1024)
             if remainder == "":
                 return
-            if remainder.endswith("\n"):
+            if remainder.endswith(("\n", "\r")):
                 break
 
 

@@ -4,6 +4,10 @@ on:
   push:
     branches:
       - "analysis/**"
+  pull_request:
+    branches:
+      - analysis/bounded-legendai-stdin-reader-20261107
+      - analysis/enforce-configured-stdin-line-limit-20261107
 
 permissions:
   contents: read
