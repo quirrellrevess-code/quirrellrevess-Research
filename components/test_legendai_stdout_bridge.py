@@ -50,6 +50,17 @@ class LegendAiBridgeTests(unittest.TestCase):
 
     def test_matches_csharp_training_and_named_action_markers(self):
         cases = {
+            "速": "training",
+            "耐": "training",
+            "力": "training",
+            "根": "training",
+            "智": "training",
+            "速度": "training",
+            "耐力": "training",
+            "力量": "training",
+            "根性": "training",
+            "智力": "training",
+            "速率": "unknown",
             "训练速度": "training",
             "訓練速度": "training",
             "トレーニング速度": "training",

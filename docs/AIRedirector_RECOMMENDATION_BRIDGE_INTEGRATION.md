@@ -99,3 +99,11 @@
 - Training aliases include the existing short labels plus Simplified Chinese `训练`, Traditional Chinese `訓練`, and Japanese `トレーニング`. Named-action markers cover the existing Chinese/Japanese terms and their Traditional Chinese aliases `比賽` / `不選`. Selection markers include both `个` and `個`.
 - Python offline cases and the .NET 10 passive smoke test cover the same language variants and precedence collisions (for example, a training/action phrase that also contains an ordinal marker).
 - These remain descriptive text categories only. No action ID is inferred, and every record remains `verified=false` and `executable=false`; Taiwan is first priority, Japan is reference-only, and China-server behavior is excluded.
+
+
+## 2026-11-10 — Reject training-label lookalikes in the Python fallback
+
+- **FINDING:** The Python fallback still treated any recommendation beginning with `速`, `耐`, `力`, `根`, or `智` as training. The C# sink uses an explicit label set, so an unrelated lookalike such as `速率` was incorrectly classified as training only by Python.
+- **IMPLEMENTED:** Restrict Python's short/full training labels to the C# label set and retain the shared `训练`, `訓練`, and `トレーニング` phrase markers. Existing Taiwan Traditional Chinese action aliases and the training → named-action → selection → unknown precedence remain unchanged.
+- **TESTED:** Python regression cases cover all explicit short/full labels and assert `速率` is `unknown`. The .NET 10 passive smoke fixture records the same lookalike and expects `unknown`.
+- **SCOPE:** Descriptive passive classification only. No action ID, executable mapping, game launch/input, account operation, request replay, or action submission is introduced. Taiwan remains first priority, Japan reference-only, China excluded.
