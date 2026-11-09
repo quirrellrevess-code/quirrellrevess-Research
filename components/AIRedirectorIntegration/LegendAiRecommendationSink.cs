@@ -101,7 +101,8 @@ public sealed class LegendAiRecommendationSink : IDisposable
         if (body.Contains("训练", StringComparison.Ordinal) ||
             body.Contains("トレーニング", StringComparison.Ordinal))
             return "training";
-        if (body.Contains("休息", StringComparison.Ordinal) ||
+        if (body == "比赛" || body == "不选" ||
+            body.Contains("休息", StringComparison.Ordinal) ||
             body.Contains("外出", StringComparison.Ordinal) ||
             body.Contains("保健室", StringComparison.Ordinal) ||
             body.Contains("休む", StringComparison.Ordinal))
