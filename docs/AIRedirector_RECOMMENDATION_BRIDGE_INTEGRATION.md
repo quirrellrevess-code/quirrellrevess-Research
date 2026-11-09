@@ -91,3 +91,12 @@
 - Python offline regressions cover Traditional Chinese `選藍色第2個` / `選綠色第1個` and Japanese `第2番`. The .NET 10 smoke test records the Traditional Chinese example and verifies the same `selection_text` category.
 - The record remains passive: `verified=false`, `executable=false`; this change does not create or submit a game action.
 - This is source-level cross-runtime classification parity, not Taiwan-server runtime evidence. Taiwan remains first priority, Japan reference-only, China excluded.
+
+
+## 2026-11-10 — Align passive training and named-action category precedence
+
+- Static cross-runtime comparison found four Taiwan/Japan text-category mismatches: Python treated `比赛` as `named_action` while C# returned `unknown`; Python treated `不选` as `named_action` while C# reached the `选` marker and returned `selection_text`; C# recognized `保健室` and `休む` as `named_action` while Python returned `unknown`.
+- The Python training rule also accepted any body beginning with `速/耐/力/根/智`, while C# accepted only known labels or text containing `训练` / `トレーニング`. The fallback now uses the same explicit training labels and phrase markers; unknown lookalikes remain `unknown`.
+- Both runtimes now apply the same precedence: training labels/phrases, named-action aliases, selection/ordinal markers, then unknown. `比赛` and `不选` are explicitly named actions before the `选` marker check.
+- Regression coverage spans Taiwan Traditional/Simplified Chinese and Japanese examples in Python and the .NET 10 passive smoke test. All records remain `verified=false` and `executable=false`; no action ID or execution mapping is added.
+- This is source-level parser parity only, not Taiwan-server runtime evidence. Taiwan remains first priority, Japan reference-only, China excluded. No game launch/input, account operation, local DLL inspection, request replay, or action submission.

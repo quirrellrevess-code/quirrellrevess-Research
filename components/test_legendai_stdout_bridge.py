@@ -35,6 +35,30 @@ class LegendAiBridgeTests(unittest.TestCase):
         self.assertEqual(parsed["candidate_kind"], "named_action")
         self.assertEqual(parsed["candidate_value"], "休息")
 
+    def test_classifies_training_and_named_action_aliases_consistently(self):
+        expected = {
+            "速": "training",
+            "速度": "training",
+            "耐力": "training",
+            "力量": "training",
+            "根性": "training",
+            "智力": "training",
+            "训练速度": "training",
+            "スピードトレーニング": "training",
+            "速率": "unknown",
+            "普通外出": "named_action",
+            "比赛": "named_action",
+            "不选": "named_action",
+            "保健室": "named_action",
+            "休む": "named_action",
+            "正在休息": "named_action",
+        }
+        for body, category in expected.items():
+            with self.subTest(body=body):
+                parsed = parse_recommendation("AI建议：" + body)
+                self.assertEqual(parsed["candidate_kind"], category)
+                self.assertEqual(parsed["candidate_value"], body if category != "training" or body[0] not in "速耐力根智" else body[0])
+
     def test_classifies_selection_as_text_only(self):
         parsed = parse_recommendation("AI建议：选蓝色第2个")
         self.assertEqual(parsed["candidate_kind"], "selection_text")
