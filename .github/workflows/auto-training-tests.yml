@@ -9,6 +9,7 @@ on:
     branches:
       - main
       - analysis/bounded-legendai-stdin-reader-20261107
+      - analysis/enforce-configured-stdin-line-limit-20261107
       - analysis/align-passive-selection-labels-20261109
   workflow_dispatch:
 
