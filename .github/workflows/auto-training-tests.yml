@@ -10,6 +10,7 @@ on:
       - main
       - analysis/bounded-legendai-stdin-reader-20261107
       - analysis/enforce-configured-stdin-line-limit-20261107
+      - analysis/align-passive-selection-labels-20261109
   workflow_dispatch:
 
 permissions:
@@ -135,13 +136,36 @@ jobs:
                   sink.SetTarget(null, null);
                   if (!sink.TryRecord("AI建议: 休息"))
                       throw new Exception("Recommendation rejected after clear");
+                  if (!sink.TryRecord("AI建议：選藍色第2個"))
+                      throw new Exception("Traditional Chinese selection recommendation rejected");
+                  foreach (var line in new[]
+                  {
+                      "AI建议：訓練速度",
+                      "AI建议：トレーニング速度",
+                      "AI建议：保健室",
+                      "AI建议：休む",
+                      "AI建议：比赛",
+                      "AI建议：比賽",
+                      "AI建议：不选",
+                      "AI建议：不選",
+                      "AI建议：普通外出",
+                      "AI建议：第2個休息",
+                      "AI建议：第2個訓練速度",
+                      "AI建议：個",
+                      "AI建议：第2番",
+                  })
+                  {
+                      if (!sink.TryRecord(line))
+                          throw new Exception("Passive category parity recommendation rejected: " + line);
+                  }
               }
               var lines = File.ReadAllLines(Path.Combine(root, "legendai-recommendations.jsonl"));
-              if (lines.Length != 4) throw new Exception("Unexpected record count");
+              if (lines.Length != 18) throw new Exception("Unexpected record count");
               using var first = JsonDocument.Parse(lines[0]);
               using var second = JsonDocument.Parse(lines[1]);
               using var third = JsonDocument.Parse(lines[2]);
               using var fourth = JsonDocument.Parse(lines[3]);
+              using var fifth = JsonDocument.Parse(lines[4]);
               if (first.RootElement.GetProperty("single_mode_chara_id").GetInt32() != 123 ||
                   first.RootElement.GetProperty("turn").GetInt32() != 17 ||
                   first.RootElement.GetProperty("turn_association_status").GetString() != "target_context_available_unverified" ||
@@ -162,6 +186,25 @@ jobs:
                   fourth.RootElement.GetProperty("turn_association_status").GetString() != "unavailable_in_airredirector_context" ||
                   fourth.RootElement.GetProperty("category").GetString() != "named_action")
                   throw new Exception("Cleared target leaked stale context");
+              if (fifth.RootElement.GetProperty("category").GetString() != "selection_text" ||
+                  fifth.RootElement.GetProperty("recommendation").GetString() != "選藍色第2個" ||
+                  fifth.RootElement.GetProperty("verified").GetBoolean() ||
+                  fifth.RootElement.GetProperty("executable").GetBoolean())
+                  throw new Exception("Traditional Chinese selection text violated the passive sink contract");
+              var expectedCategories = new[]
+              {
+                  "training", "training", "named_action", "named_action", "named_action",
+                  "named_action", "named_action", "named_action", "named_action", "named_action",
+                  "training", "selection_text", "selection_text",
+              };
+              for (var index = 0; index < expectedCategories.Length; index++)
+              {
+                  using var categoryRecord = JsonDocument.Parse(lines[index + 5]);
+                  if (categoryRecord.RootElement.GetProperty("category").GetString() != expectedCategories[index] ||
+                      categoryRecord.RootElement.GetProperty("verified").GetBoolean() ||
+                      categoryRecord.RootElement.GetProperty("executable").GetBoolean())
+                      throw new Exception("Cross-runtime passive category mismatch at record " + (index + 6));
+              }
               var blockedRoot = Path.Combine(Path.GetTempPath(), "sink-blocked-" + Guid.NewGuid().ToString("N"));
           File.WriteAllText(blockedRoot, "not a directory");
           try

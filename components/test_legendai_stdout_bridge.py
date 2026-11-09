@@ -40,6 +40,38 @@ class LegendAiBridgeTests(unittest.TestCase):
         self.assertEqual(parsed["candidate_kind"], "selection_text")
         self.assertIsNone(parse_recommendation("AI建议："))
 
+    def test_classifies_traditional_chinese_and_japanese_selection_text(self):
+        for body in ("選藍色第2個", "選綠色第1個", "第2番"):
+            with self.subTest(body=body):
+                parsed = parse_recommendation("AI建议：" + body)
+                self.assertEqual(parsed["candidate_kind"], "selection_text")
+                self.assertEqual(parsed["candidate_value"], body)
+                self.assertNotIn("action_id", parsed)
+
+    def test_matches_csharp_training_and_named_action_markers(self):
+        cases = {
+            "训练速度": "training",
+            "訓練速度": "training",
+            "トレーニング速度": "training",
+            "保健室": "named_action",
+            "休む": "named_action",
+            "比赛": "named_action",
+            "比賽": "named_action",
+            "不选": "named_action",
+            "不選": "named_action",
+            "普通外出": "named_action",
+            "第2個休息": "named_action",
+            "第2個訓練速度": "training",
+            "個": "selection_text",
+            "第2番": "selection_text",
+        }
+        for body, expected in cases.items():
+            with self.subTest(body=body):
+                parsed = parse_recommendation("AI建议：" + body)
+                self.assertEqual(parsed["candidate_kind"], expected)
+                self.assertEqual(parsed["recommendation_text"], body)
+                self.assertNotIn("action_id", parsed)
+
     def test_writes_only_recommendations_and_never_marks_executable(self):
         with tempfile.TemporaryDirectory() as directory:
             target = Path(directory) / "out.jsonl"
