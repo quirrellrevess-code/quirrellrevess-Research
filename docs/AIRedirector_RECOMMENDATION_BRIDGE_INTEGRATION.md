@@ -107,3 +107,12 @@
 - **IMPLEMENTED:** Restrict Python's short/full training labels to the C# label set and retain the shared `训练`, `訓練`, and `トレーニング` phrase markers. Existing Taiwan Traditional Chinese action aliases and the training → named-action → selection → unknown precedence remain unchanged.
 - **TESTED:** Python regression cases cover all explicit short/full labels and assert `速率` is `unknown`. The .NET 10 passive smoke fixture records the same lookalike and expects `unknown`.
 - **SCOPE:** Descriptive passive classification only. No action ID, executable mapping, game launch/input, account operation, request replay, or action submission is introduced. Taiwan remains first priority, Japan reference-only, China excluded.
+
+
+## 2026-11-10 — Exact archive-head verification for PR #13
+
+- The exact-label Python fallback correction is at code/test head `77bda6133ba777e2d62f9e0645951811865d8cb7`; the verified documentation archive parent at startup was `9a6b7b5e1432752018a76bbf0d38938ed047cb49`.
+- Native Push [42720787336](https://github.com/quirrellrevess-code/quirrellrevess-Research/actions/runs/42720787336) and PR-context [42720794482](https://github.com/quirrellrevess-code/quirrellrevess-Research/actions/runs/42720794482) passed all three jobs: 173 Python tests, pinned AIRedirector source patch check, and .NET 10 passive sink smoke.
+- Reusable Python consumer Push [42720788378](https://github.com/quirrellrevess-code/quirrellrevess-Research/actions/runs/42720788378) and PR-context [42720794783](https://github.com/quirrellrevess-code/quirrellrevess-Research/actions/runs/42720794783) passed.
+- The rule remains exact short/full training labels plus shared Chinese/Japanese training phrase markers; unrelated lookalikes such as `速率` remain `unknown`. Category precedence is training → named_action → selection_text → unknown.
+- This is passive descriptive classification only. No action IDs or executable mappings; `verified=false`, `executable=false`. Taiwan remains first priority, Japan reference-only, China excluded. No game launch/input, account operation, local DLL inspection, request replay, or action submission. These CI results do not establish Taiwan-server runtime correctness.
